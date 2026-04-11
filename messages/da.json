@@ -1,0 +1,85 @@
+{
+  "Metadata": {
+    "title": "PoGoSundet",
+    "description": "Find dit lokale Pokémon GO community i Frederikssund"
+  },
+  "Home": {
+    "title": "PoGoSundet",
+    "subtitle": "Find dit lokale community, koordiner raids og fang sammen.",
+    "loginButton": "Log ind",
+    "registerButton": "Opret konto",
+    "loggedInGreeting": "Hej, {email}!",
+    "sliceNotice": "Profiloprettelse er næste skridt — kommer snart.",
+    "logoutButton": "Log ud"
+  },
+  "Login": {
+    "title": "PoGoSundet",
+    "subtitle": "Log ind for at finde dit lokale community.",
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "din@email.dk",
+    "passwordLabel": "Adgangskode",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Glemt adgangskode?",
+    "submit": "Log ind",
+    "or": "Eller",
+    "googleButton": "Fortsæt med Google",
+    "footerPrompt": "Ny træner?",
+    "footerLink": "Opret konto",
+    "errorInvalidCredentials": "Forkert e-mail eller adgangskode.",
+    "errorGeneric": "Noget gik galt. Prøv igen."
+  },
+  "Register": {
+    "title": "PoGoSundet",
+    "subtitle": "Opret en konto og find dit lokale community.",
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "din@email.dk",
+    "passwordLabel": "Adgangskode",
+    "passwordPlaceholder": "Mindst 8 tegn",
+    "consentLabel": "Jeg accepterer ",
+    "consentLink": "privatlivspolitikken",
+    "consentRequired": "Du skal acceptere privatlivspolitikken for at oprette en konto.",
+    "submit": "Opret konto",
+    "or": "Eller",
+    "googleButton": "Fortsæt med Google",
+    "googleConsentNotice": "Ved at klikke accepterer du privatlivspolitikken.",
+    "footerPrompt": "Har du allerede en konto?",
+    "footerLink": "Log ind",
+    "successMessage": "Tjek din e-mail for at bekræfte din konto.",
+    "errorEmailTaken": "En konto med denne e-mail findes allerede.",
+    "errorWeakPassword": "Adgangskoden skal være mindst 8 tegn.",
+    "errorGeneric": "Noget gik galt. Prøv igen."
+  },
+  "Reset": {
+    "title": "Glemt adgangskode?",
+    "subtitle": "Skriv din e-mail, så sender vi dig et link til at nulstille din adgangskode.",
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "din@email.dk",
+    "submit": "Send nulstillingslink",
+    "successMessage": "Tjek din e-mail for et link til at nulstille din adgangskode.",
+    "backToLogin": "Tilbage til login",
+    "errorGeneric": "Noget gik galt. Prøv igen."
+  },
+  "ResetConfirm": {
+    "title": "Ny adgangskode",
+    "subtitle": "Vælg en ny adgangskode til din konto.",
+    "passwordLabel": "Ny adgangskode",
+    "passwordPlaceholder": "Mindst 8 tegn",
+    "confirmPasswordLabel": "Bekræft adgangskode",
+    "confirmPasswordPlaceholder": "Gentag adgangskode",
+    "submit": "Gem ny adgangskode",
+    "errorPasswordMismatch": "Adgangskoderne matcher ikke.",
+    "errorWeakPassword": "Adgangskoden skal være mindst 8 tegn.",
+    "errorGeneric": "Noget gik galt. Prøv igen."
+  },
+  "Privacy": {
+    "title": "Privatlivspolitik",
+    "lastUpdated": "Sidst opdateret: april 2026",
+    "stub": "Denne side er en foreløbig placeholder. Den fulde privatlivspolitik vil blive offentliggjort inden lancering.",
+    "backLink": "Tilbage"
+  },
+  "Header": {
+    "appName": "PoGoSundet",
+    "loginLink": "Log ind",
+    "registerLink": "Opret konto"
+  }
+}

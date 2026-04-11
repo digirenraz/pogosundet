@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Mint theme — design tokens from Banani (flow: RZeh9aYzjISm).
+   Tailwind v4 maps --color-* to bg-*, text-*, border-* utilities,
+   and --radius-* to rounded-* utilities automatically. */
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  --color-border: #e8e8e8;
+  --color-input: #f8f8f7;
+  --color-primary: #00b09f;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #ccefeb;
+  --color-secondary-foreground: #00b09f;
+  --color-muted: #e8e8e8;
+  --color-muted-foreground: #949494;
+  --color-success: #00c417;
+  --color-success-foreground: #ffffff;
+  --color-destructive: #ff0000;
+  --color-destructive-foreground: #ffffff;
+  --color-warning: #ff7308;
+  --color-warning-foreground: #ffffff;
+  --color-card: #fbfaf9;
+  --color-card-foreground: #000000;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 24px;
+
+  /* Inter loaded via next/font — variable injected on <html> by root layout */
+  --font-family-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
