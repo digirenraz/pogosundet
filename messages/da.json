@@ -82,6 +82,27 @@
     "loginLink": "Log ind",
     "registerLink": "Opret konto"
   },
+  "PlayerDirectory": {
+    "headerTitle": "Lokale Trænere",
+    "searchPlaceholder": "Søg efter spillere...",
+    "copyButton": "Kopier",
+    "copiedButton": "Kopieret!",
+    "noPlayers": "Ingen spillere endnu.",
+    "noResults": "Ingen resultater for \"{query}\"."
+  },
+  "BottomNav": {
+    "players": "Spillere",
+    "raids": "Raids",
+    "chat": "Chat",
+    "profile": "Profil"
+  },
+  "ProfileEdit": {
+    "headerTitle": "Rediger profil",
+    "submit": "Gem ændringer",
+    "back": "Tilbage",
+    "successMessage": "Profil opdateret!",
+    "errorGeneric": "Noget gik galt. Prøv igen."
+  },
   "ProfileSetup": {
     "subtitle": "Opret din lokale trænerprofil",
     "stepChip": "Trin 2 af 3",

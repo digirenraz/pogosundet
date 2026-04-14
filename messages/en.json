@@ -82,6 +82,27 @@
     "loginLink": "Log in",
     "registerLink": "Create account"
   },
+  "PlayerDirectory": {
+    "headerTitle": "Local Trainers",
+    "searchPlaceholder": "Search players...",
+    "copyButton": "Copy",
+    "copiedButton": "Copied!",
+    "noPlayers": "No players yet.",
+    "noResults": "No results for \"{query}\"."
+  },
+  "BottomNav": {
+    "players": "Players",
+    "raids": "Raids",
+    "chat": "Chat",
+    "profile": "Profile"
+  },
+  "ProfileEdit": {
+    "headerTitle": "Edit profile",
+    "submit": "Save changes",
+    "back": "Back",
+    "successMessage": "Profile updated!",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
   "ProfileSetup": {
     "subtitle": "Create your local trainer profile",
     "stepChip": "Step 2 of 3",

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createProfile, getProfile } from './helpers';
+import { createProfile, getProfile, updateProfile } from './helpers';
 
 // Mock the Supabase browser client
 vi.mock('@/lib/supabase/client', () => ({
@@ -93,5 +93,52 @@ describe('getProfile', () => {
     const result = await getProfile('user-456');
 
     expect(result.data).toBeNull();
+  });
+});
+
+describe('updateProfile', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const updateInput = {
+    trainer_name: 'UpdatedName',
+    friend_code: '9999 8888 7777',
+    first_name: 'New Name',
+    bio: 'Updated bio',
+  };
+
+  it('updates profile and returns the updated row', async () => {
+    const updatedRow = { id: 'profile-1', user_id: 'user-123', ...updateInput };
+    const chain = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: updatedRow, error: null }),
+    };
+    const supabase = { from: vi.fn().mockReturnValue(chain) };
+    vi.mocked(createClient).mockReturnValue(supabase as never);
+
+    const result = await updateProfile('user-123', updateInput);
+
+    expect(supabase.from).toHaveBeenCalledWith('profiles');
+    expect(chain.eq).toHaveBeenCalledWith('user_id', 'user-123');
+    expect(result.data).toEqual(updatedRow);
+    expect(result.error).toBeNull();
+  });
+
+  it('propagates Supabase errors', async () => {
+    const supabaseError = { message: 'update failed', code: '500' };
+    const chain = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: supabaseError }),
+    };
+    const supabase = { from: vi.fn().mockReturnValue(chain) };
+    vi.mocked(createClient).mockReturnValue(supabase as never);
+
+    const result = await updateProfile('user-123', updateInput);
+
+    expect(result.data).toBeNull();
+    expect(result.error).toEqual(supabaseError);
   });
 });

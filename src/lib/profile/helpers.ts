@@ -30,3 +30,15 @@ export async function getProfile(userId: string) {
     .single();
   return { data: data as Profile | null, error };
 }
+
+// Update an existing profile row. Returns the updated row.
+export async function updateProfile(userId: string, input: ProfileInput) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(input)
+    .eq('user_id', userId)
+    .select()
+    .single();
+  return { data: data as Profile | null, error };
+}

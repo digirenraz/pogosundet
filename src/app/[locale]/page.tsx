@@ -3,10 +3,9 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { Hero } from "@/components/Hero";
-import { LogoutButton } from "@/components/LogoutButton";
 
-// Home page — shows login/register prompts when logged out,
-// or a greeting when logged in. Redirects to profile setup if no profile exists.
+// Home page — logged-out landing page only.
+// Logged-in users are always redirected: to /profile/setup if no profile, or /players otherwise.
 export default async function HomePage() {
   const supabase = await createClient();
   const {
@@ -14,16 +13,13 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
   const t = await getTranslations("Home");
 
-  // Redirect logged-in users who haven't created a profile yet
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
       .eq("user_id", user.id)
       .single();
-    if (!profile) {
-      redirect("/profile/setup");
-    }
+    redirect(profile ? "/players" : "/profile/setup");
   }
 
   return (
@@ -40,29 +36,20 @@ export default async function HomePage() {
           </p>
         </div>
 
-        {user ? (
-          <div className="flex flex-col gap-4">
-            <p className="text-center font-semibold text-foreground">
-              {t("loggedInGreeting", { email: user.email ?? "" })}
-            </p>
-            <LogoutButton />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <Link
-              href="/login"
-              className="h-[52px] w-full bg-primary text-primary-foreground rounded-md flex items-center justify-center text-base font-semibold"
-            >
-              {t("loginButton")}
-            </Link>
-            <Link
-              href="/register"
-              className="h-[52px] w-full bg-card border border-border rounded-md flex items-center justify-center text-base font-semibold text-foreground"
-            >
-              {t("registerButton")}
-            </Link>
-          </div>
-        )}
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/login"
+            className="h-[52px] w-full bg-primary text-primary-foreground rounded-md flex items-center justify-center text-base font-semibold"
+          >
+            {t("loginButton")}
+          </Link>
+          <Link
+            href="/register"
+            className="h-[52px] w-full bg-card border border-border rounded-md flex items-center justify-center text-base font-semibold text-foreground"
+          >
+            {t("registerButton")}
+          </Link>
+        </div>
       </div>
     </div>
   );
