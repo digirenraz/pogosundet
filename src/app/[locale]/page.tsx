@@ -1,17 +1,30 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { Hero } from "@/components/Hero";
 import { LogoutButton } from "@/components/LogoutButton";
 
 // Home page — shows login/register prompts when logged out,
-// or a greeting with a "profile coming soon" notice when logged in.
+// or a greeting when logged in. Redirects to profile setup if no profile exists.
 export default async function HomePage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   const t = await getTranslations("Home");
+
+  // Redirect logged-in users who haven't created a profile yet
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    if (!profile) {
+      redirect("/profile/setup");
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -31,9 +44,6 @@ export default async function HomePage() {
           <div className="flex flex-col gap-4">
             <p className="text-center font-semibold text-foreground">
               {t("loggedInGreeting", { email: user.email ?? "" })}
-            </p>
-            <p className="text-center text-sm text-muted-foreground">
-              {t("sliceNotice")}
             </p>
             <LogoutButton />
           </div>

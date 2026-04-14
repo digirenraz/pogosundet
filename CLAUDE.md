@@ -110,6 +110,21 @@ with the GDPR checklist above?*
 
 ---
 
+## Testing strategy
+
+- **Framework:** Vitest (introduced in Slice 2)
+- **Approach:** Test-Driven Development (TDD) — write tests before implementation
+- **Scope:** Core logic only — validation functions and Supabase data helpers
+  - No UI component tests (too brittle, low value for this project)
+  - No end-to-end tests in Phase 1
+- **Test location:** co-located with the code they test, e.g. `src/lib/profile/validation.test.ts`
+- **Run tests:** `npm run test` (single run) or `npm run test:watch` (watch mode)
+- **Required:** all tests must pass before opening a PR — treat a failing test as a broken build
+
+Apply TDD to every new slice: write the test file first, confirm tests fail, then implement.
+
+---
+
 ## Git workflow
 
 - `main` branch is always deployable
@@ -163,12 +178,16 @@ Update this section at the end of each session.
 | 2026-04-11 | Password reset included in Slice 1                    | Keeps "Forgot password?" link in Banani design honest |
 | 2026-04-11 | GDPR consent checkbox + /privacy stub in Slice 1      | Non-negotiable before any registration can go live    |
 | 2026-04-11 | Banani Mint theme applied (teal #00b09f, Inter font)  | Locked design from Banani flow RZeh9aYzjISm           |
+| 2026-04-14 | Profile fields follow Banani (trainer name, friend code, first name, bio) | Level/Team/Area not in Banani design — deferred |
+| 2026-04-14 | No second GDPR consent on profile setup screen        | Consent already collected at registration (Slice 1)   |
+| 2026-04-14 | TDD with Vitest introduced in Slice 2                 | Core logic tested: validation + Supabase helpers      |
+| 2026-04-14 | Slice 2 implemented on branch slice/2-profile         | profiles table + RLS created in Supabase manually     |
 
 ---
 
 ## Open questions
 
-- **Slice 1 verification pending** — René to complete Supabase + Google OAuth setup (see `docs/setup.md`) and run through the manual verification checklist before opening a PR to `main`.
+None.
 
 ---
 
