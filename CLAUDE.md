@@ -156,13 +156,19 @@ Update this section at the end of each session.
 | 2026-03-29 | Location = manual text entry, no GPS                  | Simplicity for Phase 1               |
 | 2026-03-29 | "Add Friends" = display Trainer Code only             | No in-app social graph in Phase 1    |
 | 2026-03-29 | Profile photo storage approach not yet resolved       | Open question — decide before Slice 2|
+| 2026-04-11 | Profile photos stored in Supabase Storage             | Keeps stack simple; free tier sufficient for Phase 1 |
+| 2026-04-11 | Slice 1 implemented on branch slice/1-registration    | Awaiting Supabase + Google OAuth setup before testing |
+| 2026-04-11 | GitHub repo created at github.com/digirenraz/pogosundet | Private repo; main + slice/1-registration pushed     |
+| 2026-04-11 | Next.js 16 uses proxy.ts instead of middleware.ts     | Framework renamed middleware convention in v16        |
+| 2026-04-11 | Password reset included in Slice 1                    | Keeps "Forgot password?" link in Banani design honest |
+| 2026-04-11 | GDPR consent checkbox + /privacy stub in Slice 1      | Non-negotiable before any registration can go live    |
+| 2026-04-11 | Banani Mint theme applied (teal #00b09f, Inter font)  | Locked design from Banani flow RZeh9aYzjISm           |
 
 ---
 
 ## Open questions
 
-- **Profile photo storage:** Supabase Storage vs. a third-party service (e.g.
-  Cloudinary). Decide before starting Slice 2 (profile creation).
+- **Slice 1 verification pending** — René to complete Supabase + Google OAuth setup (see `docs/setup.md`) and run through the manual verification checklist before opening a PR to `main`.
 
 ---
 

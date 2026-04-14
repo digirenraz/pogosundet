@@ -1,0 +1,85 @@
+{
+  "Metadata": {
+    "title": "PoGoSundet",
+    "description": "Find your local Pokémon GO community in Frederikssund"
+  },
+  "Home": {
+    "title": "PoGoSundet",
+    "subtitle": "Find your local community, coordinate raids and catch together.",
+    "loginButton": "Log in",
+    "registerButton": "Create account",
+    "loggedInGreeting": "Hi, {email}!",
+    "sliceNotice": "Profile creation is the next step — coming soon.",
+    "logoutButton": "Log out"
+  },
+  "Login": {
+    "title": "PoGoSundet",
+    "subtitle": "Log in to find your local community.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "your@email.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Forgot password?",
+    "submit": "Log in",
+    "or": "Or",
+    "googleButton": "Continue with Google",
+    "footerPrompt": "New trainer?",
+    "footerLink": "Create account",
+    "errorInvalidCredentials": "Incorrect email or password.",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "Register": {
+    "title": "PoGoSundet",
+    "subtitle": "Create an account and find your local community.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "your@email.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "consentLabel": "I accept the ",
+    "consentLink": "privacy policy",
+    "consentRequired": "You must accept the privacy policy to create an account.",
+    "submit": "Create account",
+    "or": "Or",
+    "googleButton": "Continue with Google",
+    "googleConsentNotice": "By clicking you accept the privacy policy.",
+    "footerPrompt": "Already have an account?",
+    "footerLink": "Log in",
+    "successMessage": "Check your email to confirm your account.",
+    "errorEmailTaken": "An account with this email already exists.",
+    "errorWeakPassword": "Password must be at least 8 characters.",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "Reset": {
+    "title": "Forgot password?",
+    "subtitle": "Enter your email and we will send you a link to reset your password.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "your@email.com",
+    "submit": "Send reset link",
+    "successMessage": "Check your email for a link to reset your password.",
+    "backToLogin": "Back to login",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "ResetConfirm": {
+    "title": "New password",
+    "subtitle": "Choose a new password for your account.",
+    "passwordLabel": "New password",
+    "passwordPlaceholder": "At least 8 characters",
+    "confirmPasswordLabel": "Confirm password",
+    "confirmPasswordPlaceholder": "Repeat password",
+    "submit": "Save new password",
+    "errorPasswordMismatch": "Passwords do not match.",
+    "errorWeakPassword": "Password must be at least 8 characters.",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "Privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: April 2026",
+    "stub": "This page is a placeholder. The full privacy policy will be published before launch.",
+    "backLink": "Back"
+  },
+  "Header": {
+    "appName": "PoGoSundet",
+    "loginLink": "Log in",
+    "registerLink": "Create account"
+  }
+}
