@@ -81,5 +81,32 @@
     "appName": "PoGoSundet",
     "loginLink": "Log ind",
     "registerLink": "Opret konto"
+  },
+  "ProfileSetup": {
+    "subtitle": "Opret din lokale trænerprofil",
+    "stepChip": "Trin 2 af 3",
+    "cardTitle": "Opsæt din profil",
+    "cardSubtitle": "Del kun det, du vil have andre lokale spillere at se. Dit trænernavn og vennekode gør det nemt for andre at finde dig.",
+    "photoTitle": "Profilbillede er valgfrit",
+    "photoSubtitle": "Du kan fortsætte uden foto og tilføje et senere fra din profil.",
+    "photoButton": "Tilføj foto senere",
+    "trainerNameLabel": "In-game trænernavn",
+    "trainerNamePlaceholder": "DitTrænerNavn",
+    "friendCodeLabel": "Pokémon GO vennekode",
+    "friendCodePlaceholder": "XXXX XXXX XXXX",
+    "firstNameLabel": "Fornavn",
+    "firstNamePlaceholder": "Sofia",
+    "bioLabel": "Mini bio",
+    "bioPlaceholder": "Fortæl lidt om dig selv og hvor du spiller...",
+    "optional": "Valgfri",
+    "submit": "Gem profil og fortsæt",
+    "back": "Tilbage",
+    "errorTrainerNameRequired": "Trænernavn er påkrævet",
+    "errorTrainerNameLength": "Trænernavn skal være 3–24 tegn uden mellemrum foran/bagpå",
+    "errorFriendCodeRequired": "Vennekode er påkrævet",
+    "errorFriendCodeFormat": "Format: XXXX XXXX XXXX (kun tal)",
+    "errorFirstNameLength": "Fornavn må højst være 50 tegn",
+    "errorBioLength": "Bio må højst være 280 tegn",
+    "errorGeneric": "Noget gik galt. Prøv igen."
   }
 }

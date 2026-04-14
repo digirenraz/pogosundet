@@ -81,5 +81,32 @@
     "appName": "PoGoSundet",
     "loginLink": "Log in",
     "registerLink": "Create account"
+  },
+  "ProfileSetup": {
+    "subtitle": "Create your local trainer profile",
+    "stepChip": "Step 2 of 3",
+    "cardTitle": "Set up your profile",
+    "cardSubtitle": "Share only what you want other local players to see. Your trainer name and friend code help others connect with you quickly.",
+    "photoTitle": "Profile picture is optional",
+    "photoSubtitle": "You can continue without a photo and add one later from your profile.",
+    "photoButton": "Add photo later",
+    "trainerNameLabel": "In-game trainer name",
+    "trainerNamePlaceholder": "YourTrainerName",
+    "friendCodeLabel": "Pokémon GO friend code",
+    "friendCodePlaceholder": "XXXX XXXX XXXX",
+    "firstNameLabel": "First name",
+    "firstNamePlaceholder": "Sofia",
+    "bioLabel": "Mini bio",
+    "bioPlaceholder": "Tell us a bit about yourself and where you play...",
+    "optional": "Optional",
+    "submit": "Save profile and continue",
+    "back": "Back",
+    "errorTrainerNameRequired": "Trainer name is required",
+    "errorTrainerNameLength": "Trainer name must be 3–24 characters with no leading/trailing spaces",
+    "errorFriendCodeRequired": "Friend code is required",
+    "errorFriendCodeFormat": "Format: XXXX XXXX XXXX (digits only)",
+    "errorFirstNameLength": "First name must be 50 characters or fewer",
+    "errorBioLength": "Bio must be 280 characters or fewer",
+    "errorGeneric": "Something went wrong. Please try again."
   }
 }
