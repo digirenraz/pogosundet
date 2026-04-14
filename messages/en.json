@@ -88,7 +88,8 @@
     "copyButton": "Copy",
     "copiedButton": "Copied!",
     "noPlayers": "No players yet.",
-    "noResults": "No results for \"{query}\"."
+    "noResults": "No results for \"{query}\".",
+    "logoutButton": "Log out"
   },
   "BottomNav": {
     "players": "Players",

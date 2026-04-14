@@ -88,7 +88,8 @@
     "copyButton": "Kopier",
     "copiedButton": "Kopieret!",
     "noPlayers": "Ingen spillere endnu.",
-    "noResults": "Ingen resultater for \"{query}\"."
+    "noResults": "Ingen resultater for \"{query}\".",
+    "logoutButton": "Log ud"
   },
   "BottomNav": {
     "players": "Spillere",

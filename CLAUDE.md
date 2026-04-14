@@ -186,6 +186,7 @@ Update this section at the end of each session.
 | 2026-04-14 | Bottom nav added: Players + Profile active, Raids/Chat placeholder | Phase 2 features; nav hints at future scope |
 | 2026-04-14 | Home page is now logged-out only; logged-in → /players | Clean routing model for bottom nav active states |
 | 2026-04-14 | Server-only helpers in server-helpers.ts (separate from helpers.ts) | Prevents server imports leaking into client bundles |
+| 2026-04-14 | Logout accessible via dropdown on green icon in DirectoryHeader | No dedicated logout page; keeps UI clean |
 
 ---
 
