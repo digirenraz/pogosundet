@@ -75,6 +75,18 @@ Denmark is in the EU. All of the following are required before launch:
 When building any feature that touches personal data, ask: *does this comply
 with the GDPR checklist above?*
 
+### Privacy Policy maintenance
+
+The Privacy Policy lives at `src/app/[locale]/privacy/page.tsx` with content in `messages/da.json` (Privacy section).
+
+**Update the Privacy Policy whenever:**
+- A new personal data field is added to user profiles (e.g. location, team, level, phone number)
+- A new third-party service is introduced (analytics, push notifications, maps, etc.)
+- The data controller contact details change
+- The data retention policy changes
+
+The "last updated" date is in `messages/da.json` → `Privacy.lastUpdated`. Always bump it when content changes.
+
 ---
 
 ## Location approach (Phase 1)
@@ -193,6 +205,16 @@ Update this section at the end of each session.
 | 2026-04-17 | SUPABASE_SERVICE_ROLE_KEY required in .env.local for account deletion | Must be added to Vercel env vars before deploy |
 
 ---
+
+## Pre-launch checklist
+
+Before making the app publicly available:
+
+- [ ] Add `SUPABASE_SERVICE_ROLE_KEY` to Vercel environment variables (needed for account deletion)
+- [ ] Test Google OAuth with the production Supabase URL (not just local)
+- [ ] Verify Supabase project is on EU/Ireland region (already confirmed, but double-check before launch)
+- [ ] Decide on a real domain name and configure it in Vercel + Supabase allowed URLs
+- [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
 
 ## Open questions
 
