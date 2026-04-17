@@ -66,11 +66,11 @@ flag it and ask. Otherwise, do not pre-build Phase 2 functionality.**
 
 Denmark is in the EU. All of the following are required before launch:
 
-- [ ] Privacy Policy page (Danish language)
-- [ ] Explicit consent checkbox at registration (not pre-ticked)
-- [ ] All user data stored in Supabase EU/Ireland region
-- [ ] Account deletion: user can delete their own account and all associated data
-- [ ] No third-party analytics or tracking without consent
+- [x] Privacy Policy page (Danish language) — implemented in Slice 5
+- [x] Explicit consent checkbox at registration (not pre-ticked) — implemented in Slice 1
+- [x] All user data stored in Supabase EU/Ireland region — configured at project creation
+- [x] Account deletion: user can delete their own account and all associated data — implemented in Slice 5
+- [x] No third-party analytics or tracking without consent — no analytics added
 
 When building any feature that touches personal data, ask: *does this comply
 with the GDPR checklist above?*
@@ -187,6 +187,10 @@ Update this section at the end of each session.
 | 2026-04-14 | Home page is now logged-out only; logged-in → /players | Clean routing model for bottom nav active states |
 | 2026-04-14 | Server-only helpers in server-helpers.ts (separate from helpers.ts) | Prevents server imports leaking into client bundles |
 | 2026-04-14 | Logout accessible via dropdown on green icon in DirectoryHeader | No dedicated logout page; keeps UI clean |
+| 2026-04-17 | Privacy Policy written in Danish, data controller: René Rasmussen (renraz@gmail.com) | GDPR Art. 13 requirement |
+| 2026-04-17 | Account deletion via POST /api/account/delete using service role key | Client SDK cannot delete auth users; server route required |
+| 2026-04-17 | Profile row deleted via ON DELETE CASCADE (already on FK) — no extra migration needed | Cascade was set up in Slice 2 migration |
+| 2026-04-17 | SUPABASE_SERVICE_ROLE_KEY required in .env.local for account deletion | Must be added to Vercel env vars before deploy |
 
 ---
 
