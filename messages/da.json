@@ -74,8 +74,28 @@
   "Privacy": {
     "title": "Privatlivspolitik",
     "lastUpdated": "Sidst opdateret: april 2026",
-    "stub": "Denne side er en foreløbig placeholder. Den fulde privatlivspolitik vil blive offentliggjort inden lancering.",
-    "backLink": "Tilbage"
+    "backLink": "Tilbage",
+    "s1Title": "1. Dataansvarlig",
+    "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
+    "s2Title": "2. Hvilke oplysninger indsamler vi?",
+    "s2Body": "Vi indsamler de oplysninger, du selv opgiver, når du opretter en konto og profil:",
+    "s2List": "E-mailadresse · Trænernavn (in-game navn) · Pokémon GO vennekode · Fornavn (valgfrit) · Mini-bio (valgfrit) · Profilbillede (valgfrit)",
+    "s3Title": "3. Hvad bruger vi oplysningerne til?",
+    "s3Body": "Oplysningerne bruges udelukkende til at drive PoGoSundet: at vise din profil til andre lokale spillere og gøre det nemt at tilføje hinanden som venner i Pokémon GO.",
+    "s4Title": "4. Retsgrundlag",
+    "s4Body": "Behandlingen sker på grundlag af dit samtykke, som du giver ved registrering (GDPR artikel 6, stk. 1, litra a).",
+    "s5Title": "5. Opbevaring og sletning",
+    "s5Body": "Dine oplysninger opbevares, så længe din konto er aktiv. Du kan til enhver tid slette din konto via \"Rediger profil\" i appen — alle dine data slettes straks og permanent.",
+    "s6Title": "6. Videregivelse",
+    "s6Body": "Vi sælger, udlejer eller deler ikke dine personoplysninger med tredjepart. Dine profiloplysninger (trænernavn, vennekode, fornavn, bio) er synlige for andre registrerede brugere af PoGoSundet.",
+    "s7Title": "7. Databehandlere",
+    "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase handler som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR.",
+    "s8Title": "8. Dine rettigheder",
+    "s8Body": "Du har ret til indsigt i dine data, berigtigelse af forkerte oplysninger, sletning (\"retten til at blive glemt\"), dataportabilitet samt retten til at klage til Datatilsynet (datatilsynet.dk). Kontakt os på renraz@gmail.com for at udøve disse rettigheder.",
+    "s9Title": "9. Cookies og sporing",
+    "s9Body": "PoGoSundet bruger kun teknisk nødvendige cookies til at holde dig logget ind. Vi anvender ingen tracking, analyse- eller markedsføringscookies.",
+    "s10Title": "10. Kontakt",
+    "s10Body": "Spørgsmål til denne privatlivspolitik kan sendes til renraz@gmail.com"
   },
   "Header": {
     "appName": "PoGoSundet",
@@ -102,7 +122,15 @@
     "submit": "Gem ændringer",
     "back": "Tilbage",
     "successMessage": "Profil opdateret!",
-    "errorGeneric": "Noget gik galt. Prøv igen."
+    "errorGeneric": "Noget gik galt. Prøv igen.",
+    "deleteSection": "Slet konto",
+    "deleteWarning": "Denne handling er permanent. Din konto og alle dine data slettes straks og kan ikke gendannes.",
+    "deleteButton": "Slet konto permanent",
+    "deleteConfirmTitle": "Er du sikker?",
+    "deleteConfirmBody": "Din konto, profil og alle data slettes permanent. Denne handling kan ikke fortrydes.",
+    "deleteConfirmYes": "Ja, slet min konto",
+    "deleteConfirmNo": "Annuller",
+    "deleteErrorGeneric": "Noget gik galt. Prøv igen."
   },
   "ProfileSetup": {
     "subtitle": "Opret din lokale trænerprofil",
