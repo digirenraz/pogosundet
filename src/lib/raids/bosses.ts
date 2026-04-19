@@ -1,0 +1,40 @@
+// Current raid bosses — update manually when the raid pool changes.
+// Sorted roughly by tier (legendaries first, then popular bosses).
+export const RAID_BOSSES = [
+  // Tier 5 / Mega legendaries (update per current rotation)
+  'Mewtwo',
+  'Rayquaza',
+  'Kyogre',
+  'Groudon',
+  'Lugia',
+  'Ho-Oh',
+  'Giratina (Ændret form)',
+  'Giratina (Oprindelse form)',
+  'Dialga',
+  'Palkia',
+  'Zekrom',
+  'Reshiram',
+  'Xerneas',
+  'Yveltal',
+  'Necrozma',
+  'Mega Charizard X',
+  'Mega Charizard Y',
+  'Mega Rayquaza',
+  'Mega Gyarados',
+  'Mega Kangaskhan',
+  // Tier 3 / popular
+  'Tyranitar',
+  'Dragonite',
+  'Machamp',
+  'Gengar',
+  'Alakazam',
+  'Rhydon',
+  'Togetic',
+  'Espeon',
+  'Umbreon',
+  // Tier 1
+  'Magikarp',
+  'Dratini',
+  'Pikachu',
+  'Eevee',
+] as const;

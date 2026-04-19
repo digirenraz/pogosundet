@@ -1,7 +1,52 @@
-# PoGoSundet — Claude Code Project Guide
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 This file is read automatically at the start of every Claude Code session.
 Do not delete it. Update it at the end of each session if any decisions changed.
+
+---
+
+## Commands
+
+| Task | Command |
+|------|---------|
+| Dev server | `npm run dev` |
+| Build | `npm run build` |
+| Lint | `npm run lint` |
+| Run all tests | `npm run test` |
+| Watch tests | `npm run test:watch` |
+| Run single test file | `npx vitest run src/lib/profile/validation.test.ts` |
+
+---
+
+## Code architecture
+
+### Supabase clients — three distinct files, never mix them
+- `src/lib/supabase/client.ts` — browser-side (Client Components only)
+- `src/lib/supabase/server.ts` — server-side (Server Components, Route Handlers)
+- `src/lib/supabase/admin.ts` — service role key, privileged ops only (e.g. account deletion). Never import in client components.
+
+### Middleware (src/proxy.ts)
+Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Supabase session refresh (`updateSession`) then next-intl locale routing. Auth cookies are manually copied from the Supabase response onto the intl response to prevent loss.
+
+### i18n routing
+`localePrefix: 'as-needed'` — URLs are `/login`, `/players` (no `/da/` prefix). All pages live under `src/app/[locale]/`. Use `getTranslations()` in Server Components and `useTranslations()` in Client Components. All strings in `messages/da.json`.
+
+### Auth flow
+- Google OAuth + email/password via Supabase Auth
+- OAuth callback: `src/app/auth/callback/route.ts`
+- Email confirmation: `src/app/auth/confirm/route.ts`
+- After login, redirect to `/players` (the main screen for logged-in users)
+- Home page (`/`) is logged-out only
+
+### Lib structure
+- `src/lib/profile/` — `validation.ts` (pure), `helpers.ts` (client Supabase), `server-helpers.ts` (server Supabase), each with a co-located `.test.ts`
+- `src/lib/account/server-helpers.ts` — account deletion using admin client
+- Tests use Vitest + jsdom + `@testing-library/jest-dom`; `@` alias maps to `src/`
+
+### Account deletion
+`POST /api/account/delete` — verifies session, calls `deleteAccount()` using the admin client (service role key). The `profiles` row cascades automatically from the auth user delete.
 
 ---
 
@@ -9,7 +54,8 @@ Do not delete it. Update it at the end of each session if any decisions changed.
 
 **PoGoSundet** is a mobile-friendly web app for the local Pokémon GO community in
 Frederikssund, Denmark. It lets players create profiles, find each other, share
-Trainer Codes, and — in Phase 2 — coordinate raids, meetups, and trades.
+Trainer Codes, coordinate raids, and — in Phase 2 — handle trades and richer
+messaging.
 
 The product owner is a non-technical product manager. Claude Code is the
 primary implementation tool. Code must be clean, well-commented, and easy to
@@ -26,6 +72,7 @@ hand off to a future developer.
 | Auth        | Supabase Auth                   | Google OAuth + email/password in Phase 1    |
 | Hosting     | Vercel                          | Free tier adequate for initial scale        |
 | i18n        | next-intl                       | Danish-first; architecture supports more    |
+| PWA / Push  | next-pwa + web-push (self-hosted via Supabase Edge Functions) | Introduced in Slices 7–8 |
 
 **Do not suggest alternative frameworks, ORMs, or services** unless there is a
 concrete blocker. When in doubt, ask before introducing a new dependency.
@@ -42,23 +89,101 @@ concrete blocker. When in doubt, ask before introducing a new dependency.
 
 ## Phase plan
 
-### Phase 1 — current focus
+### Phase 1 — near complete
 User profiles and community discovery:
-- Registration and login (Google OAuth + email/password)
-- User profile: trainer name, level, team (Mystic/Valor/Instinct), area, Trainer Code
-- Browse and search community members
-- Display Trainer Code (for use inside Pokémon GO — not an in-app social graph)
-- GDPR compliance (see below)
+- Registration and login (Google OAuth + email/password) ✅
+- User profile: trainer name, friend code, first name, bio ✅
+- Browse and search community members ✅
+- Display Trainer Code (for use inside Pokémon GO — not an in-app social graph) ✅
+- GDPR compliance (see below) ✅
+
+### Raid MVP — launch blocker (Slices 6–8)
+Without raid coordination, the community is unlikely to return to the app. These
+slices must ship before public launch.
+
+- Post a raid, see active raids, join/leave
+- PWA installability (required for iOS push)
+- Web push notifications when a raid is posted
+
+See **Raid MVP scope** and **Push notifications approach** below.
 
 ### Phase 2 — do not build yet
-- Raid coordination and remote RSVPs
-- Chat / messaging
+- Chat / messaging (threaded discussion inside a raid, DMs)
 - Trade requests
-- Push notifications
 - Admin roles and moderation tools
+- Richer raid features: remote lobby codes, filters, recurring raids, history
 
-**If a Phase 1 feature would require significant refactoring to support Phase 2,
+**If a Raid MVP feature would require significant refactoring to support Phase 2,
 flag it and ask. Otherwise, do not pre-build Phase 2 functionality.**
+
+---
+
+## Raid MVP scope (Slices 6–7)
+
+Deliberately small. The community is ~20–200 people with a handful of raids per
+day. The feature must be **faster than taking a screenshot and posting it in
+Messenger** — which is what people do today.
+
+### In scope
+- **Post a raid:** gym name (text), raid boss (dropdown — maintain list manually
+  for now), start time (defaults to "now"; quick picks: +15 min, +30 min, +1h),
+  optional note
+- **List of active raids:** single screen, newest first, auto-hides a raid ~45
+  minutes after its start time
+- **Raid card:** boss, gym, "starts in X min" / "started X min ago", count of
+  people coming, "I'm in" button
+- **Tap card to expand:** shows who's coming (trainer names) and the note
+- **Join / leave:** single button toggles state
+
+### Out of scope (do NOT build in the Raid MVP)
+- Comments or chat on a raid (Messenger still works for that)
+- Remote raid lobby code sharing
+- Recurring raids or raids scheduled more than a few hours out
+- Raid history, stats, or past-raid browsing
+- Filters, search, sort options on the list
+- Photo upload for raids
+- Host/organiser roles
+
+### Messenger bridge (launch fallback)
+Not all users will install the PWA on day one. To avoid the feature dying on
+launch, each raid card has a **"Share to Messenger"** button that opens
+Messenger with the raid link and details pre-filled. The poster taps it
+themselves — this is a manual step, not automated (see Decisions Log
+2026-04-19).
+
+---
+
+## Push notifications approach (Slice 8)
+
+**Why self-hosted web push, not OneSignal:** we're already on Supabase, a 20–200
+user scale doesn't need a third-party push service, and keeping everything in
+one stack is simpler to hand off later.
+
+### Stack
+- **Client:** PWA service worker registers a push subscription using the
+  browser's Push API; subscription stored in a `push_subscriptions` Supabase
+  table (user_id, endpoint, keys, created_at)
+- **Server:** Supabase Edge Function triggered on `INSERT` into the `raids`
+  table; sends web push to all active subscriptions using the `web-push` npm
+  library and VAPID keys stored as Supabase secrets
+- **Scope:** one notification type for now — "new raid posted". Tapping the
+  notification opens the raid card
+
+### Platform reality
+- **Android (Chrome/Firefox/etc.):** works out of the box once PWA installed
+- **iOS 16.4+:** works only if user adds the PWA to home screen **via Safari**
+  (Chrome on iOS uses WebKit underneath but does not expose the PWA install
+  flow that enables push). The iOS onboarding must tell users to open the app
+  in Safari first.
+- **Users who don't install the PWA:** get no push. The Messenger share button
+  is their fallback.
+
+### iOS onboarding
+Designed in **Claude** (not Banani) — step-by-step visual guide covering:
+1. Open the app in Safari (if currently in Chrome/another browser)
+2. Tap Share → Add to Home Screen → Add
+3. Open the app from the home screen icon
+4. Allow notifications when prompted
 
 ---
 
@@ -86,6 +211,10 @@ The Privacy Policy lives at `src/app/[locale]/privacy/page.tsx` with content in 
 - The data retention policy changes
 
 The "last updated" date is in `messages/da.json` → `Privacy.lastUpdated`. Always bump it when content changes.
+
+**Known upcoming updates:**
+- Slice 8 adds push notification subscriptions (endpoint + encryption keys stored
+  per user). Privacy Policy must be updated to disclose this before Slice 8 ships.
 
 ---
 
@@ -152,21 +281,29 @@ Apply TDD to every new slice: write the test file first, confirm tests fail, the
 Work through these in order. Do not start a new slice until the current one is
 merged to `main`.
 
-1. **Registration & auth** — sign up, log in, log out (Google + email/password)
-2. **Profile creation** — trainer name, level, team, area, Trainer Code
-3. **Profile display** — public profile page per user
-4. **Community browser** — list/search all players
-5. **GDPR & legal** — Privacy Policy, consent, account deletion
+1. **Registration & auth** — sign up, log in, log out (Google + email/password) ✅
+2. **Profile creation** — trainer name, friend code, first name, bio ✅
+3. **Profile display** — public profile page per user ✅ (merged with Slice 4)
+4. **Community browser** — list/search all players ✅ (merged with Slice 3)
+5. **GDPR & legal** — Privacy Policy, consent, account deletion ✅
+6. **Raid MVP** — raids table, post a raid form, active raids list, join/leave,
+   "Share to Messenger" button on each raid card
+7. **PWA setup** — manifest, service worker (via next-pwa), install prompts,
+   iOS "Add to Home Screen" onboarding flow (designs from Claude)
+8. **Push notifications** — `push_subscriptions` table, subscription flow,
+   Supabase Edge Function that fires web push on new raid insert, Privacy
+   Policy update
 
-*(Slice order may be adjusted, but only with explicit instruction.)*
+*(Slice order may be adjusted, but only with explicit instruction. Slice 7 must
+come before Slice 8 — push requires the PWA.)*
 
 ---
 
 ## Scale and cost constraints
 
 - Target: 20–200 users initially, Frederikssund only
-- Supabase free tier is acceptable for Phase 1
-- Vercel free tier is acceptable for Phase 1
+- Supabase free tier is acceptable for Phase 1 + Raid MVP
+- Vercel free tier is acceptable for Phase 1 + Raid MVP
 - Do not add services, queues, caches, or background workers unless a concrete
   problem requires them
 
@@ -203,6 +340,18 @@ Update this section at the end of each session.
 | 2026-04-17 | Account deletion via POST /api/account/delete using service role key | Client SDK cannot delete auth users; server route required |
 | 2026-04-17 | Profile row deleted via ON DELETE CASCADE (already on FK) — no extra migration needed | Cascade was set up in Slice 2 migration |
 | 2026-04-17 | SUPABASE_SERVICE_ROLE_KEY required in .env.local for account deletion | Must be added to Vercel env vars before deploy |
+| 2026-04-19 | Raid MVP added as Slices 6–8; launch blocker, not Phase 2 | Without raid coordination, community won't return to the app |
+| 2026-04-19 | Raid list is intentionally minimal: one list, newest first, auto-hide ~45 min after start | Handful of raids/day; filters/search/sort add no value |
+| 2026-04-19 | Raid MVP excludes chat, remote lobby codes, recurring raids, history, filters | Keep it faster than the Messenger screenshot workflow |
+| 2026-04-19 | Push notifications via self-hosted web-push + Supabase Edge Function (not OneSignal) | Stays in existing stack; 20–200 users doesn't justify third-party service |
+| 2026-04-19 | PWA required for push notifications (iOS 16.4+ only works when installed to home screen via Safari) | Platform constraint, not a choice |
+| 2026-04-19 | iOS "Add to Home Screen" onboarding designed in Claude, not Banani | Needs explanatory/instructional visuals, not standard UI screens |
+| 2026-04-19 | iOS onboarding must instruct Chrome users to switch to Safari first | Chrome on iOS doesn't expose the PWA install flow that enables push |
+| 2026-04-19 | Messenger cross-posting is a manual "Share to Messenger" button, not automated | Messenger has no public group-posting API; deep link + poster's tap is the realistic path |
+| 2026-04-19 | Raid post form: screenshot is the primary input, all other fields optional | Matches existing community workflow — take screenshot, post with short note |
+| 2026-04-19 | Share button uses Web Share API with clipboard copy fallback | Works natively on Android; on desktop falls back to copying text |
+| 2026-04-19 | Active raid filter uses Supabase .or() with dynamic 45-min threshold | COALESCE(starts_at, created_at) not directly expressible in SDK; .or() handles both cases |
+| 2026-04-19 | Slice 6 implemented on branch slice/6-raids | raids + raid_attendees tables; Supabase Storage bucket raid-images must be created manually |
 
 ---
 
@@ -210,15 +359,32 @@ Update this section at the end of each session.
 
 Before making the app publicly available:
 
+**From Phase 1:**
 - [ ] Add `SUPABASE_SERVICE_ROLE_KEY` to Vercel environment variables (needed for account deletion)
 - [ ] Test Google OAuth with the production Supabase URL (not just local)
 - [ ] Verify Supabase project is on EU/Ireland region (already confirmed, but double-check before launch)
 - [ ] Decide on a real domain name and configure it in Vercel + Supabase allowed URLs
 - [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
 
+**From Raid MVP (Slices 6–8):**
+- [ ] Generate VAPID key pair; add `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` to Vercel env vars and Supabase secrets
+- [ ] Test PWA install flow end-to-end on a real iPhone via Safari (not simulator)
+- [ ] Test PWA install flow on Android Chrome
+- [ ] Verify push notification fires on new raid insert on both iOS and Android
+- [ ] Confirm Privacy Policy has been updated to disclose push subscription data
+- [ ] Seed the raid boss dropdown with current raid bosses before launch
+
+---
+
 ## Open questions
 
-None.
+- **Messenger vs Discord:** If the "Share to Messenger" manual step creates too
+  much friction, or if community adoption of the PWA lags, evaluate migrating
+  the community group to Discord (webhook-based auto-posting into a channel is
+  trivial there). Decide after 2–4 weeks of real raid usage post-launch.
+- **Raid boss list maintenance:** currently maintained manually. If it becomes a
+  burden, consider a lightweight admin-only edit screen (but defer until it's
+  actually a problem).
 
 ---
 
