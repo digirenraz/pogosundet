@@ -39,3 +39,9 @@ create policy "Users can join raids"
 
 create policy "Users can leave raids"
   on public.raid_attendees for delete using (auth.uid() = user_id);
+
+-- FK to profiles so Supabase can embed profiles(trainer_name) in attendee queries.
+-- profiles.user_id is unique, so it can be referenced as a FK target.
+alter table public.raid_attendees
+  add constraint raid_attendees_profile_fk
+  foreign key (user_id) references public.profiles(user_id);

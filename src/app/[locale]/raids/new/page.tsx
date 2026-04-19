@@ -12,10 +12,10 @@ import { RAID_BOSSES } from '@/lib/raids/bosses';
 // Start time options relative to now
 function getStartTimes() {
   const now = new Date();
+  const plus5 = new Date(now.getTime() + 5 * 60 * 1000);
+  const plus10 = new Date(now.getTime() + 10 * 60 * 1000);
   const plus15 = new Date(now.getTime() + 15 * 60 * 1000);
-  const plus30 = new Date(now.getTime() + 30 * 60 * 1000);
-  const plus60 = new Date(now.getTime() + 60 * 60 * 1000);
-  return { now, plus15, plus30, plus60 };
+  return { now, plus5, plus10, plus15 };
 }
 
 export default function NewRaidPage() {
@@ -26,7 +26,7 @@ export default function NewRaidPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [gymName, setGymName] = useState('');
   const [bossName, setBossName] = useState('');
-  const [startsAtOption, setStartsAtOption] = useState<'now' | '+15' | '+30' | '+60'>('now');
+  const [startsAtOption, setStartsAtOption] = useState<'now' | '+5' | '+10' | '+15'>('now');
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +42,9 @@ export default function NewRaidPage() {
   function getStartsAt(): string | null {
     if (startsAtOption === 'now') return new Date().toISOString();
     const times = getStartTimes();
-    if (startsAtOption === '+15') return times.plus15.toISOString();
-    if (startsAtOption === '+30') return times.plus30.toISOString();
-    return times.plus60.toISOString();
+    if (startsAtOption === '+5') return times.plus5.toISOString();
+    if (startsAtOption === '+10') return times.plus10.toISOString();
+    return times.plus15.toISOString();
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -79,6 +79,7 @@ export default function NewRaidPage() {
           .upload(path, imageFile);
 
         if (uploadError) {
+          console.error('Storage upload error:', uploadError);
           setError(t('form.errorGeneric'));
           setLoading(false);
           return;
@@ -100,6 +101,7 @@ export default function NewRaidPage() {
       });
 
       if (insertError) {
+        console.error('Raid insert error:', insertError);
         setError(t('form.errorGeneric'));
         return;
       }
@@ -114,9 +116,9 @@ export default function NewRaidPage() {
 
   const startOptions: Array<{ key: typeof startsAtOption; label: string }> = [
     { key: 'now', label: t('form.now') },
+    { key: '+5', label: t('form.plus5') },
+    { key: '+10', label: t('form.plus10') },
     { key: '+15', label: t('form.plus15') },
-    { key: '+30', label: t('form.plus30') },
-    { key: '+60', label: t('form.plus60') },
   ];
 
   return (
