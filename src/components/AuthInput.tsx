@@ -3,11 +3,13 @@ import { type LucideIcon } from "lucide-react";
 interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   icon: LucideIcon;
+  error?: string;
 }
 
 // 52px form input with a label and a lucide icon on the left.
 // Matches the input style from the Banani login design.
-export function AuthInput({ label, icon: Icon, id, ...props }: AuthInputProps) {
+// Pass `error` to show an inline error message below the input.
+export function AuthInput({ label, icon: Icon, id, error, ...props }: AuthInputProps) {
   const inputId = id ?? `input-${label.toLowerCase().replace(/\s+/g, "-")}`;
 
   return (
@@ -18,7 +20,7 @@ export function AuthInput({ label, icon: Icon, id, ...props }: AuthInputProps) {
       >
         {label}
       </label>
-      <div className="h-[52px] bg-input border border-border rounded-md flex items-center px-4 gap-3">
+      <div className={`h-[52px] bg-input border rounded-md flex items-center px-4 gap-3 ${error ? "border-destructive" : "border-border"}`}>
         <Icon size={20} className="text-muted-foreground flex-shrink-0" aria-hidden="true" />
         <input
           id={inputId}
@@ -26,6 +28,7 @@ export function AuthInput({ label, icon: Icon, id, ...props }: AuthInputProps) {
           {...props}
         />
       </div>
+      {error && <p className="text-[13px] text-destructive">{error}</p>}
     </div>
   );
 }
