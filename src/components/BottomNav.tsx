@@ -24,11 +24,14 @@ export function BottomNav() {
         <span className="text-[11px] font-semibold">{t('players')}</span>
       </Link>
 
-      {/* Raids — placeholder, Phase 2 */}
-      <div className="flex flex-col items-center justify-center gap-1 w-16 text-muted-foreground cursor-not-allowed opacity-50">
+      {/* Raids */}
+      <Link
+        href="/raids"
+        className={`flex flex-col items-center justify-center gap-1 w-16 ${isActive('/raids') ? 'text-primary' : 'text-muted-foreground'}`}
+      >
         <Swords size={24} />
         <span className="text-[11px] font-semibold">{t('raids')}</span>
-      </div>
+      </Link>
 
       {/* Chat — placeholder, Phase 2 */}
       <div className="flex flex-col items-center justify-center gap-1 w-16 text-muted-foreground cursor-not-allowed opacity-50">
