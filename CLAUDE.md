@@ -41,9 +41,14 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Su
 - Home page (`/`) is logged-out only
 
 ### Lib structure
-- `src/lib/profile/` — `validation.ts` (pure), `helpers.ts` (client Supabase), `server-helpers.ts` (server Supabase), each with a co-located `.test.ts`
+- `src/lib/profile/` — `validation.ts` (pure), `helpers.ts` (client Supabase), `server-helpers.ts` (server Supabase), `filters.ts` (player search/filter logic), each with a co-located `.test.ts`
+- `src/lib/raids/` — `validation.ts` (pure, requires at least one of image/gym/boss), `helpers.ts` (client Supabase: createRaid, joinRaid, leaveRaid), `server-helpers.ts` (getActiveRaids — fetches last 2h, filters to 45-min window in JS), `bosses.ts` (manually maintained raid boss list)
 - `src/lib/account/server-helpers.ts` — account deletion using admin client
 - Tests use Vitest + jsdom + `@testing-library/jest-dom`; `@` alias maps to `src/`
+
+### Supabase Storage
+- Bucket `raid-images` — stores raid screenshots uploaded by users
+- Requires two manually created RLS policies: INSERT for authenticated users, SELECT for public (not set automatically on bucket creation)
 
 ### Account deletion
 `POST /api/account/delete` — verifies session, calls `deleteAccount()` using the admin client (service role key). The `profiles` row cascades automatically from the auth user delete.

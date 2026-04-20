@@ -30,7 +30,9 @@ export default function ProfileSetupPage() {
       setGeneralError(t('errorGeneric'));
       return;
     }
-    router.push('/players');
+    // Send iOS users to the PWA install onboarding; non-iOS go straight to the directory
+    const dest = /iPad|iPhone|iPod/.test(navigator.userAgent) ? '/onboarding/ios' : '/players';
+    router.push(dest);
   }
 
   return (
