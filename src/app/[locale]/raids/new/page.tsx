@@ -3,11 +3,12 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, Camera } from 'lucide-react';
+import { ArrowLeft, Camera, Minus, Plus, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { createRaid } from '@/lib/raids/helpers';
+import { createRaid, joinRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
 import { validateRaid } from '@/lib/raids/validation';
-import { RAID_BOSSES } from '@/lib/raids/bosses';
+import { BossSearch } from '@/components/BossSearch';
+import { GymSearch } from '@/components/GymSearch';
 
 // Start time options relative to now
 function getStartTimes() {
@@ -16,6 +17,13 @@ function getStartTimes() {
   const plus10 = new Date(now.getTime() + 10 * 60 * 1000);
   const plus15 = new Date(now.getTime() + 15 * 60 * 1000);
   return { now, plus5, plus10, plus15 };
+}
+
+// Format file size for display
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function NewRaidPage() {
@@ -28,6 +36,7 @@ export default function NewRaidPage() {
   const [bossName, setBossName] = useState('');
   const [startsAtOption, setStartsAtOption] = useState<'now' | '+5' | '+10' | '+15'>('now');
   const [note, setNote] = useState('');
+  const [extra, setExtra] = useState(0); // how many extra people the poster is bringing
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,12 +48,22 @@ export default function NewRaidPage() {
     setImagePreview(URL.createObjectURL(file));
   }
 
+  function handleRemoveImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   function getStartsAt(): string | null {
     if (startsAtOption === 'now') return new Date().toISOString();
     const times = getStartTimes();
     if (startsAtOption === '+5') return times.plus5.toISOString();
     if (startsAtOption === '+10') return times.plus10.toISOString();
     return times.plus15.toISOString();
+  }
+
+  function handleExtraChange(delta: number) {
+    setExtra(prev => Math.max(0, Math.min(9, prev + delta)));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -66,8 +85,13 @@ export default function NewRaidPage() {
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
 
       let imageUrl: string | null = null;
 
@@ -85,13 +109,13 @@ export default function NewRaidPage() {
           return;
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('raid-images')
-          .getPublicUrl(path);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('raid-images').getPublicUrl(path);
         imageUrl = publicUrl;
       }
 
-      const { error: insertError } = await createRaid({
+      const { data: newRaid, error: insertError } = await createRaid({
         user_id: user.id,
         image_url: imageUrl,
         gym_name: gymName.trim() || null,
@@ -100,10 +124,16 @@ export default function NewRaidPage() {
         note: note.trim() || null,
       });
 
-      if (insertError) {
+      if (insertError || !newRaid) {
         console.error('Raid insert error:', insertError);
         setError(t('form.errorGeneric'));
         return;
+      }
+
+      // Auto-join the poster and set their extra count
+      await joinRaid(newRaid.id, user.id);
+      if (extra > 0) {
+        await updateAttendeeExtra(newRaid.id, user.id, extra);
       }
 
       router.push('/raids');
@@ -120,6 +150,14 @@ export default function NewRaidPage() {
     { key: '+10', label: t('form.plus10') },
     { key: '+15', label: t('form.plus15') },
   ];
+
+  // Player count display
+  const totalTrainers = 1 + extra;
+  const playerLabel =
+    extra === 0
+      ? t('form.justMe')
+      : t('form.withExtra', { count: extra });
+  const totalLabel = t('form.totalTrainers', { count: totalTrainers });
 
   return (
     <div className="min-h-screen bg-background">
@@ -150,67 +188,90 @@ export default function NewRaidPage() {
               onChange={handleImageChange}
               className="hidden"
             />
-            {imagePreview ? (
-              <div className="relative rounded-lg overflow-hidden bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imagePreview} alt="Raid screenshot" className="w-full object-cover max-h-64" />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-2 right-2 bg-black/60 text-white text-[12px] rounded-md px-3 py-1.5"
-                >
-                  {t('form.imageChange')}
-                </button>
+
+            {imagePreview && imageFile ? (
+              /* Image selected: horizontal thumbnail card */
+              <div className="border border-border rounded-xl overflow-hidden flex">
+                {/* Thumbnail */}
+                <div className="relative w-[108px] shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imagePreview}
+                    alt="Raid screenshot"
+                    className="w-full h-full object-cover"
+                    style={{ minHeight: 72 }}
+                  />
+                </div>
+                {/* File info + remove */}
+                <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
+                  <p className="text-[13px] font-semibold text-card-foreground truncate">
+                    {imageFile.name}
+                  </p>
+                  <p className="text-[12px] text-muted-foreground">
+                    {formatFileSize(imageFile.size)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="mt-1.5 flex items-center gap-1 text-[12px] text-muted-foreground hover:text-destructive transition-colors w-fit"
+                  >
+                    <X size={13} />
+                    Fjern
+                  </button>
+                </div>
               </div>
             ) : (
+              /* No image: dashed upload button */
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-border rounded-lg h-36 flex flex-col items-center justify-center gap-2 text-muted-foreground"
+                className="w-full border-2 border-dashed border-border rounded-xl h-20 flex items-center justify-center gap-3 text-muted-foreground"
               >
-                <Camera size={28} />
-                <span className="text-[14px]">{t('form.imageButton')}</span>
+                <Camera size={22} />
+                <span className="text-[14px]">{t('form.imageHint')}</span>
+                <span className="bg-secondary text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
+                  {t('form.imageRecommended')}
+                </span>
               </button>
             )}
           </div>
 
-          {/* Gym name — optional */}
+          {/* Gym field — GymSearch autocomplete */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <label className="text-[14px] font-semibold text-card-foreground">{t('form.gymLabel')}</label>
+              <label className="text-[14px] font-semibold text-card-foreground">
+                {t('form.gymLabel')}
+              </label>
               <span className="text-[12px] text-muted-foreground">{t('form.optional')}</span>
             </div>
-            <input
-              type="text"
+            <GymSearch
               value={gymName}
-              onChange={e => setGymName(e.target.value)}
-              placeholder={t('form.gymPlaceholder')}
-              className="border border-border rounded-lg px-3 py-2.5 text-[15px] bg-background text-card-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary"
+              onChange={setGymName}
+              placeholder={t('form.gymSearch')}
             />
           </div>
 
-          {/* Boss — optional */}
+          {/* Boss field — BossSearch autocomplete */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <label className="text-[14px] font-semibold text-card-foreground">{t('form.bossLabel')}</label>
+              <label className="text-[14px] font-semibold text-card-foreground">
+                {t('form.bossLabel')}
+              </label>
               <span className="text-[12px] text-muted-foreground">{t('form.optional')}</span>
             </div>
-            <select
+            <BossSearch
               value={bossName}
-              onChange={e => setBossName(e.target.value)}
-              className="border border-border rounded-lg px-3 py-2.5 text-[15px] bg-background text-card-foreground outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">{t('form.bossPlaceholder')}</option>
-              {RAID_BOSSES.map(boss => (
-                <option key={boss} value={boss}>{boss}</option>
-              ))}
-            </select>
+              onChange={setBossName}
+              placeholder={t('form.bossSearch')}
+            />
           </div>
 
           {/* Start time — quick picks */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <label className="text-[14px] font-semibold text-card-foreground">{t('form.startsAtLabel')}</label>
+              <label className="text-[14px] font-semibold text-card-foreground">
+                {t('form.startsAtLabel')}
+              </label>
               <span className="text-[12px] text-muted-foreground">{t('form.optional')}</span>
             </div>
             <div className="grid grid-cols-4 gap-2">
@@ -234,7 +295,9 @@ export default function NewRaidPage() {
           {/* Note — optional */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <label className="text-[14px] font-semibold text-card-foreground">{t('form.noteLabel')}</label>
+              <label className="text-[14px] font-semibold text-card-foreground">
+                {t('form.noteLabel')}
+              </label>
               <span className="text-[12px] text-muted-foreground">{t('form.optional')}</span>
             </div>
             <textarea
@@ -246,9 +309,43 @@ export default function NewRaidPage() {
             />
           </div>
 
-          {error && (
-            <p className="text-destructive text-[14px]">{error}</p>
-          )}
+          {/* Player count stepper */}
+          <div className="bg-input rounded-xl p-3">
+            <p className="text-[13px] font-semibold text-muted-foreground mb-2">
+              {t('form.playerCountLabel')}
+            </p>
+            <div className="flex items-center justify-between">
+              {/* Minus */}
+              <button
+                type="button"
+                disabled={extra === 0}
+                onClick={() => handleExtraChange(-1)}
+                className="w-9 h-9 rounded-lg border border-border bg-background flex items-center justify-center text-card-foreground disabled:opacity-40"
+                aria-label="Færre"
+              >
+                <Minus size={16} />
+              </button>
+
+              {/* Center display */}
+              <div className="flex flex-col items-center">
+                <p className="text-[17px] font-extrabold text-primary">{playerLabel}</p>
+                <p className="text-[12px] text-muted-foreground">{totalLabel}</p>
+              </div>
+
+              {/* Plus */}
+              <button
+                type="button"
+                disabled={extra === 9}
+                onClick={() => handleExtraChange(1)}
+                className="w-9 h-9 rounded-lg border border-primary bg-secondary flex items-center justify-center text-primary disabled:opacity-40"
+                aria-label="Flere"
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+          </div>
+
+          {error && <p className="text-destructive text-[14px]">{error}</p>}
 
           <button
             type="submit"

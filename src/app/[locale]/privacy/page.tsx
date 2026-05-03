@@ -15,6 +15,7 @@ export default async function PrivacyPage() {
     { title: t('s8Title'), body: t('s8Body') },
     { title: t('s9Title'), body: t('s9Body') },
     { title: t('s10Title'), body: t('s10Body') },
+    { title: t('s11Title'), body: t('s11Body') },
   ] as { title: string; body: string; list?: string }[];
 
   return (
