@@ -1,0 +1,25 @@
+{
+  "name": "PoGoSundet",
+  "short_name": "PoGoSundet",
+  "description": "Find dit lokale Pokémon GO community i Frederikssund",
+  "start_url": "/raids",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00b09f",
+  "orientation": "portrait-primary",
+  "lang": "da",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

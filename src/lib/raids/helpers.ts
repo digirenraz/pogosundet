@@ -37,3 +37,18 @@ export async function leaveRaid(raidId: string, userId: string) {
     .eq('user_id', userId);
   return { error };
 }
+
+// Update how many extra people a user is bringing to the raid.
+export async function updateAttendeeExtra(
+  raidId: string,
+  userId: string,
+  extraCount: number
+) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('raid_attendees')
+    .update({ extra_count: extraCount })
+    .eq('raid_id', raidId)
+    .eq('user_id', userId);
+  return { error };
+}
