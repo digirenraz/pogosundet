@@ -43,6 +43,7 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Su
 ### Lib structure
 - `src/lib/profile/` — `validation.ts` (pure), `helpers.ts` (client Supabase), `server-helpers.ts` (server Supabase), `filters.ts` (player search/filter logic), each with a co-located `.test.ts`
 - `src/lib/raids/` — `validation.ts` (pure), `helpers.ts` (client: createRaid, joinRaid, leaveRaid, updateAttendeeExtra), `server-helpers.ts` (getActiveRaids, getRecentRaids → `{active, expired}`, getRaidById), `message-helpers.ts` (client: sendMessage, getMessagesForRaid), `bosses.ts` (quick-pick list), `pokemon.ts` (~600 Pokémon names for boss autocomplete). Note: `raid_attendees.user_id` and `raid_messages.user_id` both FK to `profiles.user_id` (unique), **not** `profiles.id` — required for embedded Supabase queries `profiles(trainer_name)`.
+- `src/lib/push/subscription-helpers.ts` — getPushStatus, subscribeToPush, unsubscribeFromPush (browser Push API + Supabase upsert)
 - `src/lib/account/server-helpers.ts` — account deletion using admin client
 - Tests use Vitest + jsdom + `@testing-library/jest-dom`; `@` alias maps to `src/`
 
@@ -80,7 +81,7 @@ hand off to a future developer.
 | Auth        | Supabase Auth                   | Google OAuth + email/password in Phase 1    |
 | Hosting     | Vercel                          | Free tier adequate for initial scale        |
 | i18n        | next-intl                       | Danish-first; architecture supports more    |
-| PWA / Push  | next-pwa + web-push (self-hosted via Supabase Edge Functions) | Planned for Slices 7–8; not yet installed in package.json |
+| PWA / Push  | Manual sw.js + web-push (self-hosted via Supabase Edge Functions) | Implemented in Slices 7–8; no next-pwa dependency needed |
 
 **Do not suggest alternative frameworks, ORMs, or services** unless there is a
 concrete blocker. When in doubt, ask before introducing a new dependency.
@@ -116,7 +117,7 @@ slices must ship before public launch.
 See **Raid MVP scope** and **Push notifications approach** below.
 
 ### Phase 2 — do not build yet
-- Chat / messaging (threaded discussion inside a raid, DMs)
+- DMs (direct messages between players)
 - Trade requests
 - Admin roles and moderation tools
 - Richer raid features: remote lobby codes, filters, recurring raids, history
@@ -126,29 +127,25 @@ flag it and ask. Otherwise, do not pre-build Phase 2 functionality.**
 
 ---
 
-## Raid MVP scope (Slices 6–7)
+## Raid MVP scope (Slices 6–8)
 
 Deliberately small. The community is ~20–200 people with a handful of raids per
 day. The feature must be **faster than taking a screenshot and posting it in
 Messenger** — which is what people do today.
 
-### In scope
-- **Post a raid:** gym name (text), raid boss (dropdown — maintain list manually
-  for now), start time (defaults to "now"; quick picks: +15 min, +30 min, +1h),
-  optional note
-- **List of active raids:** single screen, newest first, auto-hides a raid ~45
-  minutes after its start time
-- **Raid card:** boss, gym, "starts in X min" / "started X min ago", count of
-  people coming, "I'm in" button
-- **Tap card to expand:** shows who's coming (trainer names) and the note
-- **Join / leave:** single button toggles state
+### In scope (all implemented)
+- **Post a raid:** screenshot upload (primary), boss autocomplete (BossSearch — full Pokémon list), gym search (GymSearch — OSM + freeform fallback), start time quick picks (Nu/+5/+10/+15 min), extra player count, optional note
+- **List of active raids:** single screen, newest first, auto-hides ~45 min after start time; expired raids shown greyed out below
+- **Raid card (Flow A):** thumbnail left, boss + gym + timer badge, message count, trainer count, RSVP strip with extra-player stepper and Share button
+- **Raid detail screen** (`/raids/[id]`): hero image, attendee list with avatar initials, per-raid chat (10s polling)
+- **Join / leave:** single button toggles state; poster auto-joined on submit
+- **Push notifications:** web push on new raid insert (PWA only)
 
 ### Out of scope (do NOT build in the Raid MVP)
 - Remote raid lobby code sharing
 - Recurring raids or raids scheduled more than a few hours out
 - Raid history, stats, or past-raid browsing
 - Filters, search, sort options on the list
-- Photo upload for raids
 - Host/organiser roles
 
 ### Messenger bridge (launch fallback)
@@ -220,8 +217,7 @@ The Privacy Policy lives at `src/app/[locale]/privacy/page.tsx` with content in 
 The "last updated" date is in `messages/da.json` → `Privacy.lastUpdated`. Always bump it when content changes.
 
 **Known upcoming updates:**
-- Slice 8 adds push notification subscriptions (endpoint + encryption keys stored
-  per user). Privacy Policy must be updated to disclose this before Slice 8 ships.
+- None currently — Privacy Policy was updated in Slice 8 to disclose push subscription data.
 
 ---
 
@@ -362,10 +358,6 @@ Update this section at the end of each session.
 | 2026-04-19 | Raid start time options: Nu / +5 min / +10 min / +15 min | Tighter range fits real raid coordination better than the original +30/+60 options |
 | 2026-04-19 | Active raid filter uses client-side JS, not PostgREST .or() | PostgREST timestamp syntax in .or() failed silently; JS filter on server is reliable and testable |
 | 2026-04-19 | FK added from raid_attendees.user_id to profiles.user_id | Required for Supabase embedded query profiles(trainer_name) to work; profiles.user_id is unique |
-| 2026-04-29 | Slice 8 implemented: push_subscriptions table, PushSubscribePrompt banner, Edge Function notify-raid | Web push via self-hosted VAPID; Edge Function deployed manually with `supabase functions deploy notify-raid` |
-| 2026-04-29 | supabase/functions/ excluded from tsconfig.json | Deno Edge Function uses npm: specifiers unsupported by Next.js TypeScript checker |
-| 2026-04-29 | Privacy Policy updated to section 11 disclosing push subscription data; lastUpdated bumped to maj 2026 | GDPR requirement — push endpoint + keys are personal data |
-| 2026-04-29 | PushSubscribePrompt only shows in standalone PWA mode (display-mode: standalone) | Push only works reliably when PWA is installed; avoids misleading browser users |
 | 2026-04-19 | Supabase Storage bucket raid-images needs two manual policies | INSERT for authenticated users, SELECT for public — not set automatically on bucket creation |
 | 2026-04-29 | Design tool switched from Banani to Claude Design (claude.ai/design) | All future screen designs come from Claude Design handoff bundles |
 | 2026-04-29 | Chat added to Raid MVP (not Phase 2) | Claude Design handoff included per-raid chat; community needs it to replace Messenger |
@@ -376,13 +368,15 @@ Update this section at the end of each session.
 | 2026-04-29 | Poster is auto-joined to raid_attendees on submit (with extra_count) | Needed so poster's name appears in attendee list and totalTrainers count is accurate |
 | 2026-04-29 | "Sluttede raids" section shows expired raids (45min–2h) greyed out inline | Cards go opacity-50 + grayscale; no RSVP strip; getRecentRaids returns both active+expired |
 | 2026-04-29 | Migration 003 must be run manually in Supabase SQL editor | Adds extra_count to raid_attendees + creates raid_messages table with RLS |
-| 2026-05-03 | Slice 7 PWA: manual sw.js (not next-pwa), manifest.json, icon.svg | next-pwa not needed for installability; sw.js will be extended in Slice 8 for push |
-| 2026-05-03 | PWA icon is placeholder SVG (PG on teal) — replace before launch | Real branded PNG icons (192×192, 512×512) needed for App Store quality home screen icon |
-| 2026-05-03 | InstallPrompt component handles Android "Add to Home Screen" banner | iOS never fires beforeinstallprompt — iOS users use the /onboarding/ios guide instead |
 | 2026-04-29 | Slice 8 implemented: push_subscriptions table, PushSubscribePrompt banner, Edge Function notify-raid | Web push via self-hosted VAPID; Edge Function deployed manually with `supabase functions deploy notify-raid` |
 | 2026-04-29 | supabase/functions/ excluded from tsconfig.json | Deno Edge Function uses npm: specifiers unsupported by Next.js TypeScript checker |
 | 2026-04-29 | Privacy Policy updated to section 11 disclosing push subscription data; lastUpdated bumped to maj 2026 | GDPR requirement — push endpoint + keys are personal data |
 | 2026-04-29 | PushSubscribePrompt only shows in standalone PWA mode (display-mode: standalone) | Push only works reliably when PWA is installed; avoids misleading browser users |
+| 2026-05-03 | Slice 7 PWA: manual sw.js (not next-pwa), manifest.json, icon.svg | next-pwa not needed for installability; sw.js extended in Slice 8 for push handler |
+| 2026-05-03 | PWA icon is placeholder SVG (PG on teal) — replace before launch | Real branded PNG icons (192×192, 512×512) needed for home screen quality |
+| 2026-05-03 | InstallPrompt component handles Android "Add to Home Screen" banner | iOS never fires beforeinstallprompt — iOS users use /onboarding/ios guide instead |
+| 2026-05-03 | git user.email must be set to renraz@googlemail.com | Vercel blocks deployments from commits with unmatched email addresses |
+| 2026-05-03 | Chat on raid detail not visible after deploy — under investigation | Likely migration 003 not applied or a runtime error on /raids/[id]; see pre-launch checklist |
 
 ---
 
@@ -398,15 +392,17 @@ Before making the app publicly available:
 - [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
 
 **From Raid MVP (Slices 6–8):**
-- [ ] Generate VAPID key pair; add `NEXT_PUBLIC_VAPID_PUBLIC_KEY` to Vercel env vars; add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` as Supabase secrets
-- [ ] Run migration 004_push_subscriptions.sql in Supabase SQL editor
-- [ ] Deploy Edge Function: `supabase functions deploy notify-raid`
-- [ ] Set up database webhook in Supabase dashboard: Database → Webhooks → INSERT on public.raids → notify-raid function URL
+- [x] Generate VAPID key pair; add `NEXT_PUBLIC_VAPID_PUBLIC_KEY` to Vercel env vars; add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` as Supabase secrets
+- [x] Run migration 003_raid_chat.sql and 004_push_subscriptions.sql in Supabase SQL editor
+- [x] Deploy Edge Function: `supabase functions deploy notify-raid`
+- [x] Set up database webhook in Supabase dashboard: Database → Webhooks → INSERT on public.raids → notify-raid function URL
+- [ ] **Investigate: chat not visible on raid detail screen** — verify migration 003 applied (raid_messages table exists), check Vercel logs, check browser console on /raids/[id]
 - [ ] Test PWA install flow end-to-end on a real iPhone via Safari (not simulator)
 - [ ] Test PWA install flow on Android Chrome
 - [ ] Verify push notification fires on new raid insert on both iOS and Android
 - [x] Confirm Privacy Policy has been updated to disclose push subscription data — done in Slice 8
-- [ ] Seed the raid boss dropdown with current raid bosses before launch
+- [ ] Replace placeholder PWA icon (public/icon.svg) with real branded PNG icons (192×192, 512×512)
+- [ ] Seed the raid boss quick-pick list with current raid bosses before launch
 
 ---
 
