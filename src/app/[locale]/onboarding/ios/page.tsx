@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ArrowLeft, Bell, Users, Zap, Info, Check } from 'lucide-react';
+import { useMounted } from '@/lib/hooks/use-mounted';
 
 const ACCENT = '#00b09f';
 const STORAGE_KEY = 'pgs_ios_onboarding_done';
@@ -405,18 +406,20 @@ type Screen = 'intro' | 'steps' | 'done';
 export default function IosOnboardingPage() {
   const t = useTranslations('IosOnboarding');
   const router = useRouter();
+  const mounted = useMounted();
   const [screen, setScreen] = useState<Screen>('intro');
   const [stepIdx, setStepIdx] = useState(0);
-  const [ready, setReady] = useState(false);
+
+  // True only on the client, on iOS, when not already onboarded — gates the UI.
+  const ready =
+    mounted && isIOS() && !localStorage.getItem(STORAGE_KEY);
 
   useEffect(() => {
-    // Redirect non-iOS users and users who already completed onboarding
-    if (!isIOS() || localStorage.getItem(STORAGE_KEY)) {
+    // Redirect non-iOS users and users who already completed onboarding.
+    if (mounted && (!isIOS() || localStorage.getItem(STORAGE_KEY))) {
       router.replace('/players');
-      return;
     }
-    setReady(true);
-  }, [router]);
+  }, [mounted, router]);
 
   function finish() {
     localStorage.setItem(STORAGE_KEY, 'true');

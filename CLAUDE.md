@@ -5,6 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This file is read automatically at the start of every Claude Code session.
 Do not delete it. Update it at the end of each session if any decisions changed.
 
+For first-time environment setup (Supabase project, env vars, Google OAuth), see `docs/setup.md`. VAPID keys and Edge Function deployment are covered in the Pre-launch checklist below.
+
 ---
 
 ## Commands
@@ -14,9 +16,12 @@ Do not delete it. Update it at the end of each session if any decisions changed.
 | Dev server | `npm run dev` |
 | Build | `npm run build` |
 | Lint | `npm run lint` |
-| Run all tests | `npm run test` |
-| Watch tests | `npm run test:watch` |
-| Run single test file | `npx vitest run src/lib/profile/validation.test.ts` |
+| Run all unit tests | `npm run test` |
+| Watch unit tests | `npm run test:watch` |
+| Run single unit test file | `npx vitest run src/lib/profile/validation.test.ts` |
+| Run all e2e tests | `npm run test:e2e` |
+| Run e2e in UI mode | `npm run test:e2e:ui` |
+| Run single e2e file | `npx playwright test e2e/smoke.spec.ts` |
 
 ---
 
@@ -42,7 +47,7 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Su
 
 ### Lib structure
 - `src/lib/profile/` — `validation.ts` (pure), `helpers.ts` (client Supabase), `server-helpers.ts` (server Supabase), `filters.ts` (player search/filter logic), each with a co-located `.test.ts`
-- `src/lib/raids/` — `validation.ts` (pure), `helpers.ts` (client: createRaid, joinRaid, leaveRaid, updateAttendeeExtra), `server-helpers.ts` (getActiveRaids, getRecentRaids → `{active, expired}`, getRaidById), `message-helpers.ts` (client: sendMessage, getMessagesForRaid), `bosses.ts` (quick-pick list), `pokemon.ts` (~600 Pokémon names for boss autocomplete). Note: `raid_attendees.user_id` and `raid_messages.user_id` both FK to `profiles.user_id` (unique), **not** `profiles.id` — required for embedded Supabase queries `profiles(trainer_name)`.
+- `src/lib/raids/` — `validation.ts` (pure), `helpers.ts` (client: createRaid, joinRaid, leaveRaid, updateAttendeeExtra), `server-helpers.ts` (getActiveRaids, getRecentRaids → `{active, expired}`, getRaidById), `message-helpers.ts` (client: sendMessage, getMessagesForRaid), `use-raids-realtime.ts` (client hook used by both `RaidList` and `RaidDetail`: subscribes to Supabase Realtime on raids/raid_attendees/raid_messages and calls `router.refresh()` on changes, debounced 250ms — server stays the source of truth for embedded joins), `bosses.ts` (quick-pick list), `pokemon.ts` (~600 Pokémon names for boss autocomplete). Note: `raid_attendees.user_id` and `raid_messages.user_id` both FK to `profiles.user_id` (unique), **not** `profiles.id` — required for embedded Supabase queries `profiles(trainer_name)`.
 - `src/lib/push/subscription-helpers.ts` — getPushStatus, subscribeToPush, unsubscribeFromPush (browser Push API + Supabase upsert)
 - `src/lib/account/server-helpers.ts` — account deletion using admin client
 - Tests use Vitest + jsdom + `@testing-library/jest-dom`; `@` alias maps to `src/`
@@ -55,7 +60,11 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Su
 `POST /api/account/delete` — verifies session, calls `deleteAccount()` using the admin client (service role key). The `profiles` row cascades automatically from the auth user delete.
 
 ### Database migrations
-SQL migrations live in `supabase/migrations/` as reference files. There is no Supabase CLI or migration runner — run them manually in the Supabase SQL editor.
+SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
+
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`. Current Edge Functions: `notify-raid` (in `supabase/functions/`).
+
+⚠️ **`005_realtime.sql` is not yet applied in Supabase.** Until it is, the `useRaidsRealtime` hook will subscribe but receive no change events — the overview and detail screens won't auto-update. If you're debugging "live updates not working", apply this migration first.
 
 ---
 
@@ -137,7 +146,7 @@ Messenger** — which is what people do today.
 - **Post a raid:** screenshot upload (primary), boss autocomplete (BossSearch — full Pokémon list), gym search (GymSearch — OSM + freeform fallback), start time quick picks (Nu/+5/+10/+15 min), extra player count, optional note
 - **List of active raids:** single screen, newest first, auto-hides ~45 min after start time; expired raids shown greyed out below
 - **Raid card (Flow A):** thumbnail left, boss + gym + timer badge, message count, trainer count, RSVP strip with extra-player stepper and Share button
-- **Raid detail screen** (`/raids/[id]`): hero image, attendee list with avatar initials, per-raid chat (10s polling)
+- **Raid detail screen** (`/raids/[id]`): hero image, attendee list with avatar initials, per-raid chat — live updates via Supabase Realtime (no polling)
 - **Join / leave:** single button toggles state; poster auto-joined on submit
 - **Push notifications:** web push on new raid insert (PWA only)
 
@@ -256,16 +265,20 @@ The "last updated" date is in `messages/da.json` → `Privacy.lastUpdated`. Alwa
 
 ## Testing strategy
 
-- **Framework:** Vitest (introduced in Slice 2)
-- **Approach:** Test-Driven Development (TDD) — write tests before implementation
-- **Scope:** Core logic only — validation functions and Supabase data helpers
-  - No UI component tests (too brittle, low value for this project)
-  - No end-to-end tests in Phase 1
-- **Test location:** co-located with the code they test, e.g. `src/lib/profile/validation.test.ts`
-- **Run tests:** `npm run test` (single run) or `npm run test:watch` (watch mode)
-- **Required:** all tests must pass before opening a PR — treat a failing test as a broken build
+Two layers, both run in CI:
 
-Apply TDD to every new slice: write the test file first, confirm tests fail, then implement.
+**Unit / logic tests — Vitest**
+- TDD: write the test first, confirm it fails, then implement
+- Scope: pure functions and Supabase helpers (validation, filters, server-helpers)
+- Co-located with the code they test (e.g. `src/lib/profile/validation.test.ts`)
+- Run: `npm run test` (single) / `npm run test:watch`
+
+**Browser verification — Playwright**
+- When a change has any user-visible effect, verify it in a real browser via the Playwright MCP **and** capture the same steps as a Playwright test file so the verification becomes a CI regression test.
+- One Playwright file per user flow (post a raid, join/leave, chat, install PWA prompt, etc.); spec files live in `e2e/` and run against the dev server.
+- The "no UI tests / no e2e" rule from earlier slices is **superseded** by this — manual smoke testing alone is no longer enough.
+
+**PR gate:** all tests must pass before opening a PR — treat a failing test as a broken build.
 
 ---
 
@@ -279,26 +292,9 @@ Apply TDD to every new slice: write the test file first, confirm tests fail, the
 
 ---
 
-## Vertical slices (ordered)
+## Vertical slices
 
-Work through these in order. Do not start a new slice until the current one is
-merged to `main`.
-
-1. **Registration & auth** — sign up, log in, log out (Google + email/password) ✅
-2. **Profile creation** — trainer name, friend code, first name, bio ✅
-3. **Profile display** — public profile page per user ✅ (merged with Slice 4)
-4. **Community browser** — list/search all players ✅ (merged with Slice 3)
-5. **GDPR & legal** — Privacy Policy, consent, account deletion ✅
-6. **Raid MVP** — raids table, post a raid form, active raids list, join/leave,
-   "Share to Messenger" button on each raid card ✅
-7. **PWA setup** — manifest, service worker (via next-pwa), install prompts,
-   iOS "Add to Home Screen" onboarding flow (designs from Claude) ✅
-8. **Push notifications** — `push_subscriptions` table, subscription flow,
-   Supabase Edge Function that fires web push on new raid insert, Privacy
-   Policy update ✅
-
-*(Slice order may be adjusted, but only with explicit instruction. Slice 7 must
-come before Slice 8 — push requires the PWA.)*
+Slices 1–8 implemented and merged. Realtime hook added 2026-05-06; migration `005_realtime.sql` pending. Work proceeds one feature branch at a time (`slice/N-name`); do not start a new slice until the current one is merged to `main`. See the Phase plan above for what's in/out of scope, and the Decisions log for resolved questions per slice.
 
 ---
 
@@ -314,36 +310,12 @@ come before Slice 8 — push requires the PWA.)*
 
 ## Decisions log
 
-Update this section at the end of each session.
+Update this section at the end of each session. Entries older than ~4 weeks live in [`docs/decisions-archive.md`](docs/decisions-archive.md).
 
 | Date       | Decision                                              | Reason                              |
 |------------|-------------------------------------------------------|--------------------------------------|
-| 2026-03-29 | Supabase EU/Ireland region selected                   | GDPR compliance                      |
-| 2026-03-29 | Facebook Login deferred post-Phase 1                  | App review complexity                |
-| 2026-03-29 | Location = manual text entry, no GPS                  | Simplicity for Phase 1               |
-| 2026-03-29 | "Add Friends" = display Trainer Code only             | No in-app social graph in Phase 1    |
-| 2026-03-29 | Profile photo storage approach not yet resolved       | Open question — decide before Slice 2|
-| 2026-04-11 | Profile photos stored in Supabase Storage             | Keeps stack simple; free tier sufficient for Phase 1 |
-| 2026-04-11 | Slice 1 implemented on branch slice/1-registration    | Awaiting Supabase + Google OAuth setup before testing |
-| 2026-04-11 | GitHub repo created at github.com/digirenraz/pogosundet | Private repo; main + slice/1-registration pushed     |
-| 2026-04-11 | Next.js 16 uses proxy.ts instead of middleware.ts     | Framework renamed middleware convention in v16        |
-| 2026-04-11 | Password reset included in Slice 1                    | Keeps "Forgot password?" link in Banani design honest |
-| 2026-04-11 | GDPR consent checkbox + /privacy stub in Slice 1      | Non-negotiable before any registration can go live    |
-| 2026-04-11 | Mint theme applied (teal #00b09f, Inter font)         | Locked design from original Claude Design handoff     |
-| 2026-04-14 | Profile fields: trainer name, friend code, first name, bio | Level/Team/Area not in original design — deferred |
-| 2026-04-14 | No second GDPR consent on profile setup screen        | Consent already collected at registration (Slice 1)   |
-| 2026-04-14 | TDD with Vitest introduced in Slice 2                 | Core logic tested: validation + Supabase helpers      |
-| 2026-04-14 | Slice 2 implemented on branch slice/2-profile         | profiles table + RLS created in Supabase manually     |
-| 2026-04-14 | Slices 3+4 merged — Player Directory is the main screen | Design combines profile display + community browser |
-| 2026-04-14 | Bottom nav added: Players + Profile active, Raids/Chat placeholder | Phase 2 features; nav hints at future scope |
-| 2026-04-14 | Home page is now logged-out only; logged-in → /players | Clean routing model for bottom nav active states |
-| 2026-04-14 | Server-only helpers in server-helpers.ts (separate from helpers.ts) | Prevents server imports leaking into client bundles |
-| 2026-04-14 | Logout accessible via dropdown on green icon in DirectoryHeader | No dedicated logout page; keeps UI clean |
-| 2026-04-17 | Privacy Policy written in Danish, data controller: René Rasmussen (renraz@gmail.com) | GDPR Art. 13 requirement |
-| 2026-04-17 | Account deletion via POST /api/account/delete using service role key | Client SDK cannot delete auth users; server route required |
-| 2026-04-17 | Profile row deleted via ON DELETE CASCADE (already on FK) — no extra migration needed | Cascade was set up in Slice 2 migration |
-| 2026-04-17 | SUPABASE_SERVICE_ROLE_KEY required in .env.local for account deletion | Must be added to Vercel env vars before deploy |
 | 2026-04-19 | Raid MVP added as Slices 6–8; launch blocker, not Phase 2 | Without raid coordination, community won't return to the app |
+| 2026-05-07 | Playwright MCP for browser verification; verifications captured as Playwright spec files in `e2e/` and run in CI | Manual smoke checks regress silently; converting each verification into a test gives a regression suite for free. Supersedes the earlier "no UI tests / no e2e" rule. |
 | 2026-04-19 | Raid list is intentionally minimal: one list, newest first, auto-hide ~45 min after start | Handful of raids/day; filters/search/sort add no value |
 | 2026-04-19 | Raid MVP excludes chat, remote lobby codes, recurring raids, history, filters | Keep it faster than the Messenger screenshot workflow |
 | 2026-04-19 | Push notifications via self-hosted web-push + Supabase Edge Function (not OneSignal) | Stays in existing stack; 20–200 users doesn't justify third-party service |
@@ -376,7 +348,7 @@ Update this section at the end of each session.
 | 2026-05-03 | PWA icon is placeholder SVG (PG on teal) — replace before launch | Real branded PNG icons (192×192, 512×512) needed for home screen quality |
 | 2026-05-03 | InstallPrompt component handles Android "Add to Home Screen" banner | iOS never fires beforeinstallprompt — iOS users use /onboarding/ios guide instead |
 | 2026-05-03 | git user.email must be set to renraz@googlemail.com | Vercel blocks deployments from commits with unmatched email addresses |
-| 2026-05-03 | Chat on raid detail not visible after deploy — under investigation | Likely migration 003 not applied or a runtime error on /raids/[id]; see pre-launch checklist |
+| 2026-05-06 | Live updates via Supabase Realtime, not polling | Coordinating raids must feel as instant as Messenger; 10s polling is too slow. Hook `useRaidsRealtime` subscribes per screen and triggers `router.refresh()` (debounced 250ms) — server stays the source of truth for embedded joins. Migration 005 enables Replication on raids/raid_attendees/raid_messages. |
 
 ---
 
@@ -392,17 +364,20 @@ Before making the app publicly available:
 - [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
 
 **From Raid MVP (Slices 6–8):**
-- [x] Generate VAPID key pair; add `NEXT_PUBLIC_VAPID_PUBLIC_KEY` to Vercel env vars; add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` as Supabase secrets
-- [x] Run migration 003_raid_chat.sql and 004_push_subscriptions.sql in Supabase SQL editor
-- [x] Deploy Edge Function: `supabase functions deploy notify-raid`
-- [x] Set up database webhook in Supabase dashboard: Database → Webhooks → INSERT on public.raids → notify-raid function URL
+- [ ] **Run migration 005_realtime.sql in Supabase SQL editor** — enables Replication on raids/raid_attendees/raid_messages so the `useRaidsRealtime` hook receives change events. Without this, the overview and detail screens won't auto-update.
+- [ ] **Smoke-test Realtime end-to-end on both devices** — after migration 005 is applied: open raids overview on Android, post a raid / send a chat / RSVP from iOS (and vice-versa). Changes should appear on the other device within ~300ms. If nothing happens, check the browser console for channel subscription errors and verify Replication is on for all three tables.
 - [ ] **Investigate: chat not visible on raid detail screen** — verify migration 003 applied (raid_messages table exists), check Vercel logs, check browser console on /raids/[id]
 - [ ] Test PWA install flow end-to-end on a real iPhone via Safari (not simulator)
 - [ ] Test PWA install flow on Android Chrome
-- [ ] Verify push notification fires on new raid insert on both iOS and Android
-- [x] Confirm Privacy Policy has been updated to disclose push subscription data — done in Slice 8
+- [ ] **Push notifications not firing on installed PWAs (iOS + Android) — investigate.** Both devices accepted the OS notification prompt but no notification arrives when a new raid is posted. Code path looks correct (`subscribeToPush` → `push_subscriptions` row → webhook → `notify-raid` Edge Function → `web-push` → `sw.js` push handler). Run these checks in the Supabase dashboard, in order — first miss is the culprit:
+  1. **`push_subscriptions` table** — are there actually rows for both user_ids? If not, the OS prompt fired but the upsert silently failed (RLS, network, stale permission state).
+  2. **Database → Webhooks** — is there a webhook on `public.raids` INSERT pointing at `https://<ref>.supabase.co/functions/v1/notify-raid` with `Authorization: Bearer <SERVICE_ROLE_KEY>` header? Easy to lose after re-linking the project.
+  3. **Edge Functions → notify-raid → Logs** — post a test raid. Any invocations? What status code? No invocations → webhook isn't firing (back to #2).
+  4. **VAPID key match** — `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (Vercel) and `VAPID_PUBLIC_KEY` (Supabase secret) must be from the same keypair. If regenerated on one side only, every send returns 403 and existing subscriptions are permanently invalid — users must unsubscribe + resubscribe.
 - [ ] Replace placeholder PWA icon (public/icon.svg) with real branded PNG icons (192×192, 512×512)
 - [ ] Seed the raid boss quick-pick list with current raid bosses before launch
+
+_Resolved items (VAPID keys generated, migrations 003/004 applied, Edge Function deployed, webhook configured, Privacy Policy section 11 added) removed for clarity — see git history if needed._
 
 ---
 
@@ -427,7 +402,7 @@ Designs come from **Claude Design** (claude.ai/design). The user exports a hando
 
 To read a handoff bundle: fetch the URL, decompress with `gunzip`, extract files with `tar -x -O`, read the README first then the relevant HTML/JSX files.
 
-The selected flow and final decisions are in the chat transcript (`chats/chat1.md`). Always read the transcript — it shows what the user iterated on and where they landed.
+Final decisions from each design session are recorded in the Decisions Log below.
 
 ---
 
