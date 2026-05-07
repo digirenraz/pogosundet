@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Check, Minus, Plus, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { joinRaid, leaveRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
-import { sendMessage, getMessagesForRaid, type RaidMessage } from '@/lib/raids/message-helpers';
+import { sendMessage, type RaidMessage } from '@/lib/raids/message-helpers';
+import { useRaidsRealtime } from '@/lib/raids/use-raids-realtime';
 import type { RaidWithDetails } from '@/lib/raids/server-helpers';
 
 interface RaidDetailProps {
@@ -52,14 +53,23 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
   const timeLabel = relativeLabel(raid);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Poll for new messages every 10 seconds
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const updated = await getMessagesForRaid(raid.id);
-      setMessages(updated);
-    }, 10_000);
-    return () => clearInterval(interval);
-  }, [raid.id]);
+  // Realtime: subscribe to attendee + message changes for this raid;
+  // each event triggers router.refresh which re-fetches the raid server-side
+  // and passes a new `raid` prop down. The reset-on-prop-change below picks it up.
+  useRaidsRealtime(raid.id);
+
+  // Reset local state when a fresh `raid` prop arrives (router.refresh after a
+  // Realtime event). Compare-and-set during render is the React-recommended
+  // pattern for syncing state to a changing prop without a useEffect.
+  const [raidSnapshot, setRaidSnapshot] = useState(raid);
+  if (raidSnapshot !== raid) {
+    setRaidSnapshot(raid);
+    const me = raid.raid_attendees.find(a => a.user_id === currentUserId);
+    setJoined(!!me);
+    setExtra(me?.extra_count ?? 0);
+    setAttendees(raid.raid_attendees);
+    setMessages(raid.raid_messages);
+  }
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
