@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
-import { LogoutButton } from "./LogoutButton";
 
 // Server Component — reads the active session to show login or logout state.
 // Rendered inside the hero area so uses white text with a drop shadow for contrast.

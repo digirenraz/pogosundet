@@ -37,13 +37,15 @@ export async function subscribeToPush(userId: string): Promise<{ error: unknown 
 
     const json = subscription.toJSON();
     const endpoint = json.endpoint!;
-    const p256dh = json.keys?.p256dh!;
-    const auth = json.keys?.auth!;
+    const keys = json.keys!;
 
     const supabase = createClient();
     const { error } = await supabase
       .from('push_subscriptions')
-      .upsert({ user_id: userId, endpoint, p256dh, auth }, { onConflict: 'user_id' });
+      .upsert(
+        { user_id: userId, endpoint, p256dh: keys.p256dh, auth: keys.auth },
+        { onConflict: 'user_id' },
+      );
 
     return { error };
   } catch (error) {

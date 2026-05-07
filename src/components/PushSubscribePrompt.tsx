@@ -3,10 +3,11 @@
 // Banner shown on the raids page prompting PWA users to enable push notifications.
 // Only visible when running as an installed standalone PWA and the user hasn't
 // yet subscribed or dismissed the prompt.
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Bell, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { subscribeToPush } from '@/lib/push/subscription-helpers';
+import { useMounted } from '@/lib/hooks/use-mounted';
 
 const DISMISSED_KEY = 'push-prompt-dismissed';
 
@@ -16,40 +17,27 @@ interface Props {
 }
 
 export function PushSubscribePrompt({ userId, initialStatus }: Props) {
-  // null = not yet determined; false = hide; true = show
-  const [visible, setVisible] = useState<boolean | null>(null);
+  const mounted = useMounted();
+  const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(false);
   const t = useTranslations('Raids');
 
-  useEffect(() => {
-    // Only show for unsubscribed users running the standalone PWA who haven't dismissed
-    if (initialStatus !== 'unsubscribed') {
-      setVisible(false);
-      return;
-    }
-    if (localStorage.getItem(DISMISSED_KEY) === '1') {
-      setVisible(false);
-      return;
-    }
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    setVisible(isStandalone);
-  }, [initialStatus]);
-
-  // Avoid SSR mismatch — render nothing until the client check is done
-  if (visible === null || visible === false) return null;
+  // Gate all browser-only checks behind `mounted` to avoid SSR mismatch.
+  if (!mounted || dismissed) return null;
+  if (initialStatus !== 'unsubscribed') return null;
+  if (localStorage.getItem(DISMISSED_KEY) === '1') return null;
+  if (!window.matchMedia('(display-mode: standalone)').matches) return null;
 
   async function handleAllow() {
     setLoading(true);
     const { error } = await subscribeToPush(userId);
     setLoading(false);
-    if (!error) {
-      setVisible(false);
-    }
+    if (!error) setDismissed(true);
   }
 
   function handleDismiss() {
     localStorage.setItem(DISMISSED_KEY, '1');
-    setVisible(false);
+    setDismissed(true);
   }
 
   return (
