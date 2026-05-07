@@ -294,7 +294,7 @@ Two layers, both run in CI:
 
 ## Vertical slices
 
-Slices 1–8 implemented and merged. Realtime hook added 2026-05-06; migration `005_realtime.sql` pending. Work proceeds one feature branch at a time (`slice/N-name`); do not start a new slice until the current one is merged to `main`. See the Phase plan above for what's in/out of scope, and the Decisions log for resolved questions per slice.
+Slices 1–9 implemented and merged. Migration `005_realtime.sql` still pending manual application in the Supabase SQL editor. Each slice or chore gets its own short-lived branch **off `main`** (e.g. `slice/N-name`, `chore/short-name`), and the branch is deleted after its PR merges. Do not start a new slice until the current one is merged. See the Phase plan above for what's in/out of scope, and the Decisions log for resolved questions per slice.
 
 ---
 
@@ -316,6 +316,7 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 |------------|-------------------------------------------------------|--------------------------------------|
 | 2026-04-19 | Raid MVP added as Slices 6–8; launch blocker, not Phase 2 | Without raid coordination, community won't return to the app |
 | 2026-05-07 | Playwright MCP for browser verification; verifications captured as Playwright spec files in `e2e/` and run in CI | Manual smoke checks regress silently; converting each verification into a test gives a regression suite for free. Supersedes the earlier "no UI tests / no e2e" rule. |
+| 2026-05-07 | Each slice/chore branches off `main` and is deleted on merge | Earlier work piled onto `slice/1-registration` (PRs #1–#7 all opened from that one branch instead of fresh per-slice branches). Cleanup retired the misuse and `slice/9-realtime` + `chore/playwright-ci` were the first PRs done correctly. |
 | 2026-04-19 | Raid list is intentionally minimal: one list, newest first, auto-hide ~45 min after start | Handful of raids/day; filters/search/sort add no value |
 | 2026-04-19 | Raid MVP excludes chat, remote lobby codes, recurring raids, history, filters | Keep it faster than the Messenger screenshot workflow |
 | 2026-04-19 | Push notifications via self-hosted web-push + Supabase Edge Function (not OneSignal) | Stays in existing stack; 20–200 users doesn't justify third-party service |
@@ -362,6 +363,9 @@ Before making the app publicly available:
 - [ ] Verify Supabase project is on EU/Ireland region (already confirmed, but double-check before launch)
 - [ ] Decide on a real domain name and configure it in Vercel + Supabase allowed URLs
 - [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
+
+**Tooling / CI:**
+- [ ] Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` as GitHub Actions secrets (Settings → Secrets and variables → Actions). Required for the Playwright e2e job to boot the dev server. Without them the e2e step in CI fails; lint and unit tests still pass.
 
 **From Raid MVP (Slices 6–8):**
 - [ ] **Run migration 005_realtime.sql in Supabase SQL editor** — enables Replication on raids/raid_attendees/raid_messages so the `useRaidsRealtime` hook receives change events. Without this, the overview and detail screens won't auto-update.
