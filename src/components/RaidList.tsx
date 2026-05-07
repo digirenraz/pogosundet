@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { joinRaid, leaveRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
+import { useRaidsRealtime } from '@/lib/raids/use-raids-realtime';
 import { RaidCard } from '@/components/RaidCard';
 import type { RaidWithAttendees } from '@/lib/raids/server-helpers';
 
@@ -14,6 +15,18 @@ interface RaidListProps {
 export function RaidList({ active: initialActive, expired, currentUserId }: RaidListProps) {
   // Only active raids are in local state — expired are static display only.
   const [raids, setRaids] = useState(initialActive);
+
+  // Realtime: any raid/attendee/message change triggers router.refresh,
+  // which re-runs the page server component and passes a new initialActive.
+  useRaidsRealtime();
+
+  // Reset local state when fresh server data arrives. Compare-and-set during
+  // render is the React-recommended pattern for syncing state to a prop change.
+  const [activeSnapshot, setActiveSnapshot] = useState(initialActive);
+  if (activeSnapshot !== initialActive) {
+    setActiveSnapshot(initialActive);
+    setRaids(initialActive);
+  }
 
   // Optimistically add the current user to a raid's attendee list.
   async function handleJoin(raidId: string) {
