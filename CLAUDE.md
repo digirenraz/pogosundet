@@ -364,9 +364,6 @@ Before making the app publicly available:
 - [ ] Decide on a real domain name and configure it in Vercel + Supabase allowed URLs
 - [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
 
-**Tooling / CI:**
-- [ ] Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` as GitHub Actions secrets (Settings → Secrets and variables → Actions). Required for the Playwright e2e job to boot the dev server. Without them the e2e step in CI fails; lint and unit tests still pass.
-
 **From Raid MVP (Slices 6–8):**
 - [ ] **Run migration 005_realtime.sql in Supabase SQL editor** — enables Replication on raids/raid_attendees/raid_messages so the `useRaidsRealtime` hook receives change events. Without this, the overview and detail screens won't auto-update.
 - [ ] **Smoke-test Realtime end-to-end on both devices** — after migration 005 is applied: open raids overview on Android, post a raid / send a chat / RSVP from iOS (and vice-versa). Changes should appear on the other device within ~300ms. If nothing happens, check the browser console for channel subscription errors and verify Replication is on for all three tables.
