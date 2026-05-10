@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This file is read automatically at the start of every Claude Code session.
 Do not delete it. Update it at the end of each session if any decisions changed.
 
-For first-time environment setup (Supabase project, env vars, Google OAuth), see `docs/setup.md`. VAPID keys and Edge Function deployment are covered in the Pre-launch checklist below.
+For first-time environment setup (Supabase project, env vars, Google OAuth), see `docs/setup.md`. Pre-launch operational tasks (env vars, push debugging runbook, PWA icon replacement, etc.) live in [`docs/launch-checklist.md`](docs/launch-checklist.md).
 
 ---
 
@@ -15,6 +15,7 @@ For first-time environment setup (Supabase project, env vars, Google OAuth), see
 |------|---------|
 | Dev server | `npm run dev` |
 | Build | `npm run build` |
+| Production server (after build) | `npm start` |
 | Lint | `npm run lint` |
 | Run all unit tests | `npm run test` |
 | Watch unit tests | `npm run test:watch` |
@@ -50,7 +51,8 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Su
 - `src/lib/raids/` — `validation.ts` (pure), `helpers.ts` (client: createRaid, joinRaid, leaveRaid, updateAttendeeExtra), `server-helpers.ts` (getActiveRaids, getRecentRaids → `{active, expired}`, getRaidById), `message-helpers.ts` (client: sendMessage, getMessagesForRaid), `use-raids-realtime.ts` (client hook used by both `RaidList` and `RaidDetail`: subscribes to Supabase Realtime on raids/raid_attendees/raid_messages and calls `router.refresh()` on changes, debounced 250ms — server stays the source of truth for embedded joins), `bosses.ts` (quick-pick list), `pokemon.ts` (~600 Pokémon names for boss autocomplete). Note: `raid_attendees.user_id` and `raid_messages.user_id` both FK to `profiles.user_id` (unique), **not** `profiles.id` — required for embedded Supabase queries `profiles(trainer_name)`.
 - `src/lib/push/subscription-helpers.ts` — getPushStatus, subscribeToPush, unsubscribeFromPush (browser Push API + Supabase upsert)
 - `src/lib/account/server-helpers.ts` — account deletion using admin client
-- Tests use Vitest + jsdom + `@testing-library/jest-dom`; `@` alias maps to `src/`
+- `src/i18n/routing.ts` and `src/i18n/request.ts` — next-intl config (locales, default locale `da`, `localePrefix: 'as-needed'`); imported by `proxy.ts` and the App Router locale layout
+- Tests use Vitest + jsdom + `@testing-library/jest-dom`; setup file at `src/test/setup.ts`; `@` alias maps to `src/`
 
 ### Supabase Storage
 - Bucket `raid-images` — stores raid screenshots uploaded by users
@@ -62,9 +64,7 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Su
 ### Database migrations
 SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
 
-Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`. Current Edge Functions: `notify-raid` (in `supabase/functions/`).
-
-⚠️ **`005_realtime.sql` is not yet applied in Supabase.** Until it is, the `useRaidsRealtime` hook will subscribe but receive no change events — the overview and detail screens won't auto-update. If you're debugging "live updates not working", apply this migration first.
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
 
 ---
 
@@ -107,7 +107,7 @@ concrete blocker. When in doubt, ask before introducing a new dependency.
 
 ## Phase plan
 
-### Phase 1 — near complete
+### Phase 1 — complete
 User profiles and community discovery:
 - Registration and login (Google OAuth + email/password) ✅
 - User profile: trainer name, friend code, first name, bio ✅
@@ -294,7 +294,7 @@ Two layers, both run in CI:
 
 ## Vertical slices
 
-Slices 1–9 implemented and merged. Migration `005_realtime.sql` still pending manual application in the Supabase SQL editor. Each slice or chore gets its own short-lived branch **off `main`** (e.g. `slice/N-name`, `chore/short-name`), and the branch is deleted after its PR merges. Do not start a new slice until the current one is merged. See the Phase plan above for what's in/out of scope, and the Decisions log for resolved questions per slice.
+Slices 1–9 implemented and merged. All migrations applied (including 005_realtime). Each slice or chore gets its own short-lived branch **off `main`** (e.g. `slice/N-name`, `chore/short-name`), and the branch is deleted after its PR merges. Do not start a new slice until the current one is merged. See the Phase plan above for what's in/out of scope, and the Decisions log for resolved questions per slice.
 
 ---
 
@@ -337,7 +337,7 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-04-29 | Design tool switched from Banani to Claude Design (claude.ai/design) | All future screen designs come from Claude Design handoff bundles |
 | 2026-04-29 | Chat added to Raid MVP (not Phase 2) | Claude Design handoff included per-raid chat; community needs it to replace Messenger |
 | 2026-04-29 | Extra player count on RSVP (raid_attendees.extra_count) | Posters/joiners can say "Jeg er med + 2 ekstra"; total trainer count shown on card |
-| 2026-04-29 | Raid detail screen at /raids/[id] — hero image, RSVP, attendees, chat | Tap card → detail; chat polls every 10s; Supabase realtime can replace polling later |
+| 2026-04-29 | Raid detail screen at /raids/[id] — hero image, RSVP, attendees, chat | Tap card → detail. (Originally specified 10s chat polling; superseded by Supabase Realtime on 2026-05-06.) |
 | 2026-04-29 | Boss field replaced with BossSearch autocomplete (full Pokémon list in pokemon.ts) | Dropdown was too rigid; search works for any boss including future rotations |
 | 2026-04-29 | Gym field replaced with GymSearch (OSM Overpass API, cached, freeform fallback) | User confirmed OSM in design session; overpass-api.de, 25km radius around Frederikssund |
 | 2026-04-29 | Poster is auto-joined to raid_attendees on submit (with extra_count) | Needed so poster's name appears in attendee list and totalTrainers count is accurate |
@@ -352,35 +352,13 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-03 | InstallPrompt component handles Android "Add to Home Screen" banner | iOS never fires beforeinstallprompt — iOS users use /onboarding/ios guide instead |
 | 2026-05-03 | git user.email must be set to renraz@googlemail.com | Vercel blocks deployments from commits with unmatched email addresses |
 | 2026-05-06 | Live updates via Supabase Realtime, not polling | Coordinating raids must feel as instant as Messenger; 10s polling is too slow. Hook `useRaidsRealtime` subscribes per screen and triggers `router.refresh()` (debounced 250ms) — server stays the source of truth for embedded joins. Migration 005 enables Replication on raids/raid_attendees/raid_messages. |
+| 2026-05-10 | Push notification pipeline restored after multi-layer silent failure; migration 005 applied | Root causes (each one silent): (1) webhook Authorization header was the literal placeholder `Bearer [YOUR API KEY]`, so every webhook call was auth-rejected at the gateway before reaching the function — zero invocations recorded; (2) `VAPID_PRIVATE_KEY` was missing from Edge Function secrets, so once auth was fixed the function crashed at boot with `validatePrivateKey` errors; (3) regenerating the keypair invalidated the existing `push_subscriptions` rows but the OS-level notification toggle on each device did not refresh the browser-level subscription — site data had to be cleared on each device to force re-subscribe. Hardening: `PushSubscribePrompt.tsx` now `console.error`s the upsert error instead of swallowing it; `notify-raid/index.ts` now `console.error`s any non-410 web-push error with statusCode/body. **Known limitation, not fixed:** `raids/page.tsx` derives `pushStatus` from the DB row, not the live browser subscription — they can drift (a stale row hides the prompt even when the browser has no valid subscription). Acceptable for now; fix if it bites again. |
 
 ---
 
 ## Pre-launch checklist
 
-Before making the app publicly available:
-
-**From Phase 1:**
-- [ ] Add `SUPABASE_SERVICE_ROLE_KEY` to Vercel environment variables (needed for account deletion)
-- [ ] Test Google OAuth with the production Supabase URL (not just local)
-- [ ] Verify Supabase project is on EU/Ireland region (already confirmed, but double-check before launch)
-- [ ] Decide on a real domain name and configure it in Vercel + Supabase allowed URLs
-- [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
-
-**From Raid MVP (Slices 6–8):**
-- [ ] **Run migration 005_realtime.sql in Supabase SQL editor** — enables Replication on raids/raid_attendees/raid_messages so the `useRaidsRealtime` hook receives change events. Without this, the overview and detail screens won't auto-update.
-- [ ] **Smoke-test Realtime end-to-end on both devices** — after migration 005 is applied: open raids overview on Android, post a raid / send a chat / RSVP from iOS (and vice-versa). Changes should appear on the other device within ~300ms. If nothing happens, check the browser console for channel subscription errors and verify Replication is on for all three tables.
-- [ ] **Investigate: chat not visible on raid detail screen** — verify migration 003 applied (raid_messages table exists), check Vercel logs, check browser console on /raids/[id]
-- [ ] Test PWA install flow end-to-end on a real iPhone via Safari (not simulator)
-- [ ] Test PWA install flow on Android Chrome
-- [ ] **Push notifications not firing on installed PWAs (iOS + Android) — investigate.** Both devices accepted the OS notification prompt but no notification arrives when a new raid is posted. Code path looks correct (`subscribeToPush` → `push_subscriptions` row → webhook → `notify-raid` Edge Function → `web-push` → `sw.js` push handler). Run these checks in the Supabase dashboard, in order — first miss is the culprit:
-  1. **`push_subscriptions` table** — are there actually rows for both user_ids? If not, the OS prompt fired but the upsert silently failed (RLS, network, stale permission state).
-  2. **Database → Webhooks** — is there a webhook on `public.raids` INSERT pointing at `https://<ref>.supabase.co/functions/v1/notify-raid` with `Authorization: Bearer <SERVICE_ROLE_KEY>` header? Easy to lose after re-linking the project.
-  3. **Edge Functions → notify-raid → Logs** — post a test raid. Any invocations? What status code? No invocations → webhook isn't firing (back to #2).
-  4. **VAPID key match** — `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (Vercel) and `VAPID_PUBLIC_KEY` (Supabase secret) must be from the same keypair. If regenerated on one side only, every send returns 403 and existing subscriptions are permanently invalid — users must unsubscribe + resubscribe.
-- [ ] Replace placeholder PWA icon (public/icon.svg) with real branded PNG icons (192×192, 512×512)
-- [ ] Seed the raid boss quick-pick list with current raid bosses before launch
-
-_Resolved items (VAPID keys generated, migrations 003/004 applied, Edge Function deployed, webhook configured, Privacy Policy section 11 added) removed for clarity — see git history if needed._
+Moved to [`docs/launch-checklist.md`](docs/launch-checklist.md) — operational tasks (env vars, migration 005, PWA install testing, push notification debugging runbook, icon replacement) live there to keep this file focused on architecture. Update the launch-checklist file directly as items are resolved.
 
 ---
 
