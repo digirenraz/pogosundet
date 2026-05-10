@@ -32,7 +32,11 @@ export function PushSubscribePrompt({ userId, initialStatus }: Props) {
     setLoading(true);
     const { error } = await subscribeToPush(userId);
     setLoading(false);
-    if (!error) setDismissed(true);
+    if (error) {
+      console.error('[push] subscribe failed', error);
+      return;
+    }
+    setDismissed(true);
   }
 
   function handleDismiss() {
