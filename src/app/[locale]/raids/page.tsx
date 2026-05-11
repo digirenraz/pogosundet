@@ -17,25 +17,18 @@ export default async function RaidsPage() {
 
   if (!user) redirect('/login');
 
-  const { data: ownProfile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
+  // Profile guard, raid list, push subscription status, and translations are all
+  // independent once we have user.id — run them in parallel.
+  const [{ data: ownProfile }, { active, expired }, { data: pushSub }, t] = await Promise.all([
+    supabase.from('profiles').select('id').eq('user_id', user.id).single(),
+    getRecentRaids(),
+    supabase.from('push_subscriptions').select('id').eq('user_id', user.id).maybeSingle(),
+    getTranslations('Raids'),
+  ]);
 
   if (!ownProfile) redirect('/profile/setup');
 
-  const { active, expired } = await getRecentRaids();
-  const t = await getTranslations('Raids');
-
   const hasAny = active.length > 0 || expired.length > 0;
-
-  // Check if the current user already has a push subscription stored
-  const { data: pushSub } = await supabase
-    .from('push_subscriptions')
-    .select('id')
-    .eq('user_id', user.id)
-    .maybeSingle();
   const pushStatus = pushSub ? 'subscribed' : 'unsubscribed';
 
   return (

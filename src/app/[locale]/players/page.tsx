@@ -13,16 +13,14 @@ export default async function PlayersPage() {
 
   if (!user) redirect('/login');
 
-  // Ensure the user has completed their own profile before browsing
-  const { data: ownProfile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
+  // Fetch the user's own profile (for the setup-guard redirect) and the full
+  // directory in parallel — both are independent once we have user.id.
+  const [{ data: ownProfile }, { data: profiles }] = await Promise.all([
+    supabase.from('profiles').select('id').eq('user_id', user.id).single(),
+    getAllProfiles(),
+  ]);
 
   if (!ownProfile) redirect('/profile/setup');
-
-  const { data: profiles } = await getAllProfiles();
 
   return (
     <div className="min-h-screen bg-background">
