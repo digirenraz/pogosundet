@@ -2,6 +2,8 @@ import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+export const preferredRegion = "dub1";
+
 // Handles email confirmation links sent by Supabase.
 // Used for two flows:
 //   - type=signup   → verifies a new account, then redirects to /

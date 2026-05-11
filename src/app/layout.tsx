@@ -32,6 +32,12 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+// Run server functions in Dublin — same AWS region as Supabase EU (eu-west-1).
+// Cuts function↔Supabase round-trip from ~80ms (US East default) to ~5ms.
+// Cascades to all child pages/layouts unless they override; route.ts handlers
+// must declare their own (Next.js does not inherit preferredRegion into routes).
+export const preferredRegion = "dub1";
+
 // Root layout — provides the HTML shell, font variable, and PWA hooks.
 // All locale-specific logic (NextIntlClientProvider) lives in
 // src/app/[locale]/layout.tsx, which wraps every user-facing route.
