@@ -136,21 +136,11 @@ flag it and ask. Otherwise, do not pre-build Phase 2 functionality.**
 
 ---
 
-## Raid MVP scope (Slices 6–8)
+## Raid MVP scope
 
-Deliberately small. The community is ~20–200 people with a handful of raids per
-day. The feature must be **faster than taking a screenshot and posting it in
-Messenger** — which is what people do today.
+Shipped and live (Slices 6–8, full smoke test passed 2026-05-10). The feature must remain **faster than taking a screenshot and posting it in Messenger** — that's the bar against any new addition.
 
-### In scope (all implemented)
-- **Post a raid:** screenshot upload (primary), boss autocomplete (BossSearch — full Pokémon list), gym search (GymSearch — OSM + freeform fallback), start time quick picks (Nu/+5/+10/+15 min), extra player count, optional note
-- **List of active raids:** single screen, newest first, auto-hides ~45 min after start time; expired raids shown greyed out below
-- **Raid card (Flow A):** thumbnail left, boss + gym + timer badge, message count, trainer count, RSVP strip with extra-player stepper and Share button
-- **Raid detail screen** (`/raids/[id]`): hero image, attendee list with avatar initials, per-raid chat — live updates via Supabase Realtime (no polling)
-- **Join / leave:** single button toggles state; poster auto-joined on submit
-- **Push notifications:** web push on new raid insert (PWA only)
-
-### Out of scope (do NOT build in the Raid MVP)
+### Out of scope (do NOT build)
 - Remote raid lobby code sharing
 - Recurring raids or raids scheduled more than a few hours out
 - Raid history, stats, or past-raid browsing
@@ -158,45 +148,17 @@ Messenger** — which is what people do today.
 - Host/organiser roles
 
 ### Messenger bridge (launch fallback)
-Not all users will install the PWA on day one. To avoid the feature dying on
-launch, each raid card has a **"Share to Messenger"** button that opens
-Messenger with the raid link and details pre-filled. The poster taps it
-themselves — this is a manual step, not automated (see Decisions Log
-2026-04-19).
+Not all users will install the PWA on day one. Each raid card has a **"Share to Messenger"** button that opens Messenger with the raid link and details pre-filled. The poster taps it themselves — manual step, not automated (Messenger has no public group-posting API).
 
 ---
 
-## Push notifications approach (Slice 8)
+## Push notifications — platform reality
 
-**Why self-hosted web push, not OneSignal:** we're already on Supabase, a 20–200
-user scale doesn't need a third-party push service, and keeping everything in
-one stack is simpler to hand off later.
+Self-hosted web-push: PWA service worker + `push_subscriptions` table + `notify-raid` Edge Function (triggered on raid INSERT). Debugging runbook lives in `docs/launch-checklist.md`.
 
-### Stack
-- **Client:** PWA service worker registers a push subscription using the
-  browser's Push API; subscription stored in a `push_subscriptions` Supabase
-  table (user_id, endpoint, keys, created_at)
-- **Server:** Supabase Edge Function triggered on `INSERT` into the `raids`
-  table; sends web push to all active subscriptions using the `web-push` npm
-  library and VAPID keys stored as Supabase secrets
-- **Scope:** one notification type for now — "new raid posted". Tapping the
-  notification opens the raid card
-
-### Platform reality
-- **Android (Chrome/Firefox/etc.):** works out of the box once PWA installed
-- **iOS 16.4+:** works only if user adds the PWA to home screen **via Safari**
-  (Chrome on iOS uses WebKit underneath but does not expose the PWA install
-  flow that enables push). The iOS onboarding must tell users to open the app
-  in Safari first.
-- **Users who don't install the PWA:** get no push. The Messenger share button
-  is their fallback.
-
-### iOS onboarding
-Designed in **Claude Design** — step-by-step visual guide covering:
-1. Open the app in Safari (if currently in Chrome/another browser)
-2. Tap Share → Add to Home Screen → Add
-3. Open the app from the home screen icon
-4. Allow notifications when prompted
+- **Android (Chrome/Firefox/etc.):** works once PWA installed.
+- **iOS 16.4+:** works **only** when added to home screen via Safari. Chrome on iOS uses WebKit but doesn't expose the install flow. iOS onboarding at `/onboarding/ios` walks users through Safari → Share → Add to Home Screen → Allow notifications.
+- **Users who don't install the PWA:** get no push. The Messenger share button is their fallback.
 
 ---
 
@@ -252,14 +214,9 @@ The "last updated" date is in `messages/da.json` → `Privacy.lastUpdated`. Alwa
 
 ## Coding standards
 
-- Use **TypeScript** throughout — no plain `.js` files in `src/`
-- Use **Tailwind CSS** for styling — no separate CSS files unless unavoidable
-- Components go in `src/components/`, pages in `src/app/`
-- Supabase client logic goes in `src/lib/supabase/`
-- Keep components small and single-purpose
-- Add a short comment at the top of any non-obvious function explaining *why*,
-  not just *what*
-- Prefer explicit over clever — this codebase may be read by a non-developer
+- Comment the *why*, not the *what* — only when non-obvious.
+- Prefer explicit over clever — this codebase may be read by a non-developer.
+- Keep components small and single-purpose.
 
 ---
 
@@ -284,17 +241,10 @@ Two layers, both run in CI:
 
 ## Git workflow
 
-- `main` branch is always deployable
-- One feature branch per vertical slice: `slice/1-registration`, `slice/2-profile`, etc.
-- Open a PR to `main` when a slice is complete
-- Do not commit directly to `main`
-- Commit messages: short, imperative, in English (e.g. `Add Trainer Code display`)
-
----
-
-## Vertical slices
-
-Slices 1–9 implemented and merged. All migrations applied (including 005_realtime). Each slice or chore gets its own short-lived branch **off `main`** (e.g. `slice/N-name`, `chore/short-name`), and the branch is deleted after its PR merges. Do not start a new slice until the current one is merged. See the Phase plan above for what's in/out of scope, and the Decisions log for resolved questions per slice.
+- `main` is always deployable. Do not commit directly to `main`.
+- Each slice or chore gets its own short-lived branch **off `main`** (`slice/N-name`, `chore/short-name`). Branch is deleted after its PR merges. Do not start a new slice until the current one is merged.
+- Commit messages: short, imperative, in English (e.g. `Add Trainer Code display`).
+- Slices 1–9 already implemented and merged; all migrations applied.
 
 ---
 
@@ -314,43 +264,19 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 
 | Date       | Decision                                              | Reason                              |
 |------------|-------------------------------------------------------|--------------------------------------|
-| 2026-04-19 | Raid MVP added as Slices 6–8; launch blocker, not Phase 2 | Without raid coordination, community won't return to the app |
+| 2026-04-29 | Design tool switched from Banani to Claude Design (claude.ai/design) | All future screen designs come from Claude Design handoff bundles |
+| 2026-04-29 | Chat added to Raid MVP (not Phase 2) | Claude Design handoff included per-raid chat; community needs it to replace Messenger |
+| 2026-05-03 | PWA icon is placeholder SVG (PG on teal) — replace before launch | Real branded PNG icons (192×192, 512×512) needed for home screen quality |
+| 2026-05-03 | git user.email must be set to renraz@googlemail.com | Vercel blocks deployments from commits with unmatched email addresses |
 | 2026-05-07 | Playwright MCP for browser verification; verifications captured as Playwright spec files in `e2e/` and run in CI | Manual smoke checks regress silently; converting each verification into a test gives a regression suite for free. Supersedes the earlier "no UI tests / no e2e" rule. |
 | 2026-05-07 | Each slice/chore branches off `main` and is deleted on merge | Earlier work piled onto `slice/1-registration` (PRs #1–#7 all opened from that one branch instead of fresh per-slice branches). Cleanup retired the misuse and `slice/9-realtime` + `chore/playwright-ci` were the first PRs done correctly. |
 | 2026-05-07 | Client-only gating uses `useMounted` (`useSyncExternalStore`-based) instead of useState+useEffect | The React 19 `react-hooks/set-state-in-effect` lint rule fires on the canonical "did mount" pattern. The hook in `src/lib/hooks/use-mounted.ts` returns `false` on the server and `true` post-hydration without setState-in-effect, so `localStorage` / `matchMedia` / `navigator` checks can be guarded during render. Used by `PushSubscribePrompt` and the iOS onboarding page. |
 | 2026-05-07 | CI workflow live on `main`: lint → vitest → Playwright on every PR and push | Three GitHub Actions secrets (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) drive the e2e dev server. First green run: 2026-05-07 on `ad66f2c`. Failure annotation about Node 20 deprecation is non-blocking until June 2026. |
-| 2026-04-19 | Raid list is intentionally minimal: one list, newest first, auto-hide ~45 min after start | Handful of raids/day; filters/search/sort add no value |
-| 2026-04-19 | Raid MVP excludes chat, remote lobby codes, recurring raids, history, filters | Keep it faster than the Messenger screenshot workflow |
-| 2026-04-19 | Push notifications via self-hosted web-push + Supabase Edge Function (not OneSignal) | Stays in existing stack; 20–200 users doesn't justify third-party service |
-| 2026-04-19 | PWA required for push notifications (iOS 16.4+ only works when installed to home screen via Safari) | Platform constraint, not a choice |
-| 2026-04-19 | iOS "Add to Home Screen" onboarding designed in Claude Design | Needs explanatory/instructional visuals, not standard UI screens |
-| 2026-04-19 | iOS onboarding must instruct Chrome users to switch to Safari first | Chrome on iOS doesn't expose the PWA install flow that enables push |
-| 2026-04-19 | Messenger cross-posting is a manual "Share to Messenger" button, not automated | Messenger has no public group-posting API; deep link + poster's tap is the realistic path |
-| 2026-04-19 | Raid post form: screenshot is the primary input, all other fields optional | Matches existing community workflow — take screenshot, post with short note |
-| 2026-04-19 | Share button uses Web Share API with clipboard copy fallback | Works natively on Android; on desktop falls back to copying text |
-| 2026-04-19 | Active raid filter uses Supabase .or() with dynamic 45-min threshold | COALESCE(starts_at, created_at) not directly expressible in SDK; .or() handles both cases |
-| 2026-04-19 | Slice 6 implemented on branch slice/6-raids | raids + raid_attendees tables; Supabase Storage bucket raid-images must be created manually |
-| 2026-04-19 | Raid start time options: Nu / +5 min / +10 min / +15 min | Tighter range fits real raid coordination better than the original +30/+60 options |
-| 2026-04-19 | Active raid filter uses client-side JS, not PostgREST .or() | PostgREST timestamp syntax in .or() failed silently; JS filter on server is reliable and testable |
-| 2026-04-19 | FK added from raid_attendees.user_id to profiles.user_id | Required for Supabase embedded query profiles(trainer_name) to work; profiles.user_id is unique |
-| 2026-04-19 | Supabase Storage bucket raid-images needs two manual policies | INSERT for authenticated users, SELECT for public — not set automatically on bucket creation |
-| 2026-04-29 | Design tool switched from Banani to Claude Design (claude.ai/design) | All future screen designs come from Claude Design handoff bundles |
-| 2026-04-29 | Chat added to Raid MVP (not Phase 2) | Claude Design handoff included per-raid chat; community needs it to replace Messenger |
-| 2026-04-29 | Extra player count on RSVP (raid_attendees.extra_count) | Posters/joiners can say "Jeg er med + 2 ekstra"; total trainer count shown on card |
-| 2026-04-29 | Raid detail screen at /raids/[id] — hero image, RSVP, attendees, chat | Tap card → detail. (Originally specified 10s chat polling; superseded by Supabase Realtime on 2026-05-06.) |
-| 2026-04-29 | Boss field replaced with BossSearch autocomplete (full Pokémon list in pokemon.ts) | Dropdown was too rigid; search works for any boss including future rotations |
-| 2026-04-29 | Gym field replaced with GymSearch (OSM Overpass API, cached, freeform fallback) | User confirmed OSM in design session; overpass-api.de, 25km radius around Frederikssund |
-| 2026-04-29 | Poster is auto-joined to raid_attendees on submit (with extra_count) | Needed so poster's name appears in attendee list and totalTrainers count is accurate |
-| 2026-04-29 | "Sluttede raids" section shows expired raids (45min–2h) greyed out inline | Cards go opacity-50 + grayscale; no RSVP strip; getRecentRaids returns both active+expired |
-| 2026-04-29 | Migration 003 must be run manually in Supabase SQL editor | Adds extra_count to raid_attendees + creates raid_messages table with RLS |
-| 2026-04-29 | Slice 8 implemented: push_subscriptions table, PushSubscribePrompt banner, Edge Function notify-raid | Web push via self-hosted VAPID; Edge Function deployed manually with `supabase functions deploy notify-raid` |
-| 2026-04-29 | supabase/functions/ excluded from tsconfig.json | Deno Edge Function uses npm: specifiers unsupported by Next.js TypeScript checker |
-| 2026-04-29 | Privacy Policy updated to section 11 disclosing push subscription data; lastUpdated bumped to maj 2026 | GDPR requirement — push endpoint + keys are personal data |
-| 2026-04-29 | PushSubscribePrompt only shows in standalone PWA mode (display-mode: standalone) | Push only works reliably when PWA is installed; avoids misleading browser users |
-| 2026-05-03 | Slice 7 PWA: manual sw.js (not next-pwa), manifest.json, icon.svg | next-pwa not needed for installability; sw.js extended in Slice 8 for push handler |
-| 2026-05-03 | PWA icon is placeholder SVG (PG on teal) — replace before launch | Real branded PNG icons (192×192, 512×512) needed for home screen quality |
-| 2026-05-03 | InstallPrompt component handles Android "Add to Home Screen" banner | iOS never fires beforeinstallprompt — iOS users use /onboarding/ios guide instead |
-| 2026-05-03 | git user.email must be set to renraz@googlemail.com | Vercel blocks deployments from commits with unmatched email addresses |
+| 2026-05-11 | All server functions pinned to `dub1` (Dublin) via `preferredRegion` and `config.regions` | Supabase EU runs in AWS eu-west-1 (Ireland). Default Vercel region `iad1` (US East) added ~80ms per Supabase query; with 4–5 sequential queries per page that was 400–500ms of pure network overhead. Dublin co-location cuts each round-trip to ~5ms. Measured impact: FCP dropped from 6.6s → 1.2s (warm). |
+| 2026-05-11 | Server page components parallelise independent Supabase queries with `Promise.all` | `/raids` had 4 sequential post-`getUser` queries; `/players` and `/raids/[id]` had 2 each. All are independent once `user.id` is known — running in parallel eliminates the serial wait. |
+| 2026-05-11 | Player directory cached with `unstable_cache` (60s TTL, tag `profiles`) using admin client | Server client uses `cookies()` so it can't be called inside `unstable_cache` (runs outside request context). Admin client has no per-request dependency. Account deletion calls `revalidateTag('profiles', 'max')` for immediate bust; creates/edits rely on the TTL. |
+| 2026-05-11 | Realtime chat messages appended to local state instead of triggering `router.refresh()` | Each message INSERT was causing a full RSC page refetch. Sender name is resolved from the local attendees list. Optimistic messages are replaced when the real Realtime row arrives. Attendee changes still use `router.refresh()` (need the profile join). |
+| 2026-05-11 | `ref.current` writes must go in `useEffect`, not during render — React 19 `react-hooks/refs` rule | Fires on the "update ref synchronously during render" pattern (e.g. `attendeesRef.current = attendees`). Move into `useEffect(() => { ref.current = value; }, [value])`. One render-cycle lag is acceptable for callback refs. |
 | 2026-05-06 | Live updates via Supabase Realtime, not polling | Coordinating raids must feel as instant as Messenger; 10s polling is too slow. Hook `useRaidsRealtime` subscribes per screen and triggers `router.refresh()` (debounced 250ms) — server stays the source of truth for embedded joins. Migration 005 enables Replication on raids/raid_attendees/raid_messages. |
 | 2026-05-10 | Push notification pipeline restored after multi-layer silent failure; migration 005 applied | Root causes (each one silent): (1) webhook Authorization header was the literal placeholder `Bearer [YOUR API KEY]`, so every webhook call was auth-rejected at the gateway before reaching the function — zero invocations recorded; (2) `VAPID_PRIVATE_KEY` was missing from Edge Function secrets, so once auth was fixed the function crashed at boot with `validatePrivateKey` errors; (3) regenerating the keypair invalidated the existing `push_subscriptions` rows but the OS-level notification toggle on each device did not refresh the browser-level subscription — site data had to be cleared on each device to force re-subscribe. Hardening: `PushSubscribePrompt.tsx` now `console.error`s the upsert error instead of swallowing it; `notify-raid/index.ts` now `console.error`s any non-410 web-push error with statusCode/body. **Known limitation, not fixed:** `raids/page.tsx` derives `pushStatus` from the DB row, not the live browser subscription — they can drift (a stale row hides the prompt even when the browser has no valid subscription). Acceptable for now; fix if it bites again. |
 | 2026-05-10 | Pre-launch checklist extracted from `CLAUDE.md` to `docs/launch-checklist.md`; debugging runbook kept there for future regressions | `CLAUDE.md` is loaded into every session and was approaching the size where operational checklists with debugging runbooks compete with architectural notes. Pointer to the new file lives in `CLAUDE.md`'s intro. Push debugging runbook (the 6-step "first miss is the culprit" list) now lives next to the checklist instead of inline; meant to be re-used if push regresses. |
