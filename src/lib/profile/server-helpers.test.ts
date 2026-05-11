@@ -1,11 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAllProfiles } from './server-helpers';
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(),
+// unstable_cache requires the Next.js incremental cache infrastructure,
+// which doesn't exist in Vitest. Stub it so the wrapped function is called directly.
+vi.mock('next/cache', () => ({
+  unstable_cache: (fn: (...args: unknown[]) => unknown) => fn,
+  revalidateTag: vi.fn(),
 }));
 
-import { createClient } from '@/lib/supabase/server';
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: vi.fn(),
+}));
+
+import { createAdminClient } from '@/lib/supabase/admin';
 
 function mockSupabase(response: { data: unknown; error: unknown }) {
   const chain = {
@@ -25,7 +32,7 @@ describe('getAllProfiles', () => {
 
   it('returns all profiles ordered by created_at', async () => {
     const supabase = mockSupabase({ data: fakeProfiles, error: null });
-    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(supabase as never);
 
     const result = await getAllProfiles();
 
@@ -37,7 +44,7 @@ describe('getAllProfiles', () => {
 
   it('returns empty array when no profiles exist', async () => {
     const supabase = mockSupabase({ data: null, error: null });
-    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(supabase as never);
 
     const result = await getAllProfiles();
 
@@ -48,7 +55,7 @@ describe('getAllProfiles', () => {
   it('propagates Supabase errors', async () => {
     const supabaseError = { message: 'connection error', code: '500' };
     const supabase = mockSupabase({ data: null, error: supabaseError });
-    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(supabase as never);
 
     const result = await getAllProfiles();
 
