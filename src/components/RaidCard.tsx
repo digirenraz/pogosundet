@@ -98,7 +98,9 @@ export function RaidCard({
               src={raid.image_url}
               alt="Raid screenshot"
               className={`w-full h-full object-cover${expired ? ' grayscale' : ''}`}
-              style={{ minHeight: 80 }}
+              width={108}
+              height={80}
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full min-h-[80px] flex items-center justify-center bg-secondary">
