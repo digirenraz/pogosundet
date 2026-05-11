@@ -25,4 +25,8 @@ export async function proxy(request: NextRequest) {
 export const config = {
   // Run on all paths except: Next.js internals, static files, and our auth handlers
   matcher: ["/((?!_next|api|auth|.*\\..*).*)"],
+  // Run middleware in Dublin — same AWS region as Supabase EU.
+  // Critical: middleware calls supabase.auth.getUser() on every request;
+  // running it in iad1 (default) adds ~80ms US↔EU latency to every navigation.
+  regions: ["dub1"],
 };

@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { deleteAccount } from '@/lib/account/server-helpers';
 
+export const preferredRegion = 'dub1';
+
 export async function POST() {
   const supabase = await createClient();
 

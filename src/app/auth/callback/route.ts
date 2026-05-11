@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+export const preferredRegion = "dub1";
+
 // Handles the OAuth redirect from Google (and future providers).
 // Supabase sends the user here after Google authentication with a one-time code.
 // We exchange the code for a session and redirect to the home page.
