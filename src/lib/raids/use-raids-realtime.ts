@@ -25,7 +25,8 @@ export function useRaidsRealtime(
 ) {
   const router = useRouter();
   const onMessageInsertRef = useRef(onMessageInsert);
-  onMessageInsertRef.current = onMessageInsert;
+  // Must update via effect — React 19 react-hooks/refs forbids ref.current writes during render.
+  useEffect(() => { onMessageInsertRef.current = onMessageInsert; }, [onMessageInsert]);
 
   useEffect(() => {
     const supabase = createClient();

@@ -53,7 +53,8 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
   // Ref so the realtime message handler always reads the latest attendees list
   // without needing the subscription effect to re-run on every state change.
   const attendeesRef = useRef(attendees);
-  attendeesRef.current = attendees;
+  // Must update via effect — React 19 react-hooks/refs forbids ref.current writes during render.
+  useEffect(() => { attendeesRef.current = attendees; }, [attendees]);
 
   const timeLabel = relativeLabel(raid);
   const messagesEndRef = useRef<HTMLDivElement>(null);
