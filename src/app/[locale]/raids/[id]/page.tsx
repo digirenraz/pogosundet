@@ -18,16 +18,13 @@ export default async function RaidDetailPage({ params }: RaidDetailPageProps) {
 
   if (!user) redirect('/login');
 
-  // Ensure the user has a profile set up
-  const { data: ownProfile } = await supabase
-    .from('profiles')
-    .select('trainer_name')
-    .eq('user_id', user.id)
-    .single();
+  // Profile check and raid data fetch are independent — run in parallel.
+  const [{ data: ownProfile }, raid] = await Promise.all([
+    supabase.from('profiles').select('trainer_name').eq('user_id', user.id).single(),
+    getRaidById(id),
+  ]);
 
   if (!ownProfile) redirect('/profile/setup');
-
-  const raid = await getRaidById(id);
   if (!raid) notFound();
 
   return (
