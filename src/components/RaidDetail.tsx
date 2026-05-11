@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Check, Minus, Plus, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { joinRaid, leaveRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
-import { sendMessage, type RaidMessage } from '@/lib/raids/message-helpers';
+import { sendMessage, type RaidMessage, type RaidMessageRow } from '@/lib/raids/message-helpers';
 import { useRaidsRealtime } from '@/lib/raids/use-raids-realtime';
 import type { RaidWithDetails } from '@/lib/raids/server-helpers';
 
@@ -50,17 +50,42 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
   // Optimistic attendees — seeded from server data
   const [attendees, setAttendees] = useState(raid.raid_attendees);
 
+  // Ref so the realtime message handler always reads the latest attendees list
+  // without needing the subscription effect to re-run on every state change.
+  const attendeesRef = useRef(attendees);
+  // Must update via effect — React 19 react-hooks/refs forbids ref.current writes during render.
+  useEffect(() => { attendeesRef.current = attendees; }, [attendees]);
+
   const timeLabel = relativeLabel(raid);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Realtime: subscribe to attendee + message changes for this raid;
-  // each event triggers router.refresh which re-fetches the raid server-side
-  // and passes a new `raid` prop down. The reset-on-prop-change below picks it up.
-  useRaidsRealtime(raid.id);
+  // Realtime: attendee changes trigger router.refresh (needs the profile join);
+  // message INSERTs are handled locally — avoids a full RSC refetch per chat message.
+  // The sender's trainer_name is resolved from the local attendees list (fast path);
+  // if not found (sender hasn't RSVP'd), the name falls back to null.
+  // Optimistic messages from the current user are replaced when the real row arrives.
+  useRaidsRealtime(raid.id, (row: RaidMessageRow) => {
+    const knownAttendee = attendeesRef.current.find(a => a.user_id === row.user_id);
+    const msg: RaidMessage = {
+      ...row,
+      profiles: knownAttendee?.profiles ?? null,
+    };
+    setMessages(prev => {
+      // Replace the optimistic placeholder for this sender if one exists
+      if (prev.some(m => m.id.startsWith('opt-') && m.user_id === row.user_id)) {
+        return prev.map(m =>
+          m.id.startsWith('opt-') && m.user_id === row.user_id ? msg : m
+        );
+      }
+      // Deduplicate (defensive against double-delivery)
+      if (prev.some(m => m.id === row.id)) return prev;
+      return [...prev, msg];
+    });
+  });
 
-  // Reset local state when a fresh `raid` prop arrives (router.refresh after a
-  // Realtime event). Compare-and-set during render is the React-recommended
-  // pattern for syncing state to a changing prop without a useEffect.
+  // Sync joined/extra/attendees when a fresh `raid` prop arrives (router.refresh
+  // after an attendee change). Messages are intentionally excluded — they are
+  // managed locally via the realtime callback above and must not be overwritten.
   const [raidSnapshot, setRaidSnapshot] = useState(raid);
   if (raidSnapshot !== raid) {
     setRaidSnapshot(raid);
@@ -68,7 +93,6 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
     setJoined(!!me);
     setExtra(me?.extra_count ?? 0);
     setAttendees(raid.raid_attendees);
-    setMessages(raid.raid_messages);
   }
 
   // Scroll to bottom when new messages arrive

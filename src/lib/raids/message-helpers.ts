@@ -11,6 +11,9 @@ export interface RaidMessage {
   profiles: { trainer_name: string } | null;
 }
 
+// Raw DB row from a Realtime INSERT event — no embedded profile join.
+export type RaidMessageRow = Omit<RaidMessage, 'profiles'>;
+
 // Insert a chat message into raid_messages.
 export async function sendMessage(
   raidId: string,
