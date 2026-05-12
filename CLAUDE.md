@@ -208,6 +208,10 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-11 | Page components parallelise independent Supabase queries with `Promise.all` | Queries are independent once `user.id` is known — serial execution was pure waste |
 | 2026-05-11 | Realtime chat messages appended to local state, not `router.refresh()` | Per-message refresh caused full RSC page refetches |
 | 2026-05-11 | `ref.current` writes go in `useEffect`, not during render | React 19 `react-hooks/refs` rule disallows synchronous ref writes during render |
+| 2026-05-12 | Tailwind v4 `@theme` tree-shakes CSS vars only referenced via inline `style={{ var(--x) }}` | The class scanner can't see JS strings, so `--color-team-*` vars (used by team-color rings in `Avatar` / chips) disappeared at runtime. Fix: declare them in a plain `:root {}` block outside `@theme` so they're emitted unconditionally. Applies to any future design tokens read from JS rather than via utility classes. |
+| 2026-05-12 | Profile: added `team` + `level` columns (migration 006); BottomNav profile tab → `/profile` not `/profile/edit` | Slice 10A. `team` (mystic/valor/instinct) and `level` (1–80) are both nullable / "Valgfri". The new `/profile` is the "Min profil" view; `/profile/edit` is reached from there. Privacy Policy not bumped — team/level are voluntary public profile info, same category as bio. |
+| 2026-05-12 | Online presence via Supabase Realtime presence channel `players-online` (no DB writes) | `src/lib/profile/use-presence.ts` returns a `Set<user_id>` of currently connected clients. Channel auto-cleans on disconnect. The directory shows `Online (n)` and avatars get a green dot. "Last seen" timestamps were deferred — would need a `last_active_at` column. |
+| 2026-05-12 | Friend code QR uses `qrcode` lib, encodes the raw 12-digit string | PoGo's in-game friend QR is a proprietary format we can't replicate, so scanning this QR will NOT add the friend in PoGo. Generic QR readers do read it as the 12-digit code — useful for copy-paste / sharing elsewhere. Honest trade-off vs. a purely decorative QR. |
 
 ---
 
