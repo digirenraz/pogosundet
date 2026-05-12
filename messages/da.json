@@ -111,7 +111,35 @@
     "copiedButton": "Kopieret!",
     "noPlayers": "Ingen spillere endnu.",
     "noResults": "Ingen resultater for \"{query}\".",
-    "logoutButton": "Log ud"
+    "noFilterResults": "Ingen spillere matcher filteret.",
+    "logoutButton": "Log ud",
+    "filterAll": "Alle",
+    "filterOnline": "Online ({count})",
+    "filterMystic": "Mystic",
+    "filterValor": "Valor",
+    "filterInstinct": "Instinct",
+    "countLabel": "{count} trænere · tryk for at se vennekode",
+    "onlineLabel": "online nu"
+  },
+  "PlayerDetail": {
+    "back": "Tilbage",
+    "next": "Næste",
+    "previous": "Forrige",
+    "qrSectionLabel": "Vennekode",
+    "qrInstructions": "Åbn Pokémon GO → Venner → Tilføj ven → QR CODE, og scan denne kode.",
+    "copyButton": "Kopier kode",
+    "copiedButton": "Kopieret!",
+    "swipeHint": "Stryg for at se næste træner",
+    "onlineLabel": "Online nu",
+    "levelChip": "Niveau {level}",
+    "bioLabel": "Mini bio"
+  },
+  "ProfileTab": {
+    "headerTitle": "Min profil",
+    "editButton": "Rediger profil",
+    "qrButton": "Vis QR kode",
+    "levelChip": "Niveau {level}",
+    "bioLabel": "Mini bio"
   },
   "Raids": {
     "headerTitle": "Aktive Raids",
@@ -252,6 +280,13 @@
     "bioLabel": "Mini bio",
     "bioPlaceholder": "Fortæl lidt om dig selv og hvor du spiller...",
     "optional": "Valgfri",
+    "teamLabel": "Team",
+    "teamMystic": "Mystic",
+    "teamValor": "Valor",
+    "teamInstinct": "Instinct",
+    "teamClearLabel": "Ingen / hold hemmeligt",
+    "levelLabel": "Level",
+    "levelClearLabel": "Skjul level",
     "submit": "Gem profil og fortsæt",
     "back": "Tilbage",
     "errorTrainerNameRequired": "Trænernavn er påkrævet",
@@ -260,6 +295,8 @@
     "errorFriendCodeFormat": "Format: XXXX XXXX XXXX (kun tal)",
     "errorFirstNameLength": "Fornavn må højst være 50 tegn",
     "errorBioLength": "Bio må højst være 280 tegn",
+    "errorTeamInvalid": "Ugyldigt team",
+    "errorLevelRange": "Level skal være mellem 1 og 80",
     "errorGeneric": "Noget gik galt. Prøv igen."
   }
 }

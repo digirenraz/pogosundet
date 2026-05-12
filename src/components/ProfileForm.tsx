@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { UserRound, Hash, User, AlignLeft, Camera } from 'lucide-react';
-import { validateProfile, type ProfileInput } from '@/lib/profile/validation';
+import { validateProfile, type ProfileInput, type Team } from '@/lib/profile/validation';
 import { AuthInput } from '@/components/AuthInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { TEAMS } from '@/components/Avatar';
 
 interface ProfileFormProps {
   // Translation function scoped to the caller's namespace (ProfileSetup or ProfileEdit)
@@ -17,6 +18,8 @@ interface ProfileFormProps {
   onBack?: () => void;
   backLabel?: string;
 }
+
+const TEAM_KEYS: Team[] = ['mystic', 'valor', 'instinct'];
 
 // Shared form for both profile creation (/profile/setup) and editing (/profile/edit).
 // The caller owns submission logic and error state; this component handles fields + validation.
@@ -34,6 +37,9 @@ export function ProfileForm({
   const [friendCode, setFriendCode] = useState(initialValues?.friend_code ?? '');
   const [firstName, setFirstName] = useState(initialValues?.first_name ?? '');
   const [bio, setBio] = useState(initialValues?.bio ?? '');
+  const [team, setTeam] = useState<Team | null>(initialValues?.team ?? null);
+  const [level, setLevel] = useState<number>(initialValues?.level ?? 40);
+  const [levelSet, setLevelSet] = useState<boolean>(initialValues?.level != null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   function handleFriendCodeChange(value: string) {
@@ -45,7 +51,14 @@ export function ProfileForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const validation = validateProfile({ trainer_name: trainerName, friend_code: friendCode, first_name: firstName, bio });
+    const validation = validateProfile({
+      trainer_name: trainerName,
+      friend_code: friendCode,
+      first_name: firstName,
+      bio,
+      team: team ?? undefined,
+      level: levelSet ? level : undefined,
+    });
     if (!validation.valid) {
       const translated: Record<string, string> = {};
       for (const [field, key] of Object.entries(validation.errors)) {
@@ -60,6 +73,8 @@ export function ProfileForm({
       friend_code: friendCode,
       first_name: firstName || undefined,
       bio: bio || undefined,
+      team: team ?? undefined,
+      level: levelSet ? level : undefined,
     });
   }
 
@@ -103,6 +118,119 @@ export function ProfileForm({
           error={errors.friend_code}
           autoComplete="off"
         />
+
+        {/* Team picker — optional */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-[14px] font-semibold text-foreground">{t('teamLabel')}</label>
+            <span className="px-2 py-1 rounded-[24px] bg-secondary text-secondary-foreground text-[12px] font-semibold">
+              {t('optional')}
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {TEAM_KEYS.map((k) => {
+              const meta = TEAMS[k];
+              const active = team === k;
+              return (
+                <button
+                  type="button"
+                  key={k}
+                  onClick={() => setTeam(active ? null : k)}
+                  className="rounded-md px-1 py-2.5 flex flex-col items-center gap-1"
+                  style={{
+                    background: active
+                      ? `color-mix(in srgb, ${meta.color} 8%, transparent)`
+                      : 'var(--color-card)',
+                    border: `1.5px solid ${active ? meta.color : 'var(--color-border)'}`,
+                  }}
+                >
+                  <span
+                    className="inline-flex items-center justify-center rounded-full text-white font-extrabold"
+                    style={{ width: 36, height: 36, background: meta.color, fontSize: 16 }}
+                  >
+                    {meta.short}
+                  </span>
+                  <span
+                    className="text-[12px] font-bold"
+                    style={{ color: active ? meta.color : 'var(--color-foreground)' }}
+                  >
+                    {t(`team${meta.label}` as 'teamMystic' | 'teamValor' | 'teamInstinct')}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => setTeam(null)}
+            className="self-start text-[12px] font-semibold"
+            style={{
+              color: team === null ? 'var(--color-foreground)' : 'var(--color-muted-foreground)',
+              textDecoration: team === null ? 'underline' : 'none',
+            }}
+          >
+            {t('teamClearLabel')}
+          </button>
+          {errors.team && <p className="text-[13px] text-destructive">{errors.team}</p>}
+        </div>
+
+        {/* Level slider — optional */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-[14px] font-semibold text-foreground">
+              {t('levelLabel')} <span className="text-primary">{levelSet ? level : '—'}</span>
+            </label>
+            <span className="px-2 py-1 rounded-[24px] bg-secondary text-secondary-foreground text-[12px] font-semibold">
+              {t('optional')}
+            </span>
+          </div>
+          <div className="bg-input border border-border rounded-md px-3.5 pt-3.5 pb-2.5">
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-muted-foreground font-semibold">1</span>
+              <input
+                type="range"
+                min={1}
+                max={80}
+                value={level}
+                onChange={(e) => {
+                  setLevel(Number(e.target.value));
+                  setLevelSet(true);
+                }}
+                className="flex-1 accent-primary"
+                aria-label={t('levelLabel')}
+              />
+              <span className="text-[11px] text-muted-foreground font-semibold">80</span>
+            </div>
+            <div className="flex justify-between mt-1.5">
+              {[20, 40, 60, 80].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => {
+                    setLevel(n);
+                    setLevelSet(true);
+                  }}
+                  className="text-[11px] font-bold"
+                  style={{
+                    color: levelSet && level === n ? 'var(--color-primary)' : 'var(--color-muted-foreground)',
+                  }}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+          {levelSet && (
+            <button
+              type="button"
+              onClick={() => setLevelSet(false)}
+              className="self-start text-[12px] font-semibold text-muted-foreground"
+            >
+              {t('levelClearLabel')}
+            </button>
+          )}
+          {errors.level && <p className="text-[13px] text-destructive">{errors.level}</p>}
+        </div>
 
         {/* First name — optional */}
         <div className="flex flex-col gap-2">

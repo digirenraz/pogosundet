@@ -31,3 +31,11 @@
   /* Inter loaded via next/font — variable injected on <html> by root layout */
   --font-family-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
+
+/* Team colors live outside @theme: they're consumed via inline style="var(--color-team-*)",
+   which Tailwind's class scanner can't see, so @theme would tree-shake them. */
+:root {
+  --color-team-mystic: #2d7ff9;
+  --color-team-valor: #ee2a36;
+  --color-team-instinct: #f5b70c;
+}

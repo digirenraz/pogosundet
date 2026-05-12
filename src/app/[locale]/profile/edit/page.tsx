@@ -40,6 +40,8 @@ export default function ProfileEditPage() {
           friend_code: data.friend_code,
           first_name: data.first_name ?? '',
           bio: data.bio ?? '',
+          team: data.team ?? undefined,
+          level: data.level ?? undefined,
         });
       }
     }
@@ -57,8 +59,8 @@ export default function ProfileEditPage() {
       return;
     }
     setSuccessMessage(tEdit('successMessage'));
-    // Return to directory after a brief moment so user sees the success message
-    setTimeout(() => router.push('/players'), 1200);
+    // Return to the "Min profil" view so the user can verify the changes
+    setTimeout(() => router.push('/profile'), 1200);
   }
 
   async function handleDeleteConfirm() {
@@ -82,7 +84,7 @@ export default function ProfileEditPage() {
     <div className="min-h-screen bg-[#F9FAFB] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-3 border-b border-[#E5E7EB] bg-white">
-        <button onClick={() => router.push('/players')} className="text-[#6B7280]">
+        <button onClick={() => router.push('/profile')} className="text-[#6B7280]">
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-[18px] font-bold text-[#111827]">{tEdit('headerTitle')}</h1>
