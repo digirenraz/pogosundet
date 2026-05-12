@@ -12,6 +12,8 @@ export function BottomNav() {
   const t = useTranslations('BottomNav');
 
   const isActive = (path: string) => pathname.endsWith(path);
+  // Profile tab is active for /profile and /profile/edit alike.
+  const isProfileActive = /\/profile(\/.*)?$/.test(pathname);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border flex items-center justify-around px-2 z-10">
@@ -41,8 +43,8 @@ export function BottomNav() {
 
       {/* Profile */}
       <Link
-        href="/profile/edit"
-        className={`flex flex-col items-center justify-center gap-1 w-16 ${isActive('/profile/edit') ? 'text-primary' : 'text-muted-foreground'}`}
+        href="/profile"
+        className={`flex flex-col items-center justify-center gap-1 w-16 ${isProfileActive ? 'text-primary' : 'text-muted-foreground'}`}
       >
         <User size={24} />
         <span className="text-[11px] font-semibold">{t('profile')}</span>

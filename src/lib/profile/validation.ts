@@ -1,8 +1,12 @@
+export type Team = 'mystic' | 'valor' | 'instinct';
+
 export interface ProfileInput {
   trainer_name: string;
   friend_code: string;
   first_name?: string;
   bio?: string;
+  team?: Team;
+  level?: number;
 }
 
 export interface ValidationResult {
@@ -12,6 +16,7 @@ export interface ValidationResult {
 
 // Friend code must be exactly 12 digits formatted as XXXX XXXX XXXX
 const FRIEND_CODE_RE = /^\d{4} \d{4} \d{4}$/;
+const VALID_TEAMS: readonly Team[] = ['mystic', 'valor', 'instinct'];
 
 export function validateProfile(data: ProfileInput): ValidationResult {
   const errors: Record<string, string> = {};
@@ -43,6 +48,18 @@ export function validateProfile(data: ProfileInput): ValidationResult {
   const bio = data.bio ?? '';
   if (bio.length > 280) {
     errors.bio = 'errorBioLength';
+  }
+
+  // team: optional, must be one of the three known values when set
+  if (data.team !== undefined && !VALID_TEAMS.includes(data.team)) {
+    errors.team = 'errorTeamInvalid';
+  }
+
+  // level: optional, integer 1..80 when set
+  if (data.level !== undefined) {
+    if (!Number.isInteger(data.level) || data.level < 1 || data.level > 80) {
+      errors.level = 'errorLevelRange';
+    }
   }
 
   return { valid: Object.keys(errors).length === 0, errors };

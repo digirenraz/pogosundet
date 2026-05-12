@@ -122,6 +122,72 @@ describe('validateProfile', () => {
     expect(result.errors.bio).toBeUndefined();
   });
 
+  // --- team (optional) ---
+
+  it('passes when team is undefined', () => {
+    const result = validateProfile({ ...valid, team: undefined });
+    expect(result.errors.team).toBeUndefined();
+  });
+
+  it('passes when team is mystic', () => {
+    const result = validateProfile({ ...valid, team: 'mystic' });
+    expect(result.valid).toBe(true);
+  });
+
+  it('passes when team is valor', () => {
+    const result = validateProfile({ ...valid, team: 'valor' });
+    expect(result.valid).toBe(true);
+  });
+
+  it('passes when team is instinct', () => {
+    const result = validateProfile({ ...valid, team: 'instinct' });
+    expect(result.valid).toBe(true);
+  });
+
+  it('fails when team is an unknown value', () => {
+    const result = validateProfile({
+      ...valid,
+      team: 'rocket' as unknown as 'mystic' | 'valor' | 'instinct',
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.team).toBe('errorTeamInvalid');
+  });
+
+  // --- level (optional) ---
+
+  it('passes when level is undefined', () => {
+    const result = validateProfile({ ...valid, level: undefined });
+    expect(result.errors.level).toBeUndefined();
+  });
+
+  it('passes level at exactly 1', () => {
+    const result = validateProfile({ ...valid, level: 1 });
+    expect(result.valid).toBe(true);
+  });
+
+  it('passes level at exactly 80', () => {
+    const result = validateProfile({ ...valid, level: 80 });
+    expect(result.valid).toBe(true);
+  });
+
+  it('fails when level is 0', () => {
+    const result = validateProfile({ ...valid, level: 0 });
+    expect(result.valid).toBe(false);
+    expect(result.errors.level).toBe('errorLevelRange');
+  });
+
+  it('fails when level is 81', () => {
+    const result = validateProfile({ ...valid, level: 81 });
+    expect(result.valid).toBe(false);
+    expect(result.errors.level).toBe('errorLevelRange');
+  });
+
+  it('fails when level is not an integer', () => {
+    const result = validateProfile({ ...valid, level: 42.5 });
+    expect(result.valid).toBe(false);
+    expect(result.errors.level).toBe('errorLevelRange');
+  });
+
   // --- multiple errors at once ---
 
   it('returns multiple errors when both required fields are missing', () => {

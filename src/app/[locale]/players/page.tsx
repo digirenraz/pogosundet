@@ -27,7 +27,7 @@ export default async function PlayersPage() {
       <DirectoryHeader />
       {/* Content padded for fixed header (60px) and fixed bottom nav (64px) */}
       <main className="pt-[76px] pb-[80px] px-4 flex flex-col gap-4">
-        <PlayerDirectory profiles={profiles} />
+        <PlayerDirectory profiles={profiles} currentUserId={user.id} />
       </main>
       <BottomNav />
     </div>
