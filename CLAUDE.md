@@ -23,6 +23,7 @@ For first-time environment setup (Supabase project, env vars, Google OAuth), see
 | Run all e2e tests | `npm run test:e2e` |
 | Run e2e in UI mode | `npm run test:e2e:ui` |
 | Run single e2e file | `npx playwright test e2e/smoke.spec.ts` |
+| Deploy Edge Function | `npx supabase functions deploy notify-raid` |
 
 ---
 
@@ -33,7 +34,10 @@ For first-time environment setup (Supabase project, env vars, Google OAuth), see
 - `src/lib/supabase/server.ts` — server-side (Server Components, Route Handlers)
 - `src/lib/supabase/admin.ts` — service role key, privileged ops only (e.g. account deletion). Never import in client components.
 
-### Middleware (src/proxy.ts)
+### Vercel region — always `dub1`
+Every server route and page component must export `export const preferredRegion = "dub1"` (Dublin). Supabase EU runs in AWS eu-west-1 (Ireland); the default US East region adds ~80ms per query. `proxy.ts` exports `regions: ["dub1"]`. Any new route handler or Server Component page that makes Supabase calls must include this export — it is not inherited automatically.
+
+### Middleware (`src/proxy.ts`)
 Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Supabase session refresh (`updateSession`) then next-intl locale routing. Auth cookies are manually copied from the Supabase response onto the intl response to prevent loss.
 
 ### i18n routing
@@ -54,6 +58,19 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Su
 - `src/i18n/routing.ts` and `src/i18n/request.ts` — next-intl config (locales, default locale `da`, `localePrefix: 'as-needed'`); imported by `proxy.ts` and the App Router locale layout
 - Tests use Vitest + jsdom + `@testing-library/jest-dom`; setup file at `src/test/setup.ts`; `@` alias maps to `src/`
 
+### Caching — player directory
+`getAllProfiles` in `src/lib/profile/server-helpers.ts` uses `unstable_cache` (60s TTL, tag `profiles`). **Must use the admin client** — the server client calls `cookies()` which is unavailable inside `unstable_cache` (runs outside request context). Account deletion calls `revalidateTag('profiles')` for an immediate bust.
+
+### Page-level data fetching
+Server page components parallelise independent Supabase queries with `Promise.all`. The pattern: await `getUser()` first, then fire all remaining queries in parallel once `user.id` is known.
+
+### Realtime — chat vs. attendees
+Chat messages (`raid_messages`) are appended to local React state via Realtime INSERT events — triggering `router.refresh()` per message caused full RSC page refetches. Attendee changes (`raid_attendees`) still use `router.refresh()` because they need the profile join. The `useRaidsRealtime` hook manages both.
+
+### React 19 patterns
+- **Client-only gating** (localStorage, navigator, matchMedia): use `useMounted` from `src/lib/hooks/use-mounted.ts` instead of useState+useEffect. React 19's `react-hooks/set-state-in-effect` lint rule fires on the canonical "did mount" pattern. The hook uses `useSyncExternalStore` and returns `false` on the server, `true` post-hydration.
+- **Ref writes during render**: move `ref.current = value` assignments into a `useEffect(() => { ref.current = value; }, [value])` — the `react-hooks/refs` rule disallows synchronous ref writes during render.
+
 ### Supabase Storage
 - Bucket `raid-images` — stores raid screenshots uploaded by users
 - Requires two manually created RLS policies: INSERT for authenticated users, SELECT for public (not set automatically on bucket creation)
@@ -70,14 +87,9 @@ Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, 
 
 ## Project overview
 
-**PoGoSundet** is a mobile-friendly web app for the local Pokémon GO community in
-Frederikssund, Denmark. It lets players create profiles, find each other, share
-Trainer Codes, coordinate raids, and — in Phase 2 — handle trades and richer
-messaging.
+**PoGoSundet** is a mobile-friendly web app for the local Pokémon GO community in Frederikssund, Denmark. Players create profiles, find each other, share Trainer Codes, and coordinate raids.
 
-The product owner is a non-technical product manager. Claude Code is the
-primary implementation tool. Code must be clean, well-commented, and easy to
-hand off to a future developer.
+The product owner is a non-technical product manager. Claude Code is the primary implementation tool. Code must be clean, well-commented, and easy to hand off to a future developer.
 
 ---
 
@@ -85,70 +97,36 @@ hand off to a future developer.
 
 | Layer       | Choice                          | Notes                                      |
 |-------------|----------------------------------|---------------------------------------------|
-| Frontend    | Next.js (App Router)            | Single codebase, mobile-first               |
+| Frontend    | Next.js 16 (App Router)         | Single codebase, mobile-first               |
 | Backend/DB  | Supabase                        | EU/Ireland region — required for GDPR       |
-| Auth        | Supabase Auth                   | Google OAuth + email/password in Phase 1    |
+| Auth        | Supabase Auth                   | Google OAuth + email/password               |
 | Hosting     | Vercel                          | Free tier adequate for initial scale        |
 | i18n        | next-intl                       | Danish-first; architecture supports more    |
-| PWA / Push  | Manual sw.js + web-push (self-hosted via Supabase Edge Functions) | Implemented in Slices 7–8; no next-pwa dependency needed |
+| PWA / Push  | Manual sw.js + web-push (self-hosted via Supabase Edge Functions) | No next-pwa dependency |
 
-**Do not suggest alternative frameworks, ORMs, or services** unless there is a
-concrete blocker. When in doubt, ask before introducing a new dependency.
-
----
-
-## Auth decisions (Phase 1)
-
-- ✅ Google OAuth — implement in Phase 1
-- ✅ Email/password — implement in Phase 1
-- ❌ Facebook Login — deferred until after Phase 1 is stable (app review complexity)
+**Do not suggest alternative frameworks, ORMs, or services** unless there is a concrete blocker. When in doubt, ask before introducing a new dependency.
 
 ---
 
 ## Phase plan
 
 ### Phase 1 — complete
-User profiles and community discovery:
-- Registration and login (Google OAuth + email/password) ✅
-- User profile: trainer name, friend code, first name, bio ✅
-- Browse and search community members ✅
-- Display Trainer Code (for use inside Pokémon GO — not an in-app social graph) ✅
-- GDPR compliance (see below) ✅
+Registration and login (Google OAuth + email/password), user profiles, browse and search community members, display Trainer Codes, GDPR compliance.
 
-### Raid MVP — launch blocker (Slices 6–8)
-Without raid coordination, the community is unlikely to return to the app. These
-slices must ship before public launch.
+### Raid MVP — shipped (Slices 6–8, smoke test passed 2026-05-10)
+Post a raid, see active raids, join/leave, per-raid chat, PWA installability, web push notifications. The feature bar: **faster than taking a screenshot and posting it in Messenger**.
 
-- Post a raid, see active raids, join/leave
-- PWA installability (required for iOS push)
-- Web push notifications when a raid is posted
-
-See **Raid MVP scope** and **Push notifications approach** below.
-
-### Phase 2 — do not build yet
-- DMs (direct messages between players)
-- Trade requests
-- Admin roles and moderation tools
-- Richer raid features: remote lobby codes, filters, recurring raids, history
-
-**If a Raid MVP feature would require significant refactoring to support Phase 2,
-flag it and ask. Otherwise, do not pre-build Phase 2 functionality.**
-
----
-
-## Raid MVP scope
-
-Shipped and live (Slices 6–8, full smoke test passed 2026-05-10). The feature must remain **faster than taking a screenshot and posting it in Messenger** — that's the bar against any new addition.
-
-### Out of scope (do NOT build)
+**Do NOT build:**
 - Remote raid lobby code sharing
 - Recurring raids or raids scheduled more than a few hours out
 - Raid history, stats, or past-raid browsing
 - Filters, search, sort options on the list
 - Host/organiser roles
 
-### Messenger bridge (launch fallback)
-Not all users will install the PWA on day one. Each raid card has a **"Share to Messenger"** button that opens Messenger with the raid link and details pre-filled. The poster taps it themselves — manual step, not automated (Messenger has no public group-posting API).
+### Phase 2 — do not build yet
+DMs, trade requests, admin/moderation, richer raid features (remote lobby codes, filters, recurring raids, history).
+
+**If a feature would require significant refactoring to support Phase 2, flag it and ask. Otherwise, do not pre-build Phase 2 functionality.**
 
 ---
 
@@ -157,104 +135,59 @@ Not all users will install the PWA on day one. Each raid card has a **"Share to 
 Self-hosted web-push: PWA service worker + `push_subscriptions` table + `notify-raid` Edge Function (triggered on raid INSERT). Debugging runbook lives in `docs/launch-checklist.md`.
 
 - **Android (Chrome/Firefox/etc.):** works once PWA installed.
-- **iOS 16.4+:** works **only** when added to home screen via Safari. Chrome on iOS uses WebKit but doesn't expose the install flow. iOS onboarding at `/onboarding/ios` walks users through Safari → Share → Add to Home Screen → Allow notifications.
-- **Users who don't install the PWA:** get no push. The Messenger share button is their fallback.
+- **iOS 16.4+:** works **only** when added to home screen via Safari. iOS onboarding at `/onboarding/ios` walks users through the flow.
+- **Users who don't install the PWA:** get no push. The "Share to Messenger" button on each raid card is their fallback.
+
+Known limitation: `raids/page.tsx` derives `pushStatus` from the DB row, not the live browser subscription — they can drift. Acceptable for now; fix if it causes support issues.
 
 ---
 
-## GDPR requirements (Phase 1 — non-negotiable)
+## GDPR requirements (non-negotiable)
 
-Denmark is in the EU. All of the following are required before launch:
+Denmark is in the EU. All of the following are in place:
 
-- [x] Privacy Policy page (Danish language) — implemented in Slice 5
-- [x] Explicit consent checkbox at registration (not pre-ticked) — implemented in Slice 1
-- [x] All user data stored in Supabase EU/Ireland region — configured at project creation
-- [x] Account deletion: user can delete their own account and all associated data — implemented in Slice 5
-- [x] No third-party analytics or tracking without consent — no analytics added
+- [x] Privacy Policy page (Danish) at `/privacy`
+- [x] Explicit consent checkbox at registration (not pre-ticked)
+- [x] All user data in Supabase EU/Ireland region
+- [x] Account deletion with full data cascade
+- [x] No third-party analytics or tracking
 
-When building any feature that touches personal data, ask: *does this comply
-with the GDPR checklist above?*
+When building any feature that touches personal data, verify GDPR compliance.
 
-### Privacy Policy maintenance
-
-The Privacy Policy lives at `src/app/[locale]/privacy/page.tsx` with content in `messages/da.json` (Privacy section).
-
-**Update the Privacy Policy whenever:**
-- A new personal data field is added to user profiles (e.g. location, team, level, phone number)
-- A new third-party service is introduced (analytics, push notifications, maps, etc.)
-- The data controller contact details change
-- The data retention policy changes
-
-The "last updated" date is in `messages/da.json` → `Privacy.lastUpdated`. Always bump it when content changes.
-
-**Known upcoming updates:**
-- None currently — Privacy Policy was updated in Slice 8 to disclose push subscription data.
-
----
-
-## Location approach (Phase 1)
-
-- **Manual text entry only** — user types their area (e.g. "Frederikssund centrum")
-- No GPS, no geolocation API, no map integrations in Phase 1
-- Store as a plain text field on the profile
+**Update the Privacy Policy** (`src/app/[locale]/privacy/page.tsx`, content in `messages/da.json` → `Privacy`) and bump `Privacy.lastUpdated` whenever: a new personal data field is added, a new third-party service is introduced, or contact/retention details change.
 
 ---
 
 ## Language and i18n
 
 - Default language: **Danish (da)**
-- All UI strings must go through next-intl — no hardcoded Danish (or English) text
-  in components
-- Translation files live in `/messages/da.json` (and `/messages/en.json` as a
-  stub for future use)
-- Do not add a language switcher in Phase 1 — the architecture supports it,
-  but the UI does not need it yet
-
----
-
-## Coding standards
-
-- Comment the *why*, not the *what* — only when non-obvious.
-- Prefer explicit over clever — this codebase may be read by a non-developer.
-- Keep components small and single-purpose.
+- All UI strings must go through next-intl — no hardcoded text in components
+- Translation files: `/messages/da.json` (primary), `/messages/en.json` (stub)
+- No language switcher in Phase 1
 
 ---
 
 ## Testing strategy
 
-Two layers, both run in CI:
-
 **Unit / logic tests — Vitest**
 - TDD: write the test first, confirm it fails, then implement
 - Scope: pure functions and Supabase helpers (validation, filters, server-helpers)
-- Co-located with the code they test (e.g. `src/lib/profile/validation.test.ts`)
-- Run: `npm run test` (single) / `npm run test:watch`
+- Co-located with the code they test
 
 **Browser verification — Playwright**
-- When a change has any user-visible effect, verify it in a real browser via the Playwright MCP **and** capture the same steps as a Playwright test file so the verification becomes a CI regression test.
-- One Playwright file per user flow (post a raid, join/leave, chat, install PWA prompt, etc.); spec files live in `e2e/` and run against the dev server.
-- The "no UI tests / no e2e" rule from earlier slices is **superseded** by this — manual smoke testing alone is no longer enough.
+- When a change has any user-visible effect, verify it in a real browser via the Playwright MCP **and** capture the same steps as a spec in `e2e/` so the verification becomes a CI regression test.
+- One spec file per user flow; specs run against the dev server.
 
-**PR gate:** all tests must pass before opening a PR — treat a failing test as a broken build.
+**PR gate:** all tests must pass before opening a PR.
 
 ---
 
 ## Git workflow
 
 - `main` is always deployable. Do not commit directly to `main`.
-- Each slice or chore gets its own short-lived branch **off `main`** (`slice/N-name`, `chore/short-name`). Branch is deleted after its PR merges. Do not start a new slice until the current one is merged.
+- Each slice or chore gets its own short-lived branch **off `main`** (`slice/N-name`, `chore/short-name`). Delete the branch after its PR merges. Do not start a new slice until the current one is merged.
 - Commit messages: short, imperative, in English (e.g. `Add Trainer Code display`).
 - Slices 1–9 already implemented and merged; all migrations applied.
-
----
-
-## Scale and cost constraints
-
-- Target: 20–200 users initially, Frederikssund only
-- Supabase free tier is acceptable for Phase 1 + Raid MVP
-- Vercel free tier is acceptable for Phase 1 + Raid MVP
-- Do not add services, queues, caches, or background workers unless a concrete
-  problem requires them
 
 ---
 
@@ -264,55 +197,35 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 
 | Date       | Decision                                              | Reason                              |
 |------------|-------------------------------------------------------|--------------------------------------|
-| 2026-04-29 | Design tool switched from Banani to Claude Design (claude.ai/design) | All future screen designs come from Claude Design handoff bundles |
-| 2026-04-29 | Chat added to Raid MVP (not Phase 2) | Claude Design handoff included per-raid chat; community needs it to replace Messenger |
-| 2026-05-03 | PWA icon is placeholder SVG (PG on teal) — replace before launch | Real branded PNG icons (192×192, 512×512) needed for home screen quality |
-| 2026-05-03 | git user.email must be set to renraz@googlemail.com | Vercel blocks deployments from commits with unmatched email addresses |
-| 2026-05-07 | Playwright MCP for browser verification; verifications captured as Playwright spec files in `e2e/` and run in CI | Manual smoke checks regress silently; converting each verification into a test gives a regression suite for free. Supersedes the earlier "no UI tests / no e2e" rule. |
-| 2026-05-07 | Each slice/chore branches off `main` and is deleted on merge | Earlier work piled onto `slice/1-registration` (PRs #1–#7 all opened from that one branch instead of fresh per-slice branches). Cleanup retired the misuse and `slice/9-realtime` + `chore/playwright-ci` were the first PRs done correctly. |
-| 2026-05-07 | Client-only gating uses `useMounted` (`useSyncExternalStore`-based) instead of useState+useEffect | The React 19 `react-hooks/set-state-in-effect` lint rule fires on the canonical "did mount" pattern. The hook in `src/lib/hooks/use-mounted.ts` returns `false` on the server and `true` post-hydration without setState-in-effect, so `localStorage` / `matchMedia` / `navigator` checks can be guarded during render. Used by `PushSubscribePrompt` and the iOS onboarding page. |
-| 2026-05-07 | CI workflow live on `main`: lint → vitest → Playwright on every PR and push | Three GitHub Actions secrets (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) drive the e2e dev server. First green run: 2026-05-07 on `ad66f2c`. Failure annotation about Node 20 deprecation is non-blocking until June 2026. |
-| 2026-05-11 | All server functions pinned to `dub1` (Dublin) via `preferredRegion` and `config.regions` | Supabase EU runs in AWS eu-west-1 (Ireland). Default Vercel region `iad1` (US East) added ~80ms per Supabase query; with 4–5 sequential queries per page that was 400–500ms of pure network overhead. Dublin co-location cuts each round-trip to ~5ms. Measured impact: FCP dropped from 6.6s → 1.2s (warm). |
-| 2026-05-11 | Server page components parallelise independent Supabase queries with `Promise.all` | `/raids` had 4 sequential post-`getUser` queries; `/players` and `/raids/[id]` had 2 each. All are independent once `user.id` is known — running in parallel eliminates the serial wait. |
-| 2026-05-11 | Player directory cached with `unstable_cache` (60s TTL, tag `profiles`) using admin client | Server client uses `cookies()` so it can't be called inside `unstable_cache` (runs outside request context). Admin client has no per-request dependency. Account deletion calls `revalidateTag('profiles', 'max')` for immediate bust; creates/edits rely on the TTL. |
-| 2026-05-11 | Realtime chat messages appended to local state instead of triggering `router.refresh()` | Each message INSERT was causing a full RSC page refetch. Sender name is resolved from the local attendees list. Optimistic messages are replaced when the real Realtime row arrives. Attendee changes still use `router.refresh()` (need the profile join). |
-| 2026-05-11 | `ref.current` writes must go in `useEffect`, not during render — React 19 `react-hooks/refs` rule | Fires on the "update ref synchronously during render" pattern (e.g. `attendeesRef.current = attendees`). Move into `useEffect(() => { ref.current = value; }, [value])`. One render-cycle lag is acceptable for callback refs. |
-| 2026-05-06 | Live updates via Supabase Realtime, not polling | Coordinating raids must feel as instant as Messenger; 10s polling is too slow. Hook `useRaidsRealtime` subscribes per screen and triggers `router.refresh()` (debounced 250ms) — server stays the source of truth for embedded joins. Migration 005 enables Replication on raids/raid_attendees/raid_messages. |
-| 2026-05-10 | Push notification pipeline restored after multi-layer silent failure; migration 005 applied | Root causes (each one silent): (1) webhook Authorization header was the literal placeholder `Bearer [YOUR API KEY]`, so every webhook call was auth-rejected at the gateway before reaching the function — zero invocations recorded; (2) `VAPID_PRIVATE_KEY` was missing from Edge Function secrets, so once auth was fixed the function crashed at boot with `validatePrivateKey` errors; (3) regenerating the keypair invalidated the existing `push_subscriptions` rows but the OS-level notification toggle on each device did not refresh the browser-level subscription — site data had to be cleared on each device to force re-subscribe. Hardening: `PushSubscribePrompt.tsx` now `console.error`s the upsert error instead of swallowing it; `notify-raid/index.ts` now `console.error`s any non-410 web-push error with statusCode/body. **Known limitation, not fixed:** `raids/page.tsx` derives `pushStatus` from the DB row, not the live browser subscription — they can drift (a stale row hides the prompt even when the browser has no valid subscription). Acceptable for now; fix if it bites again. |
-| 2026-05-10 | Pre-launch checklist extracted from `CLAUDE.md` to `docs/launch-checklist.md`; debugging runbook kept there for future regressions | `CLAUDE.md` is loaded into every session and was approaching the size where operational checklists with debugging runbooks compete with architectural notes. Pointer to the new file lives in `CLAUDE.md`'s intro. Push debugging runbook (the 6-step "first miss is the culprit" list) now lives next to the checklist instead of inline; meant to be re-used if push regresses. |
-| 2026-05-10 | Edge Function deploy works via `npx supabase functions deploy notify-raid` — no brew/CLI install needed | The project is already linked locally (`supabase/.temp/linked-project.json`); `npx --yes supabase ...` picks that up and deploys without an interactive login. Docker is not required for deploy (only for local function emulation). Saves a few minutes when iterating on the function. |
-| 2026-05-10 | Realtime end-to-end smoke test passed on both devices | Post a raid / send a chat / RSVP from one device → the other device updates without a manual refresh. Confirms migration 005 + `useRaidsRealtime` are wired correctly. Raid MVP launch loop (post → notify → coordinate live) is now fully working on iOS and Android. |
-
----
-
-## Pre-launch checklist
-
-Moved to [`docs/launch-checklist.md`](docs/launch-checklist.md) — operational tasks (env vars, migration 005, PWA install testing, push notification debugging runbook, icon replacement) live there to keep this file focused on architecture. Update the launch-checklist file directly as items are resolved.
+| 2026-04-29 | Design tool: Claude Design (claude.ai/design) | Handoff bundles (gzip tar: README.md + HTML prototype + JSX) replace earlier Banani designs |
+| 2026-04-29 | Chat added to Raid MVP | Claude Design handoff included per-raid chat; community needs it to replace Messenger |
+| 2026-05-03 | PWA icon is placeholder SVG — replace before launch | Real branded PNG icons (192×192, 512×512) needed |
+| 2026-05-03 | git user.email must be renraz@googlemail.com | Vercel blocks deployments from commits with unmatched email |
+| 2026-05-07 | `useMounted` hook for client-only gating | React 19 `react-hooks/set-state-in-effect` fires on useState+useEffect mount pattern |
+| 2026-05-07 | CI: lint → vitest → Playwright on every PR/push | Three GitHub Actions secrets drive the e2e dev server |
+| 2026-05-11 | All server routes/pages export `preferredRegion = "dub1"` | Co-locating with Supabase EU (Ireland) dropped FCP from 6.6s → 1.2s |
+| 2026-05-11 | `unstable_cache` uses admin client, not server client | Server client calls `cookies()` which is unavailable outside request context |
+| 2026-05-11 | Page components parallelise independent Supabase queries with `Promise.all` | Queries are independent once `user.id` is known — serial execution was pure waste |
+| 2026-05-11 | Realtime chat messages appended to local state, not `router.refresh()` | Per-message refresh caused full RSC page refetches |
+| 2026-05-11 | `ref.current` writes go in `useEffect`, not during render | React 19 `react-hooks/refs` rule disallows synchronous ref writes during render |
 
 ---
 
 ## Open questions
 
-- **Messenger vs Discord:** If the "Share to Messenger" manual step creates too
-  much friction, or if community adoption of the PWA lags, evaluate migrating
-  the community group to Discord (webhook-based auto-posting into a channel is
-  trivial there). Decide after 2–4 weeks of real raid usage post-launch.
-- **Raid boss list maintenance:** currently maintained manually. If it becomes a
-  burden, consider a lightweight admin-only edit screen (but defer until it's
-  actually a problem).
+- **Messenger vs Discord:** If "Share to Messenger" creates too much friction post-launch, evaluate migrating to Discord (webhook-based auto-posting is trivial). Decide after 2–4 weeks of real usage.
+- **Raid boss list maintenance:** Currently manual. Consider a lightweight admin edit screen only if it becomes a real burden.
 
 ---
 
 ## Design workflow
 
-Designs come from **Claude Design** (claude.ai/design). The user exports a handoff bundle directly from Claude Design and shares the URL here. The bundle is a gzip-compressed tar archive containing:
+Designs come from **Claude Design** (claude.ai/design). The user exports a handoff bundle and shares the URL. The bundle is a gzip-compressed tar archive containing:
 - `README.md` — full spec: screens, measurements, design tokens, interaction logic
 - `*.html` — interactive prototype (read the source; do not screenshot)
 - Component `.jsx` files and `colors_and_type.css`
 
-To read a handoff bundle: fetch the URL, decompress with `gunzip`, extract files with `tar -x -O`, read the README first then the relevant HTML/JSX files.
-
-Final decisions from each design session are recorded in the Decisions Log below.
+To read: fetch the URL, decompress with `gunzip`, extract with `tar -x -O`, read README first then relevant HTML/JSX.
 
 ---
 
@@ -321,6 +234,5 @@ Final decisions from each design session are recorded in the Decisions Log below
 - I am a product manager, not a coder. Explain technical decisions briefly.
 - Before making an architectural choice not covered here, **ask first**.
 - If a task is ambiguous, **ask one clarifying question** before proceeding.
-- At the end of each session, **update the Decisions Log** above with anything
-  that was resolved.
+- At the end of each session, **update the Decisions Log** above with anything resolved.
 - Keep responses practical. Prefer working code over lengthy explanation.
