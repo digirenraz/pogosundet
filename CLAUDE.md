@@ -81,7 +81,7 @@ Chat messages (`raid_messages`) are appended to local React state via Realtime I
 ### Database migrations
 SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
 
-Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied except `007_perf_indexes` (run manually in Supabase SQL editor).
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
 
 ---
 
@@ -212,6 +212,7 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-12 | Profile: added `team` + `level` columns (migration 006); BottomNav profile tab → `/profile` not `/profile/edit` | Slice 10A. `team` (mystic/valor/instinct) and `level` (1–80) are both nullable / "Valgfri". The new `/profile` is the "Min profil" view; `/profile/edit` is reached from there. Privacy Policy not bumped — team/level are voluntary public profile info, same category as bio. |
 | 2026-05-12 | Online presence via Supabase Realtime presence channel `players-online` (no DB writes) | `src/lib/profile/use-presence.ts` returns a `Set<user_id>` of currently connected clients. Channel auto-cleans on disconnect. The directory shows `Online (n)` and avatars get a green dot. "Last seen" timestamps were deferred — would need a `last_active_at` column. |
 | 2026-05-12 | Friend code QR uses `qrcode` lib, encodes the raw 12-digit string | PoGo's in-game friend QR is a proprietary format we can't replicate, so scanning this QR will NOT add the friend in PoGo. Generic QR readers do read it as the 12-digit code — useful for copy-paste / sharing elsewhere. Honest trade-off vs. a purely decorative QR. |
+| 2026-05-17 | Service worker switched to stale-while-revalidate for HTML + cache-first for `/_next/static`; per-segment `loading.tsx` skeletons added; `optimizePackageImports: ['lucide-react']`; migration 007 adds hot-path indexes (`raids.created_at`, `raid_messages(raid_id, created_at)`, partial `profiles.team`) | Previous network-first SW made the installed PWA paint as slow as a normal tab on reopen — single biggest cause of "slow when opening the app after being away". Segment skeletons remove the cross-screen stall (no streaming UI before this). Follow-up branch `chore/perf-auth-hot-path` will replace per-page `getUser()` with `getClaims()` and drop the redundant profile-guard query. |
 
 ---
 
