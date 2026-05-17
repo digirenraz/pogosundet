@@ -51,7 +51,7 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Su
 - Home page (`/`) is logged-out only
 
 ### Lib structure
-- `src/lib/profile/` — `validation.ts` (pure), `helpers.ts` (client Supabase), `server-helpers.ts` (server Supabase), `filters.ts` (player search/filter logic), each with a co-located `.test.ts`
+- `src/lib/profile/` — `validation.ts` (pure), `helpers.ts` (client Supabase), `server-helpers.ts` (server Supabase), `filters.ts` (player search/filter logic), each with a co-located `.test.ts`; plus `use-presence.ts` (client hook subscribing to the `players-online` Supabase Realtime presence channel, returns a `Set<user_id>` — no DB writes)
 - `src/lib/raids/` — `validation.ts` (pure), `helpers.ts` (client: createRaid, joinRaid, leaveRaid, updateAttendeeExtra), `server-helpers.ts` (getActiveRaids, getRecentRaids → `{active, expired}`, getRaidById), `message-helpers.ts` (client: sendMessage, getMessagesForRaid), `use-raids-realtime.ts` (client hook used by both `RaidList` and `RaidDetail`: subscribes to Supabase Realtime on raids/raid_attendees/raid_messages and calls `router.refresh()` on changes, debounced 250ms — server stays the source of truth for embedded joins), `bosses.ts` (quick-pick list), `pokemon.ts` (~600 Pokémon names for boss autocomplete). Note: `raid_attendees.user_id` and `raid_messages.user_id` both FK to `profiles.user_id` (unique), **not** `profiles.id` — required for embedded Supabase queries `profiles(trainer_name)`.
 - `src/lib/push/subscription-helpers.ts` — getPushStatus, subscribeToPush, unsubscribeFromPush (browser Push API + Supabase upsert)
 - `src/lib/account/server-helpers.ts` — account deletion using admin client
@@ -81,7 +81,7 @@ Chat messages (`raid_messages`) are appended to local React state via Realtime I
 ### Database migrations
 SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
 
-Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied except `007_perf_indexes` (run manually in Supabase SQL editor).
 
 ---
 
