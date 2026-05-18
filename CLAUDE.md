@@ -37,6 +37,11 @@ For first-time environment setup (Supabase project, env vars, Google OAuth), see
 ### Vercel region — always `dub1`
 Every server route and page component must export `export const preferredRegion = "dub1"` (Dublin). Supabase EU runs in AWS eu-west-1 (Ireland); the default US East region adds ~80ms per query. `proxy.ts` exports `regions: ["dub1"]`. Any new route handler or Server Component page that makes Supabase calls must include this export — it is not inherited automatically.
 
+### `next.config.ts` — load-bearing knobs
+- `experimental.optimizePackageImports: ['lucide-react']` — tree-shakes the icon barrel. Removing it ships every Lucide icon in every bundle that imports one.
+- `images.remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }]` — required for `next/image` to optimise raid screenshots and avatars from Supabase Storage. Any new image origin must be added here or `next/image` will refuse the URL.
+- Wrapped in `withNextIntl('./src/i18n/request.ts')` — do not unwrap; it's what loads locale messages for Server Components.
+
 ### Middleware (`src/proxy.ts`)
 Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Supabase session refresh (`updateSession`) then next-intl locale routing. Auth cookies are manually copied from the Supabase response onto the intl response to prevent loss.
 
@@ -51,7 +56,7 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Su
 - Home page (`/`) is logged-out only
 
 ### Lib structure
-- `src/lib/profile/` — `validation.ts` (pure), `helpers.ts` (client Supabase), `server-helpers.ts` (server Supabase), `filters.ts` (player search/filter logic), each with a co-located `.test.ts`
+- `src/lib/profile/` — `validation.ts` (pure), `helpers.ts` (client Supabase), `server-helpers.ts` (server Supabase), `filters.ts` (player search/filter logic), each with a co-located `.test.ts`; plus `use-presence.ts` (client hook subscribing to the `players-online` Supabase Realtime presence channel, returns a `Set<user_id>` — no DB writes)
 - `src/lib/raids/` — `validation.ts` (pure), `helpers.ts` (client: createRaid, joinRaid, leaveRaid, updateAttendeeExtra), `server-helpers.ts` (getActiveRaids, getRecentRaids → `{active, expired}`, getRaidById), `message-helpers.ts` (client: sendMessage, getMessagesForRaid), `use-raids-realtime.ts` (client hook used by both `RaidList` and `RaidDetail`: subscribes to Supabase Realtime on raids/raid_attendees/raid_messages and calls `router.refresh()` on changes, debounced 250ms — server stays the source of truth for embedded joins), `bosses.ts` (quick-pick list), `pokemon.ts` (~600 Pokémon names for boss autocomplete). Note: `raid_attendees.user_id` and `raid_messages.user_id` both FK to `profiles.user_id` (unique), **not** `profiles.id` — required for embedded Supabase queries `profiles(trainer_name)`.
 - `src/lib/push/subscription-helpers.ts` — getPushStatus, subscribeToPush, unsubscribeFromPush (browser Push API + Supabase upsert)
 - `src/lib/account/server-helpers.ts` — account deletion using admin client
@@ -81,7 +86,7 @@ Chat messages (`raid_messages`) are appended to local React state via Realtime I
 ### Database migrations
 SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
 
-Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
 
 ---
 
@@ -177,6 +182,7 @@ When building any feature that touches personal data, verify GDPR compliance.
 **Browser verification — Playwright**
 - When a change has any user-visible effect, verify it in a real browser via the Playwright MCP **and** capture the same steps as a spec in `e2e/` so the verification becomes a CI regression test.
 - One spec file per user flow; specs run against the dev server.
+- `playwright.config.ts` auto-starts `npm run dev` on port 3000 via its `webServer` block and reuses an existing server when one is already running locally — just run `npm run test:e2e`, don't start the dev server separately. In CI it always starts fresh.
 
 **PR gate:** all tests must pass before opening a PR.
 
@@ -212,6 +218,7 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-12 | Profile: added `team` + `level` columns (migration 006); BottomNav profile tab → `/profile` not `/profile/edit` | Slice 10A. `team` (mystic/valor/instinct) and `level` (1–80) are both nullable / "Valgfri". The new `/profile` is the "Min profil" view; `/profile/edit` is reached from there. Privacy Policy not bumped — team/level are voluntary public profile info, same category as bio. |
 | 2026-05-12 | Online presence via Supabase Realtime presence channel `players-online` (no DB writes) | `src/lib/profile/use-presence.ts` returns a `Set<user_id>` of currently connected clients. Channel auto-cleans on disconnect. The directory shows `Online (n)` and avatars get a green dot. "Last seen" timestamps were deferred — would need a `last_active_at` column. |
 | 2026-05-12 | Friend code QR uses `qrcode` lib, encodes the raw 12-digit string | PoGo's in-game friend QR is a proprietary format we can't replicate, so scanning this QR will NOT add the friend in PoGo. Generic QR readers do read it as the 12-digit code — useful for copy-paste / sharing elsewhere. Honest trade-off vs. a purely decorative QR. |
+| 2026-05-17 | Service worker switched to stale-while-revalidate for HTML + cache-first for `/_next/static`; per-segment `loading.tsx` skeletons added; `optimizePackageImports: ['lucide-react']`; migration 007 adds hot-path indexes (`raids.created_at`, `raid_messages(raid_id, created_at)`, partial `profiles.team`) | Previous network-first SW made the installed PWA paint as slow as a normal tab on reopen — single biggest cause of "slow when opening the app after being away". Segment skeletons remove the cross-screen stall (no streaming UI before this). Follow-up branch `chore/perf-auth-hot-path` will replace per-page `getUser()` with `getClaims()` and drop the redundant profile-guard query. |
 
 ---
 
