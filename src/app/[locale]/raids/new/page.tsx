@@ -85,10 +85,9 @@ export default function NewRaidPage() {
 
     try {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: claimsData } = await supabase.auth.getClaims();
+      const userId = claimsData?.claims?.sub;
+      if (!userId) {
         router.push('/login');
         return;
       }
@@ -97,7 +96,7 @@ export default function NewRaidPage() {
 
       if (imageFile) {
         const ext = imageFile.name.split('.').pop() ?? 'jpg';
-        const path = `${user.id}/${Date.now()}.${ext}`;
+        const path = `${userId}/${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from('raid-images')
           .upload(path, imageFile);
@@ -116,7 +115,7 @@ export default function NewRaidPage() {
       }
 
       const { data: newRaid, error: insertError } = await createRaid({
-        user_id: user.id,
+        user_id: userId,
         image_url: imageUrl,
         gym_name: gymName.trim() || null,
         boss_name: bossName || null,
@@ -131,9 +130,9 @@ export default function NewRaidPage() {
       }
 
       // Auto-join the poster and set their extra count
-      await joinRaid(newRaid.id, user.id);
+      await joinRaid(newRaid.id, userId);
       if (extra > 0) {
-        await updateAttendeeExtra(newRaid.id, user.id, extra);
+        await updateAttendeeExtra(newRaid.id, userId, extra);
       }
 
       router.push('/raids');

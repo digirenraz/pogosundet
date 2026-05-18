@@ -11,22 +11,19 @@ import { PushSubscribePrompt } from '@/components/PushSubscribePrompt';
 // Raids page — shows active raids (and recently expired ones) plus a button to post a new one.
 export default async function RaidsPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
 
-  if (!user) redirect('/login');
+  if (!userId) redirect('/login');
 
-  // Profile guard, raid list, push subscription status, and translations are all
-  // independent once we have user.id — run them in parallel.
-  const [{ data: ownProfile }, { active, expired }, { data: pushSub }, t] = await Promise.all([
-    supabase.from('profiles').select('id').eq('user_id', user.id).single(),
+  // Raid list, push subscription status, and translations are all independent
+  // once we have userId — run them in parallel. The profile-existence guard is
+  // enforced by the middleware.
+  const [{ active, expired }, { data: pushSub }, t] = await Promise.all([
     getRecentRaids(),
-    supabase.from('push_subscriptions').select('id').eq('user_id', user.id).maybeSingle(),
+    supabase.from('push_subscriptions').select('id').eq('user_id', userId).maybeSingle(),
     getTranslations('Raids'),
   ]);
-
-  if (!ownProfile) redirect('/profile/setup');
 
   const hasAny = active.length > 0 || expired.length > 0;
   const pushStatus = pushSub ? 'subscribed' : 'unsubscribed';
@@ -47,11 +44,11 @@ export default async function RaidsPage() {
 
       {/* Content padded for fixed header (60px) and fixed bottom nav (64px) */}
       <main className="pt-[76px] pb-[80px] px-4 flex flex-col gap-4">
-        <PushSubscribePrompt userId={user.id} initialStatus={pushStatus} />
+        <PushSubscribePrompt userId={userId} initialStatus={pushStatus} />
         {!hasAny ? (
           <p className="text-center text-muted-foreground text-[14px] mt-8">{t('emptyState')}</p>
         ) : (
-          <RaidList active={active} expired={expired} currentUserId={user.id} />
+          <RaidList active={active} expired={expired} currentUserId={userId} />
         )}
       </main>
 

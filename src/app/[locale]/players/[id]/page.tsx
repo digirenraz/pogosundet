@@ -16,11 +16,10 @@ export default async function PlayerDetailPage({ params }: PlayerDetailPageProps
   const { id } = await params;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
 
-  if (!user) redirect('/login');
+  if (!userId) redirect('/login');
 
   const { data: profiles } = await getAllProfiles();
   const startIndex = profiles.findIndex((p) => p.id === id);
@@ -30,7 +29,7 @@ export default async function PlayerDetailPage({ params }: PlayerDetailPageProps
     <PlayerDetailDeckWithPresence
       profiles={profiles}
       startIndex={startIndex}
-      currentUserId={user.id}
+      currentUserId={userId}
     />
   );
 }

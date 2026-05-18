@@ -20,10 +20,11 @@ export default function ProfileSetupPage() {
     setGeneralError('');
 
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push('/login'); return; }
+    const { data: claimsData } = await supabase.auth.getClaims();
+    const userId = claimsData?.claims?.sub;
+    if (!userId) { router.push('/login'); return; }
 
-    const { error } = await createProfile({ user_id: user.id, ...input });
+    const { error } = await createProfile({ user_id: userId, ...input });
     setLoading(false);
 
     if (error) {

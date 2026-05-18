@@ -5,21 +5,15 @@ import { createClient } from "@/lib/supabase/server";
 import { Hero } from "@/components/Hero";
 
 // Home page — logged-out landing page only.
-// Logged-in users are always redirected: to /profile/setup if no profile, or /players otherwise.
+// Logged-in users with a profile go to /players; the profile-setup case is
+// handled centrally by the middleware in `src/lib/supabase/middleware.ts`.
 export default async function HomePage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
   const t = await getTranslations("Home");
 
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
-    redirect(profile ? "/players" : "/profile/setup");
+  if (claimsData?.claims) {
+    redirect("/players");
   }
 
   return (

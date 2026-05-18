@@ -14,18 +14,19 @@ export const preferredRegion = 'dub1';
 export default async function ProfileTabPage() {
   const t = await getTranslations('ProfileTab');
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
 
-  if (!user) redirect('/login');
+  if (!userId) redirect('/login');
 
   const { data } = await supabase
     .from('profiles')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .single();
 
+  // The middleware guarantees a profile exists for authenticated routes; the
+  // null-check stays as a safety net.
   if (!data) redirect('/profile/setup');
   const profile = data as Profile;
   const team = (profile.team ?? 'none') as AvatarTeam;

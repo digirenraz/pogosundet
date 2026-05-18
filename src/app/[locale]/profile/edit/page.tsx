@@ -30,10 +30,11 @@ export default function ProfileEditPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-      setUserId(user.id);
-      const { data } = await getProfile(user.id);
+      const { data: claimsData } = await supabase.auth.getClaims();
+      const uid = claimsData?.claims?.sub;
+      if (!uid) { router.push('/login'); return; }
+      setUserId(uid);
+      const { data } = await getProfile(uid);
       if (data) {
         setInitialValues({
           trainer_name: data.trainer_name,
