@@ -39,3 +39,9 @@
   --color-team-valor: #ee2a36;
   --color-team-instinct: #f5b70c;
 }
+
+/* Chat "X skriver…" indicator — three-dot bounce. Used by TypingDots. */
+@keyframes pgs-typing {
+  0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+  40%           { opacity: 1;   transform: translateY(-2px); }
+}

@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Users, Swords, MessageCircle, User } from 'lucide-react';
 
 // Bottom navigation bar. Shown on all authenticated "app" pages.
-// Players and Profile are functional; Raids and Chat are Phase 2 placeholders.
+// All four tabs are now live; chat unread badges are wired in a follow-up.
 export function BottomNav() {
   const pathname = usePathname();
   const t = useTranslations('BottomNav');
@@ -35,11 +35,18 @@ export function BottomNav() {
         <span className="text-[11px] font-semibold">{t('raids')}</span>
       </Link>
 
-      {/* Chat — placeholder, Phase 2 */}
-      <div className="flex flex-col items-center justify-center gap-1 w-16 text-muted-foreground cursor-not-allowed opacity-50">
-        <MessageCircle size={24} />
+      {/* Chat — unread count wired in a follow-up; slot reserved. */}
+      <Link
+        href="/chat"
+        className={`relative flex flex-col items-center justify-center gap-1 w-16 ${isActive('/chat') || pathname.includes('/chat/') ? 'text-primary' : 'text-muted-foreground'}`}
+      >
+        <span className="relative">
+          <MessageCircle size={24} />
+          {/* Unread count wired in a follow-up — slot reserved. */}
+          <span className="hidden absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold items-center justify-center" />
+        </span>
         <span className="text-[11px] font-semibold">{t('chat')}</span>
-      </div>
+      </Link>
 
       {/* Profile */}
       <Link

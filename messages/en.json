@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: April 2026",
+    "lastUpdated": "Last updated: 2026-05-18",
     "backLink": "Back",
     "s1Title": "1. Data Controller",
     "s1Body": "René Rasmussen is the data controller for PoGoSundet. Contact: renraz@gmail.com",
@@ -95,7 +95,11 @@
     "s9Title": "9. Cookies and tracking",
     "s9Body": "PoGoSundet only uses technically necessary cookies to keep you logged in. We do not use tracking, analytics, or marketing cookies.",
     "s10Title": "10. Contact",
-    "s10Body": "Questions about this privacy policy can be sent to renraz@gmail.com"
+    "s10Body": "Questions about this privacy policy can be sent to renraz@gmail.com",
+    "s11Title": "11. Push notifications",
+    "s11Body": "If you choose to receive push notifications, we store your browser's push subscription (endpoint and encryption keys) in our database. This data is used solely to notify you of new raids. You can unsubscribe at any time via your browser or device settings — the subscription is deleted automatically.",
+    "s12Title": "12. Community chat",
+    "s12Body": "When you post in the shared channels (#generelt and #app-feedback), we store your message together with your user id and timestamp. Messages are visible to all signed-in users of PoGoSundet and are kept indefinitely. When you delete your account, all your chat messages are deleted automatically along with your profile."
   },
   "Header": {
     "appName": "PoGoSundet",
@@ -144,6 +148,34 @@
     "raids": "Raids",
     "chat": "Chat",
     "profile": "Profile"
+  },
+  "Chat": {
+    "listTitle": "Chat",
+    "onlineNow": "Online nu",
+    "onlineCountOf": "{n} af {total}",
+    "noOneOnline": "Ingen online lige nu.",
+    "you": "Dig",
+    "you_short": "Du",
+    "kanaler": "{n, plural, =1{1 kanal} other{# kanaler}}",
+    "welcomeTo": "Velkommen til #{channel}",
+    "memberCount": "{n} medlemmer",
+    "members": "Medlemmer",
+    "membersSummary": "{online} online · {total} i alt",
+    "online": "Online nu",
+    "offline": "Offline",
+    "online_section": "Online",
+    "offline_section": "Offline",
+    "headerOnline": "{online} online · {total} medlemmer",
+    "composerPlaceholder": "Besked til #{channel}",
+    "send": "Send",
+    "back": "Tilbage",
+    "close": "Luk",
+    "typingOne": "{name} skriver…",
+    "typingTwo": "{a} og {b} skriver…",
+    "typingMany": "{n} medlemmer skriver…",
+    "noMessages": "Ingen beskeder endnu",
+    "empty": "Ingen beskeder. Vær den første.",
+    "sentAt": "Sendt · {time}"
   },
   "ProfileEdit": {
     "headerTitle": "Edit profile",
