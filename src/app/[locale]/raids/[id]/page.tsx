@@ -12,26 +12,25 @@ export default async function RaidDetailPage({ params }: RaidDetailPageProps) {
   const { id } = await params;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
 
-  if (!user) redirect('/login');
+  if (!userId) redirect('/login');
 
-  // Profile check and raid data fetch are independent — run in parallel.
+  // We still need trainer_name for the chat composer — fetch it in parallel
+  // with the raid data. The profile-existence guard is handled by middleware.
   const [{ data: ownProfile }, raid] = await Promise.all([
-    supabase.from('profiles').select('trainer_name').eq('user_id', user.id).single(),
+    supabase.from('profiles').select('trainer_name').eq('user_id', userId).single(),
     getRaidById(id),
   ]);
 
-  if (!ownProfile) redirect('/profile/setup');
   if (!raid) notFound();
 
   return (
     <RaidDetail
       raid={raid}
-      currentUserId={user.id}
-      currentUserName={ownProfile.trainer_name ?? ''}
+      currentUserId={userId}
+      currentUserName={ownProfile?.trainer_name ?? ''}
     />
   );
 }

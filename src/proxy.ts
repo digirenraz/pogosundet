@@ -7,8 +7,13 @@ import { updateSession } from "@/lib/supabase/middleware";
 const intlMiddleware = createMiddleware(routing);
 
 export async function proxy(request: NextRequest) {
-  // 1. Refresh the Supabase auth session (keeps cookies alive on every request)
+  // 1. Refresh the Supabase auth session and enforce the profile-existence guard.
+  //    May return a 3xx redirect to /profile/setup — if so, short-circuit and
+  //    skip the intl middleware so we don't double-process.
   const supabaseResponse = await updateSession(request);
+  if (supabaseResponse.status >= 300 && supabaseResponse.status < 400) {
+    return supabaseResponse;
+  }
 
   // 2. Run next-intl middleware (locale detection + redirect)
   const intlResponse = intlMiddleware(request);

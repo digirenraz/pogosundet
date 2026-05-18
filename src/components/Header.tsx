@@ -6,9 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 // Rendered inside the hero area so uses white text with a drop shadow for contrast.
 export async function Header() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const isAuthenticated = Boolean(claimsData?.claims);
   const t = await getTranslations("Header");
 
   return (
@@ -20,7 +19,7 @@ export async function Header() {
         {t("appName")}
       </Link>
 
-      {!user && (
+      {!isAuthenticated && (
         <Link
           href="/login"
           className="text-sm font-semibold text-white drop-shadow-sm"

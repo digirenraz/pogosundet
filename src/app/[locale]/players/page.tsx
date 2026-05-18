@@ -9,25 +9,19 @@ import { BottomNav } from '@/components/BottomNav';
 // Fetches all profiles server-side and passes them to the client component for search/display.
 export default async function PlayersPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
 
-  if (!user) redirect('/login');
+  if (!userId) redirect('/login');
 
-  // Fetch the user's own profile (for the setup-guard redirect) and the full
-  // directory in parallel — both are independent once we have user.id.
-  const [{ data: ownProfile }, { data: profiles }] = await Promise.all([
-    supabase.from('profiles').select('id').eq('user_id', user.id).single(),
-    getAllProfiles(),
-  ]);
-
-  if (!ownProfile) redirect('/profile/setup');
+  const { data: profiles } = await getAllProfiles();
 
   return (
     <div className="min-h-screen bg-background">
       <DirectoryHeader />
       {/* Content padded for fixed header (60px) and fixed bottom nav (64px) */}
       <main className="pt-[76px] pb-[80px] px-4 flex flex-col gap-4">
-        <PlayerDirectory profiles={profiles} currentUserId={user.id} />
+        <PlayerDirectory profiles={profiles} currentUserId={userId} />
       </main>
       <BottomNav />
     </div>
