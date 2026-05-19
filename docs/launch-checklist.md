@@ -9,16 +9,16 @@ Update this file as items are completed or new ones surface. Keep `CLAUDE.md`'s 
 ## From Phase 1
 
 - [ ] Add `SUPABASE_SERVICE_ROLE_KEY` to Vercel environment variables (needed for account deletion)
-- [ ] Test Google OAuth with the production Supabase URL (not just local)
+- [x] Test Google OAuth with the production Supabase URL (not just local) — verified 2026-05-19
 - [ ] Verify Supabase project is on EU/Ireland region (already confirmed, but double-check before launch)
 - [ ] Decide on a real domain name and configure it in Vercel + Supabase allowed URLs
 - [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
 
 ## From Raid MVP (Slices 6–8)
 
-- [ ] Test PWA install flow end-to-end on a real iPhone via Safari (not simulator)
-- [ ] Test PWA install flow on Android Chrome
-- [ ] Replace placeholder PWA icon (public/icon.svg) with real branded PNG icons (192×192, 512×512)
+- [x] Test PWA install flow end-to-end on a real iPhone via Safari (not simulator) — verified 2026-05-19, push notifications arriving
+- [x] Test PWA install flow on Android Chrome — verified 2026-05-19, push notifications arriving
+- [x] Replace placeholder PWA icon (public/icon.svg) with real branded PNG icons (192×192, 512×512) — done 2026-05-19, glossy Pokéball on teal brand background (Claude Design handoff); manifest, layout.tsx apple-touch-icon, and sw.js precache + push notification icon all updated; SW cache bumped to v3
 - [ ] Seed the raid boss quick-pick list with current raid bosses before launch
 
 ## Push notifications — runbook (keep for future regressions)

@@ -10,13 +10,13 @@
 // before painting, which made the installed PWA feel as slow as a normal browser tab.
 // SWR serves the cached shell instantly while a fresh copy is fetched in the background.
 
-const SHELL_CACHE = 'pogosundet-shell-v2';
-const RUNTIME_CACHE = 'pogosundet-runtime-v2';
+const SHELL_CACHE = 'pogosundet-shell-v3';
+const RUNTIME_CACHE = 'pogosundet-runtime-v3';
 
 // URLs precached on install. /login is a safe entry point for cold reopens —
 // the server still re-checks auth on every navigation, so showing the cached
 // login shell for an unauthenticated user is harmless.
-const PRECACHE = ['/login', '/manifest.json', '/icon.svg'];
+const PRECACHE = ['/login', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -79,7 +79,7 @@ self.addEventListener('fetch', event => {
   }
 
   // PWA assets.
-  if (url.pathname === '/manifest.json' || url.pathname === '/icon.svg' || url.pathname.startsWith('/icons/')) {
+  if (url.pathname === '/manifest.json' || url.pathname.startsWith('/icon-') || url.pathname.startsWith('/icons/')) {
     event.respondWith(cacheFirst(event.request));
     return;
   }
@@ -99,8 +99,8 @@ self.addEventListener('push', event => {
   event.waitUntil(
     self.registration.showNotification(data.title ?? 'Nyt raid!', {
       body: data.body ?? '',
-      icon: '/icon.svg',
-      badge: '/icon.svg',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       data: { url: data.url ?? '/raids' },
     })
   );
