@@ -1,10 +1,13 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { usePresence } from '@/lib/profile/use-presence';
 import { useChannelUnread, type UnreadCounts } from '@/lib/chat/use-channel-unread';
+import { useChannelListTyping } from '@/lib/chat/use-channel-list-typing';
 import { OnlineStrip, type OnlineStripProfile } from './OnlineStrip';
+import { TypingDots } from './TypingDots';
 import { relTime } from '@/lib/chat/time';
 import type { Channel } from '@/lib/chat/channels';
 
@@ -41,6 +44,12 @@ export function ChannelListScreen({
     userId: currentUserId,
     initialCounts: initialUnreadCounts,
   });
+  const typingByChannel = useChannelListTyping(currentUserId);
+  const nameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of profiles) map.set(p.user_id, p.trainer_name);
+    return map;
+  }, [profiles]);
   const now = new Date();
 
   return (
@@ -64,16 +73,23 @@ export function ChannelListScreen({
             </span>
           </div>
           <div className="flex flex-col gap-2.5">
-            {entries.map(({ channel, lastMessage }) => (
-              <ChannelRow
-                key={channel.id}
-                channel={channel}
-                lastMessage={lastMessage}
-                now={now}
-                unread={counts[channel.id]}
-                onOpen={() => clearChannel(channel.id)}
-              />
-            ))}
+            {entries.map(({ channel, lastMessage }) => {
+              const typingIds = Array.from(typingByChannel[channel.id]);
+              const typingNames = typingIds
+                .map((id) => nameById.get(id))
+                .filter((n): n is string => Boolean(n));
+              return (
+                <ChannelRow
+                  key={channel.id}
+                  channel={channel}
+                  lastMessage={lastMessage}
+                  now={now}
+                  unread={counts[channel.id]}
+                  onOpen={() => clearChannel(channel.id)}
+                  typingNames={typingNames}
+                />
+              );
+            })}
           </div>
         </section>
       </main>
@@ -87,11 +103,25 @@ interface ChannelRowProps {
   now: Date;
   unread: number;
   onOpen: () => void;
+  typingNames: string[];
 }
 
-function ChannelRow({ channel, lastMessage, now, unread, onOpen }: ChannelRowProps) {
+function ChannelRow({ channel, lastMessage, now, unread, onOpen, typingNames }: ChannelRowProps) {
   const t = useTranslations('Chat');
   const hasUnread = unread > 0;
+  const isTyping = typingNames.length > 0;
+
+  // Typing preview takes priority over last-message — matches the design.
+  let typingSentence = '';
+  if (isTyping) {
+    if (typingNames.length === 1) {
+      typingSentence = t('typingOne', { name: typingNames[0] });
+    } else if (typingNames.length === 2) {
+      typingSentence = t('typingTwo', { a: typingNames[0], b: typingNames[1] });
+    } else {
+      typingSentence = t('typingMany', { n: typingNames.length });
+    }
+  }
 
   return (
     <Link
@@ -120,7 +150,12 @@ function ChannelRow({ channel, lastMessage, now, unread, onOpen }: ChannelRowPro
         </div>
         <div className="flex justify-between items-center gap-2">
           <div className="flex-1 min-w-0 overflow-hidden">
-            {lastMessage ? (
+            {isTyping ? (
+              <span className="inline-flex items-center gap-2 text-[13px] font-semibold italic text-primary truncate max-w-full">
+                <TypingDots size={5} className="text-primary" />
+                <span className="truncate">{typingSentence}</span>
+              </span>
+            ) : lastMessage ? (
               <p
                 className={`text-[13px] truncate ${
                   hasUnread ? 'text-card-foreground font-semibold' : 'text-muted-foreground'
