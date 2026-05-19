@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getAllProfiles } from '@/lib/profile/server-helpers';
 import { CHANNELS } from '@/lib/chat/channels';
 import { getLatestMessageForChannel } from '@/lib/chat/server-helpers';
+import { getUnreadCountsForUser, markChannelsSeen } from '@/lib/chat/read-helpers';
 import { ChannelListScreen, type ChannelListEntry } from '@/components/chat/ChannelListScreen';
 import { BottomNav } from '@/components/BottomNav';
 import type { OnlineStripProfile } from '@/components/chat/OnlineStrip';
@@ -17,8 +18,13 @@ export default async function ChatPage() {
   const userId = claimsData?.claims?.sub;
   if (!userId) redirect('/login');
 
-  // Parallel fetches: latest message per channel + all profiles (cached 60s).
-  const [profilesResult, ...latestPerChannel] = await Promise.all([
+  // Unread counts must be read BEFORE the seed upsert — the seed only inserts
+  // missing rows (DO NOTHING) so it won't clobber an existing last_read_at,
+  // but reading first keeps the ordering explicit. Parallel with the rest.
+  const channelIds = CHANNELS.map((c) => c.id);
+  const [initialUnreadCounts, , profilesResult, ...latestPerChannel] = await Promise.all([
+    getUnreadCountsForUser(userId),
+    markChannelsSeen(userId, channelIds),
     getAllProfiles(),
     ...CHANNELS.map((c) => getLatestMessageForChannel(c.id)),
   ]);
@@ -53,6 +59,7 @@ export default async function ChatPage() {
         profiles={profiles}
         totalMembers={profiles.length}
         currentUserId={userId}
+        initialUnreadCounts={initialUnreadCounts}
       />
       <BottomNav />
     </>
