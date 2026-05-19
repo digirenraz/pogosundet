@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     title: "PoGoSundet",
   },
   icons: {
-    apple: "/icon.svg",
+    apple: "/icon-192.png",
   },
 };
 
