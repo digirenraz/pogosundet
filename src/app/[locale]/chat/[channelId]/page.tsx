@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getAllProfiles } from '@/lib/profile/server-helpers';
 import { getChannelById } from '@/lib/chat/channels';
 import { getMemberCount, getMessagesForChannel } from '@/lib/chat/server-helpers';
+import { markChannelRead } from '@/lib/chat/read-helpers';
 import { ChannelScreen } from '@/components/chat/ChannelScreen';
 import type { OnlineStripProfile } from '@/components/chat/OnlineStrip';
 import type { Team } from '@/lib/profile/validation';
@@ -25,6 +26,7 @@ export default async function ChannelPage({ params }: PageProps) {
   if (!userId) redirect('/login');
 
   // Parallel fetches once we have a valid channel + user.
+  // markChannelRead bumps last_read_at = NOW() so this channel renders with 0 unread.
   const [messages, profilesResult, memberCount, meResult] = await Promise.all([
     getMessagesForChannel(channel.id, 100),
     getAllProfiles(),
@@ -34,6 +36,7 @@ export default async function ChannelPage({ params }: PageProps) {
       .select('trainer_name')
       .eq('user_id', userId)
       .single(),
+    markChannelRead(userId, channel.id),
   ]);
 
   const currentUserName =

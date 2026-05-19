@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { usePresence } from '@/lib/profile/use-presence';
+import { useChannelUnread, type UnreadCounts } from '@/lib/chat/use-channel-unread';
 import { OnlineStrip, type OnlineStripProfile } from './OnlineStrip';
 import { relTime } from '@/lib/chat/time';
 import type { Channel } from '@/lib/chat/channels';
@@ -22,6 +23,7 @@ interface ChannelListScreenProps {
   profiles: OnlineStripProfile[];
   totalMembers: number;
   currentUserId: string;
+  initialUnreadCounts: UnreadCounts;
 }
 
 // Root component for /chat. Online strip + channel rows.
@@ -31,9 +33,14 @@ export function ChannelListScreen({
   profiles,
   totalMembers,
   currentUserId,
+  initialUnreadCounts,
 }: ChannelListScreenProps) {
   const t = useTranslations('Chat');
   const onlineIds = usePresence(currentUserId);
+  const { counts, clearChannel } = useChannelUnread({
+    userId: currentUserId,
+    initialCounts: initialUnreadCounts,
+  });
   const now = new Date();
 
   return (
@@ -63,6 +70,8 @@ export function ChannelListScreen({
                 channel={channel}
                 lastMessage={lastMessage}
                 now={now}
+                unread={counts[channel.id]}
+                onOpen={() => clearChannel(channel.id)}
               />
             ))}
           </div>
@@ -76,14 +85,18 @@ interface ChannelRowProps {
   channel: Channel;
   lastMessage: ChannelListEntry['lastMessage'];
   now: Date;
+  unread: number;
+  onOpen: () => void;
 }
 
-function ChannelRow({ channel, lastMessage, now }: ChannelRowProps) {
+function ChannelRow({ channel, lastMessage, now, unread, onOpen }: ChannelRowProps) {
   const t = useTranslations('Chat');
+  const hasUnread = unread > 0;
 
   return (
     <Link
       href={`/chat/${channel.id}`}
+      onClick={onOpen}
       className="flex gap-3 items-start bg-card border border-border rounded-lg p-3.5 text-left"
     >
       <div className="w-11 h-11 rounded-md bg-secondary flex items-center justify-center shrink-0">
@@ -96,7 +109,11 @@ function ChannelRow({ channel, lastMessage, now }: ChannelRowProps) {
             {channel.name}
           </span>
           {lastMessage && (
-            <span className="text-[12px] font-semibold text-muted-foreground shrink-0 whitespace-nowrap">
+            <span
+              className={`text-[12px] font-semibold shrink-0 whitespace-nowrap ${
+                hasUnread ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
               {relTime(new Date(lastMessage.created_at), now)}
             </span>
           )}
@@ -104,7 +121,11 @@ function ChannelRow({ channel, lastMessage, now }: ChannelRowProps) {
         <div className="flex justify-between items-center gap-2">
           <div className="flex-1 min-w-0 overflow-hidden">
             {lastMessage ? (
-              <p className="text-[13px] text-muted-foreground truncate">
+              <p
+                className={`text-[13px] truncate ${
+                  hasUnread ? 'text-card-foreground font-semibold' : 'text-muted-foreground'
+                }`}
+              >
                 <span className="font-semibold text-card-foreground">
                   {lastMessage.author_is_me ? t('you_short') : (lastMessage.author_name ?? '—')}:
                 </span>{' '}
@@ -114,6 +135,11 @@ function ChannelRow({ channel, lastMessage, now }: ChannelRowProps) {
               <p className="text-[13px] italic text-muted-foreground">{t('noMessages')}</p>
             )}
           </div>
+          {hasUnread && (
+            <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold inline-flex items-center justify-center shrink-0">
+              {unread}
+            </span>
+          )}
         </div>
       </div>
     </Link>

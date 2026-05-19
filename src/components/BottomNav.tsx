@@ -1,15 +1,34 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Users, Swords, MessageCircle, User } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { useChannelUnread } from '@/lib/chat/use-channel-unread';
 
 // Bottom navigation bar. Shown on all authenticated "app" pages.
-// All four tabs are now live; chat unread badges are wired in a follow-up.
+// The Chat tab carries a live unread badge driven by useChannelUnread.
 export function BottomNav() {
   const pathname = usePathname();
   const t = useTranslations('BottomNav');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getClaims();
+      const sub = data?.claims?.sub ?? null;
+      if (!cancelled) setUserId(sub);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const { total: unreadTotal } = useChannelUnread({ userId });
 
   const isActive = (path: string) => pathname.endsWith(path);
   // Profile tab is active for /profile and /profile/edit alike.
@@ -35,15 +54,21 @@ export function BottomNav() {
         <span className="text-[11px] font-semibold">{t('raids')}</span>
       </Link>
 
-      {/* Chat — unread count wired in a follow-up; slot reserved. */}
+      {/* Chat — live unread badge */}
       <Link
         href="/chat"
         className={`relative flex flex-col items-center justify-center gap-1 w-16 ${isActive('/chat') || pathname.includes('/chat/') ? 'text-primary' : 'text-muted-foreground'}`}
       >
         <span className="relative">
           <MessageCircle size={24} />
-          {/* Unread count wired in a follow-up — slot reserved. */}
-          <span className="hidden absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold items-center justify-center" />
+          {unreadTotal > 0 && (
+            <span
+              aria-label={`${unreadTotal} ulæste beskeder`}
+              className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold inline-flex items-center justify-center"
+            >
+              {unreadTotal > 99 ? '99+' : unreadTotal}
+            </span>
+          )}
         </span>
         <span className="text-[11px] font-semibold">{t('chat')}</span>
       </Link>
