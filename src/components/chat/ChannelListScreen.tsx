@@ -40,7 +40,7 @@ export function ChannelListScreen({
 }: ChannelListScreenProps) {
   const t = useTranslations('Chat');
   const onlineIds = usePresence(currentUserId);
-  const { counts, clearChannel } = useChannelUnread({
+  const { counts, clearChannel, latestByChannel } = useChannelUnread({
     userId: currentUserId,
     initialCounts: initialUnreadCounts,
   });
@@ -78,11 +78,26 @@ export function ChannelListScreen({
               const typingNames = typingIds
                 .map((id) => nameById.get(id))
                 .filter((n): n is string => Boolean(n));
+              // Prefer the most recent realtime INSERT over the server-rendered
+              // preview when it's actually newer — this keeps the channel-list
+              // row updated as messages arrive without a page refresh.
+              const live = latestByChannel[channel.id];
+              const livePreview =
+                live &&
+                (!lastMessage ||
+                  new Date(live.created_at).getTime() > new Date(lastMessage.created_at).getTime())
+                  ? {
+                      body: live.body,
+                      created_at: live.created_at,
+                      author_name: nameById.get(live.user_id) ?? null,
+                      author_is_me: live.user_id === currentUserId,
+                    }
+                  : lastMessage;
               return (
                 <ChannelRow
                   key={channel.id}
                   channel={channel}
-                  lastMessage={lastMessage}
+                  lastMessage={livePreview}
                   now={now}
                   unread={counts[channel.id]}
                   onOpen={() => clearChannel(channel.id)}

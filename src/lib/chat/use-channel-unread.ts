@@ -7,8 +7,10 @@ import { CHANNELS, type ChannelId } from './channels';
 import type { ChannelMessageRow } from './helpers';
 
 export type UnreadCounts = Record<ChannelId, number>;
+export type LatestByChannel = Record<ChannelId, ChannelMessageRow | null>;
 
 const ZERO: UnreadCounts = { generelt: 0, feedback: 0 };
+const NO_LATEST: LatestByChannel = { generelt: null, feedback: null };
 
 interface Options {
   userId: string | null | undefined;
@@ -23,12 +25,18 @@ interface Options {
 // - INSERT for a channel increments unless: sender is current user, OR the
 //   user is currently viewing that channel's page (the page-load mark-as-read
 //   will handle that case).
+// - Also exposes `latestByChannel` — the most recent row seen per channel,
+//   for consumers (the channel list) that want to update last-message
+//   previews live. Own messages and the active-channel case are NOT excluded
+//   here: the preview should still reflect what's most recent.
 export function useChannelUnread({ userId, initialCounts }: Options): {
   counts: UnreadCounts;
   total: number;
   clearChannel: (channel: ChannelId) => void;
+  latestByChannel: LatestByChannel;
 } {
   const [counts, setCounts] = useState<UnreadCounts>(initialCounts ?? ZERO);
+  const [latestByChannel, setLatestByChannel] = useState<LatestByChannel>(NO_LATEST);
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
   useEffect(() => {
@@ -86,6 +94,7 @@ export function useChannelUnread({ userId, initialCounts }: Options): {
         (payload) => {
           const row = payload.new as ChannelMessageRow;
           if (!channelIds.has(row.channel)) return;
+          setLatestByChannel((prev) => ({ ...prev, [row.channel]: row }));
           if (row.user_id === userId) return;
           if (pathnameRef.current?.endsWith(`/chat/${row.channel}`)) return;
           setCounts((prev) => ({ ...prev, [row.channel]: prev[row.channel] + 1 }));
@@ -102,5 +111,5 @@ export function useChannelUnread({ userId, initialCounts }: Options): {
   }, []);
 
   const total = counts.generelt + counts.feedback;
-  return { counts, total, clearChannel };
+  return { counts, total, clearChannel, latestByChannel };
 }
