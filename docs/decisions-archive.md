@@ -60,5 +60,8 @@ The active log lives in `CLAUDE.md` and contains roughly the last 4 weeks of dec
 | 2026-04-29 | supabase/functions/ excluded from tsconfig.json | Deno Edge Function uses npm: specifiers unsupported by Next.js TypeScript checker |
 | 2026-04-29 | Privacy Policy updated to section 11 disclosing push subscription data; lastUpdated bumped to maj 2026 | GDPR requirement — push endpoint + keys are personal data |
 | 2026-04-29 | PushSubscribePrompt only shows in standalone PWA mode (display-mode: standalone) | Push only works reliably when PWA is installed; avoids misleading browser users |
+| 2026-04-29 | Design tool: Claude Design (claude.ai/design) | Handoff bundles (gzip tar: README.md + HTML prototype + JSX) replace earlier Banani designs |
+| 2026-04-29 | Chat added to Raid MVP | Claude Design handoff included per-raid chat; community needs it to replace Messenger |
 | 2026-05-03 | Slice 7 PWA: manual sw.js (not next-pwa), manifest.json, icon.svg | next-pwa not needed for installability; sw.js extended in Slice 8 for push handler |
 | 2026-05-03 | InstallPrompt component handles Android "Add to Home Screen" banner | iOS never fires beforeinstallprompt — iOS users use /onboarding/ios guide instead |
+| 2026-05-03 | PWA icon is placeholder SVG — replace before launch | Real branded PNG icons (192×192, 512×512) needed. Resolved 2026-05-19 (see active log). |

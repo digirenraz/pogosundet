@@ -149,6 +149,11 @@
     "chat": "Chat",
     "profile": "Profile"
   },
+  "LoadingScreen": {
+    "ariaLabel": "Loading",
+    "status": "Finding local trainers",
+    "subtitle": "Frederikssund and surroundings"
+  },
   "Chat": {
     "listTitle": "Chat",
     "onlineNow": "Online nu",

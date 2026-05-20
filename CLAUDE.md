@@ -25,6 +25,8 @@ For first-time environment setup (Supabase project, env vars, Google OAuth), see
 | Run single e2e file | `npx playwright test e2e/smoke.spec.ts` |
 | Deploy Edge Function | `npx supabase functions deploy notify-raid` |
 
+No standalone typecheck script — `npm run build` is the type gate (Next.js fails the build on TS errors).
+
 ---
 
 ## Code architecture
@@ -204,9 +206,6 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 
 | Date       | Decision                                              | Reason                              |
 |------------|-------------------------------------------------------|--------------------------------------|
-| 2026-04-29 | Design tool: Claude Design (claude.ai/design) | Handoff bundles (gzip tar: README.md + HTML prototype + JSX) replace earlier Banani designs |
-| 2026-04-29 | Chat added to Raid MVP | Claude Design handoff included per-raid chat; community needs it to replace Messenger |
-| 2026-05-03 | PWA icon is placeholder SVG — replace before launch | Real branded PNG icons (192×192, 512×512) needed |
 | 2026-05-03 | git user.email must be renraz@googlemail.com | Vercel blocks deployments from commits with unmatched email |
 | 2026-05-07 | `useMounted` hook for client-only gating | React 19 `react-hooks/set-state-in-effect` fires on useState+useEffect mount pattern |
 | 2026-05-07 | CI: lint → vitest → Playwright on every PR/push | Three GitHub Actions secrets drive the e2e dev server |
@@ -227,6 +226,7 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-19 | Channel-list "X skriver…" preview on `/chat` | Adds `useChannelListTyping` — subscribes to broadcast 'typing' on both `chat:generelt` and `chat:feedback` so channel rows can swap the last-message preview for a live typing indicator, matching the design. Reuses the 3s idle decay from `use-channel-realtime.ts`. |
 | 2026-05-19 | PWA icon replaced: `public/icon.svg` placeholder → `icon-192.png` + `icon-512.png` (glossy Pokéball on teal brand background, Claude Design handoff) | Manifest updated to proper PNG sizes with `purpose: "any maskable"`; `layout.tsx` apple-touch-icon and `sw.js` precache/push icon/badge all point to PNGs; SW cache bumped v2→v3 to force refresh on existing installs. |
 | 2026-05-19 | GitHub repo: auto-delete head branches enabled; branch protection + auto-merge skipped | `gh repo edit --delete-branch-on-merge` is on, so merged PR branches now clean up automatically. Branch protection (classic + Rulesets) and the "Allow auto-merge" toggle are both Pro-only for private repos on the Free plan — both API and UI return 403 / greyed out. Manual merge workflow stays. Revisit if the repo goes public or upgrades to Pro. |
+| 2026-05-20 | Branded splash on cold open: `LoadingScreen` (Sonar design) wrapped by `InitialSplash` in `[locale]/layout.tsx` | Claude Design "Sonar over Sundet" handoff. Splash markup ships in SSR HTML so it paints before JS loads; `InitialSplash` (Client) unmounts it 250ms after `useMounted` flips. Locale layouts persist across client-side nav, so the splash only fires on a true cold open — per-segment `loading.tsx` skeletons keep handling in-app transitions. Strings live under `messages/*.json` → `LoadingScreen`. Reduced-motion fallback freezes the pulses to one static ring. Wordmark uses project Inter, not the design's Plus Jakarta Sans (consistent with the locked font decision from 2026-04-11). |
 
 ---
 

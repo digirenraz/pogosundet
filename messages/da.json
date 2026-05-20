@@ -216,6 +216,11 @@
     "chat": "Chat",
     "profile": "Profil"
   },
+  "LoadingScreen": {
+    "ariaLabel": "Indlæser",
+    "status": "Finder lokale trænere",
+    "subtitle": "Frederikssund og omegn"
+  },
   "Chat": {
     "listTitle": "Chat",
     "onlineNow": "Online nu",
