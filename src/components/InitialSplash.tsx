@@ -7,7 +7,7 @@ import { useMounted } from '@/lib/hooks/use-mounted';
 // snappy connections hydration finishes well under this, so we hold the splash
 // for the remainder before fading. On slow phones the load itself covers it
 // and no artificial wait is added.
-const MIN_VISIBLE_MS = 800;
+const MIN_VISIBLE_MS = 1600;
 const FADE_MS = 200;
 
 // First-paint splash wrapper. Renders its children (typically <LoadingScreen />)
