@@ -5,11 +5,15 @@ interface FriendCodeQRProps {
   size?: number;
 }
 
-// Renders a real, scannable QR encoding the raw friend code string as an SVG.
+// Renders a real, scannable QR encoding the friend code as an SVG.
+// Pokémon GO's in-app scanner accepts plain-numeric QRs but is strict about
+// whitespace, so we strip non-digits before encoding. As a side effect this
+// also lets `qrcode` use its denser "numeric" mode.
 // Server-renderable: qrcode's `create()` API is synchronous.
 // The four teal corner markers from the design overlay the SVG.
 export function FriendCodeQR({ value, size = 224 }: FriendCodeQRProps) {
-  const qr = QRCodeLib.create(value, { errorCorrectionLevel: 'M' });
+  const digits = value.replace(/\D/g, '');
+  const qr = QRCodeLib.create(digits, { errorCorrectionLevel: 'M' });
   const N = qr.modules.size;
   const data = qr.modules.data;
   const quietZone = 8;
