@@ -1,15 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { UserRound, Hash, User, AlignLeft, Camera } from 'lucide-react';
 import { validateProfile, type ProfileInput, type Team } from '@/lib/profile/validation';
 import { AuthInput } from '@/components/AuthInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { TEAMS } from '@/components/Avatar';
+import { Avatar, TEAMS } from '@/components/Avatar';
+import { AvatarUploadSheet } from '@/components/AvatarUploadSheet';
+import { uploadAvatar } from '@/lib/profile/avatar-helpers';
 
 interface ProfileFormProps {
   // Translation function scoped to the caller's namespace (ProfileSetup or ProfileEdit)
   t: (key: string) => string;
+  /** The authenticated user's ID — required for avatar uploads. */
+  currentUserId: string;
   initialValues?: Partial<ProfileInput>;
   onSubmit: (input: ProfileInput) => Promise<void>;
   submitLabel: string;
@@ -25,6 +30,7 @@ const TEAM_KEYS: Team[] = ['mystic', 'valor', 'instinct'];
 // The caller owns submission logic and error state; this component handles fields + validation.
 export function ProfileForm({
   t,
+  currentUserId,
   initialValues,
   onSubmit,
   submitLabel,
@@ -33,6 +39,10 @@ export function ProfileForm({
   onBack,
   backLabel,
 }: ProfileFormProps) {
+  // Avatar-related strings live in their own ProfileForm namespace so the
+  // component doesn't need callers to add keys to their own namespaces.
+  const tForm = useTranslations('ProfileForm');
+
   const [trainerName, setTrainerName] = useState(initialValues?.trainer_name ?? '');
   const [friendCode, setFriendCode] = useState(initialValues?.friend_code ?? '');
   const [firstName, setFirstName] = useState(initialValues?.first_name ?? '');
@@ -41,6 +51,10 @@ export function ProfileForm({
   const [level, setLevel] = useState<number>(initialValues?.level ?? 40);
   const [levelSet, setLevelSet] = useState<boolean>(initialValues?.level != null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Avatar state
+  const [avatar, setAvatar] = useState<string | null>(initialValues?.avatar_url ?? null);
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   function handleFriendCodeChange(value: string) {
     const digits = value.replace(/\D/g, '').slice(0, 12);
@@ -75,24 +89,69 @@ export function ProfileForm({
       bio: bio || undefined,
       team: team ?? undefined,
       level: levelSet ? level : undefined,
+      avatar_url: avatar ?? undefined,
     });
   }
 
   return (
     <div className="flex flex-col gap-4">
       {/* Photo row */}
-      <div className="flex items-center gap-4 p-4 bg-secondary rounded-lg">
-        <div className="w-[68px] h-[68px] rounded-full bg-card flex items-center justify-center flex-shrink-0">
-          <Camera size={30} className="text-muted-foreground" />
-        </div>
-        <div className="flex-1 flex flex-col gap-1.5">
-          <span className="text-[15px] font-bold text-foreground">{t('photoTitle')}</span>
-          <span className="text-[14px] leading-snug text-muted-foreground">{t('photoSubtitle')}</span>
-          <button type="button" className="self-start bg-card text-primary rounded-md px-3 py-2.5 text-[14px] font-semibold">
-            {t('photoButton')}
+      <div className="flex items-center gap-3.5 p-4 bg-secondary rounded-2xl">
+        {/* Left: avatar preview or camera placeholder */}
+        {avatar ? (
+          <Avatar
+            src={avatar}
+            name={firstName || trainerName}
+            team={team ?? 'none'}
+            size={72}
+            ring={false}
+          />
+        ) : (
+          <div className="w-[72px] h-[72px] rounded-full bg-card flex items-center justify-center flex-shrink-0">
+            <Camera size={28} className="text-muted-foreground" />
+          </div>
+        )}
+
+        {/* Right: title + subtitle + button */}
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          <span className="text-[15px] font-bold text-foreground">
+            {avatar ? tForm('photoHasAvatar') : tForm('photoNoAvatar')}
+          </span>
+          <span className="text-[12px] leading-snug text-muted-foreground">
+            {avatar ? tForm('photoHasAvatarSub') : tForm('photoNoAvatarSub')}
+          </span>
+          <button
+            type="button"
+            onClick={() => { setUploadError(''); setShowUploadSheet(true); }}
+            className="self-start mt-2 h-[34px] px-3 bg-card text-primary rounded-lg text-[13px] font-bold flex items-center gap-1.5"
+          >
+            <Camera size={14} />
+            {avatar ? tForm('photoChange') : tForm('photoAdd')}
           </button>
         </div>
       </div>
+
+      {/* Upload error (shown below photo block) */}
+      {uploadError && (
+        <p className="text-[13px] text-destructive -mt-2">{uploadError}</p>
+      )}
+
+      {/* Avatar upload sheet — rendered inline so it stacks over the whole page */}
+      {showUploadSheet && (
+        <AvatarUploadSheet
+          userId={currentUserId}
+          onCancel={() => setShowUploadSheet(false)}
+          onPick={async (dataUrl) => {
+            const { publicUrl, error } = await uploadAvatar(currentUserId, dataUrl);
+            if (error || !publicUrl) {
+              setUploadError(tForm('uploadError'));
+            } else {
+              setAvatar(publicUrl);
+              setShowUploadSheet(false);
+            }
+          }}
+        />
+      )}
 
       {/* Form fields */}
       <form id="profile-form" onSubmit={handleSubmit} className="flex flex-col gap-3">

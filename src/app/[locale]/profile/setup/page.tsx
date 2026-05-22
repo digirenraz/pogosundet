@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { MapPinned } from 'lucide-react';
@@ -14,6 +14,17 @@ export default function ProfileSetupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState('');
+  const [userId, setUserId] = useState('');
+
+  // Resolve the user ID once on mount so we can pass it to ProfileForm
+  // (needed for avatar uploads before the form is submitted).
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getClaims().then(({ data }) => {
+      const uid = data?.claims?.sub;
+      if (uid) setUserId(uid);
+    });
+  }, []);
 
   async function handleSubmit(input: ProfileInput) {
     setLoading(true);
@@ -21,10 +32,12 @@ export default function ProfileSetupPage() {
 
     const supabase = createClient();
     const { data: claimsData } = await supabase.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
-    if (!userId) { router.push('/login'); return; }
+    const uid = claimsData?.claims?.sub;
+    if (!uid) { router.push('/login'); return; }
+    // Keep userId state in sync (handles edge case where mount effect hasn't resolved yet)
+    if (!userId) setUserId(uid);
 
-    const { error } = await createProfile({ user_id: userId, ...input });
+    const { error } = await createProfile({ user_id: uid, ...input });
     setLoading(false);
 
     if (error) {
@@ -61,6 +74,7 @@ export default function ProfileSetupPage() {
 
           <ProfileForm
             t={(key) => t(key as Parameters<typeof t>[0])}
+            currentUserId={userId}
             onSubmit={handleSubmit}
             submitLabel={t('submit')}
             loading={loading}
