@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { createOAuthClient } from '@/lib/supabase/oauth-client';
 
 export default function AuthCallbackPage() {
   const [status, setStatus] = useState<'loading' | 'error'>('loading');
@@ -9,35 +10,37 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('code');
-    const supabase = createClient();
-
-    if (code) {
-      // PKCE flow: exchange the code. The code-verifier cookie is present in
-      // the browser (set by signInWithOAuth). No server handler exists to
-      // consume it first, so the exchange should succeed.
-      supabase.auth
-        .exchangeCodeForSession(code)
-        .then(({ error }) => {
-          if (error) {
-            console.error('[auth/callback] exchange error:', error.message);
-            setErrorMsg(error.message);
-            setStatus('error');
-          } else {
-            window.location.href = '/';
-          }
-        });
-    } else {
-      // No code — fall back to detecting a session from existing cookies or
-      // hash tokens (implicit flow fallback).
-      supabase.auth.getSession().then(({ data, error }) => {
-        if (error || !data.session) {
-          setErrorMsg(error?.message ?? 'Ingen kode eller session fundet');
-          setStatus('error');
-        } else {
-          window.location.href = '/';
-        }
-      });
+    if (!code) {
+      // Wrap in setTimeout to avoid synchronous setState in effect.
+      setTimeout(() => {
+        setErrorMsg('Ingen kode fundet i URL');
+        setStatus('error');
+      }, 0);
+      return;
     }
+
+    // 1. Exchange code using localStorage-based client (verifier survived ITP).
+    const oauthClient = createOAuthClient();
+    oauthClient.auth
+      .exchangeCodeForSession(code)
+      .then(async ({ data, error }) => {
+        if (error || !data.session) {
+          console.error('[auth/callback] exchange error:', error?.message);
+          setErrorMsg(error?.message ?? 'Exchange fejlede');
+          setStatus('error');
+          return;
+        }
+
+        // 2. Transfer session to cookie storage so the server can read it.
+        const ssrClient = createClient();
+        await ssrClient.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+
+        // 3. Full page reload so the server gets fresh cookies on the next request.
+        window.location.href = '/';
+      });
   }, []);
 
   if (status === 'error') {
