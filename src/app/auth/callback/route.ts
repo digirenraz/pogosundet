@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
         setAll(cookiesToSet) {
           // Write session cookies directly onto the response that will be returned
           // so they are not lost when we redirect.
+          console.log('[auth/callback] setAll called with', cookiesToSet.map(c => c.name));
           cookiesToSet.forEach(({ name, value, options }) =>
             successResponse.cookies.set(name, value, options)
           );
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
     }
   );
 
+  console.log('[auth/callback] exchanging code, request cookies:', request.cookies.getAll().map(c => c.name));
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     console.error('[auth/callback] exchangeCodeForSession error:', error.message, error.status);
@@ -46,5 +48,6 @@ export async function GET(request: NextRequest) {
       `${origin}/login?error=auth-error&details=${encodeURIComponent(error.message)}`
     );
   }
+  console.log('[auth/callback] success, response cookies:', successResponse.cookies.getAll().map(c => c.name));
   return successResponse;
 }
