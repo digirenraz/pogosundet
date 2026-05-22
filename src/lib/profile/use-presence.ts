@@ -37,6 +37,12 @@ export function usePresence(userId: string | null | undefined): Set<string> {
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await channel.track({ user_id: userId });
+          // Fire-and-forget: keep last_seen_at reasonably fresh. No await/error
+          // handling needed — best-effort, runs on every authenticated page load.
+          void supabase
+            .from('profiles')
+            .update({ last_seen_at: new Date().toISOString() })
+            .eq('user_id', userId);
         }
       });
 
