@@ -90,7 +90,7 @@ Chat messages (`raid_messages`) are appended to local React state via Realtime I
 ### Database migrations
 SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
 
-Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`, `010_chat_reactions_and_replies`, `011_friend_code_constraint`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
 
 ---
 
@@ -128,7 +128,7 @@ The product owner is a non-technical product manager. Claude Code is the primary
 - **Chat unread counts** (Slice 12, 2026-05-19): live BottomNav badge + per-row badges. Migration 009.
 - **Branded PWA icon + cold-open splash** (2026-05-19 / 2026-05-20): real PNG icons, `LoadingScreen` (Sonar design) wrapped by `InitialSplash`.
 
-Nothing currently in flight as of 2026-05-22. Next slice not yet picked.
+Nothing currently in flight as of 2026-05-22 (afternoon). Next slice not yet picked.
 
 ### Do NOT build (in Raid MVP)
 - Remote raid lobby code sharing
@@ -224,6 +224,9 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-21 | Friend code QR strips non-digits before encoding (`FriendCodeQR.tsx`) | Corrects the 2026-05-12 archive note: PoGo's in-app scanner *does* accept plain-numeric QRs as a fallback (verified against `pokemongo.gishan.net` — its QRs encode `XXXXXXXXXXXX` with no spaces and reportedly scan inside PoGo). Ours was encoding `XXXX XXXX XXXX` because `profile.friend_code` is stored formatted; whitespace broke the parser. Side benefit: pure-numeric strings use `qrcode`'s denser numeric mode, so the QR now matches gishan's visual density. |
 | 2026-05-22 | Shipped QR fix to prod (PR #29). SW cache bumped v3 → v4 to evict stale QR HTML on installed PWAs. Raid form: default start time unselected; tapping a selected chip deselects it | The QR fix is server-rendered HTML, so installed PWAs holding the cached pre-fix shell would have kept serving the broken QR via SWR for one more navigation. Bumping the SW version forces RUNTIME_CACHE eviction on next activation — users still need one extra navigation per device before the new SW activates (old SW must close first), so some "still broken" reports for ~a day are expected. Verified on prod by scanning a freshly-rendered QR with PoGo. |
 | 2026-05-22 | Slice 13: emoji reactions + threaded replies on community channel chat (Claude Design handoff `Ux3Oda-pZaILRv_Gb-hPqw`, `Chat.html`). Migration 010 adds `channel_messages.reply_to_id` and `channel_message_reactions`. | Tap any bubble → action sheet with 6 quick-reaction emojis (👍 ❤️ 😂 😮 😢 🙏) + Svar + Kopiér tekst. Reactions show as tappable chips below bubbles; user's own highlighted teal. Reply flow: action sheet → composer banner (Svarer X, × to cancel) → send stores `reply_to_id`; reply quote renders above the reply bubble. Optimistic: both reactions and replies are applied locally before the Supabase write; realtime reconciles. Reactions realtime uses a separate `useChannelReactionsRealtime` hook subscribed to INSERT/DELETE on `channel_message_reactions` — no `channel` FK on that table so we filter client-side by the live `messageIdSet`. Topic names get a `Math.random()` suffix to dodge the 2026-05-19 channel-name collision. DMs and raid-chat reactions intentionally out of scope — channels only. |
+| 2026-05-22 | iOS home screen icon + SW v4→v5: add `public/apple-touch-icon.png`, update `layout.tsx` apple-touch-icon metadata, bump SW cache version (PR #31) | iOS Safari checks `/apple-touch-icon.png` as a standard fallback URL before (or instead of) reading the `<link rel="apple-touch-icon">` tag — meaning users whose SW was serving old cached HTML (from before the icon change in v3) still got no icon on Add-to-Home-Screen. Adding the physical file at the standard path fixes this independently of HTML. SW v5 evicts all v4 caches, ensuring devices still on stale HTML/JS bundles (which also caused the QR fix not to propagate) get a fresh fetch on next navigation. `skipWaiting()` + `clients.claim()` guarantee activation on first visit. |
+| 2026-05-22 | QR "still broken for existing profiles" was user error — wrong friend codes stored in those profiles | The QR encoding fix (`FriendCodeQR.tsx`) was correct all along. The profiles that appeared broken had incorrect friend codes entered by the user during setup. Correcting the stored codes via profile edit resolved the issue. No code change needed. |
+| 2026-05-22 | Migration 011: DB-level CHECK constraint on `profiles.friend_code` enforcing `^\d{4} \d{4} \d{4}$` | App-layer validation (`validateProfile()`) already enforces this format, but a direct DB insert (e.g. via Supabase dashboard or a future admin tool) could bypass it. The constraint makes the format impossible to violate at the storage layer. Apply after confirming all existing rows are valid. |
 
 ---
 
