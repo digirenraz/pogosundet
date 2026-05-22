@@ -20,7 +20,9 @@ export const metadata: Metadata = {
     title: "PoGoSundet",
   },
   icons: {
-    apple: "/icon-192.png",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "192x192", type: "image/png" },
+    ],
   },
 };
 
