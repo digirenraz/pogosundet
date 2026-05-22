@@ -21,13 +21,25 @@ export default async function PlayerDetailPage({ params }: PlayerDetailPageProps
 
   if (!userId) redirect('/login');
 
-  const { data: profiles } = await getAllProfiles();
-  const startIndex = profiles.findIndex((p) => p.id === id);
+  // getAllProfiles is cached (60s TTL) for performance.
+  // last_seen_at is fetched fresh every render so the badge is never stale.
+  const [{ data: profiles }, lastSeenResult] = await Promise.all([
+    getAllProfiles(),
+    supabase.from('profiles').select('user_id, last_seen_at'),
+  ]);
+  const lastSeenMap = Object.fromEntries(
+    (lastSeenResult.data ?? []).map((p) => [p.user_id, p.last_seen_at])
+  );
+  const freshProfiles = profiles.map((p) => ({
+    ...p,
+    last_seen_at: (lastSeenMap[p.user_id] as string | null) ?? p.last_seen_at ?? null,
+  }));
+  const startIndex = freshProfiles.findIndex((p) => p.id === id);
   if (startIndex === -1) notFound();
 
   return (
     <PlayerDetailDeckWithPresence
-      profiles={profiles}
+      profiles={freshProfiles}
       startIndex={startIndex}
       currentUserId={userId}
     />
