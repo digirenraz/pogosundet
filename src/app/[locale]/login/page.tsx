@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Mail, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
+import { createOAuthClient } from "@/lib/supabase/oauth-client";
 import { Hero } from "@/components/Hero";
 import { AuthInput } from "@/components/AuthInput";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -46,7 +47,9 @@ export default function LoginPage() {
   }
 
   async function handleGoogle() {
-    const supabase = createClient();
+    // Use localStorage-based client so the PKCE code verifier survives iOS
+    // Safari's ITP purge during the OAuth redirect chain. See oauth-client.ts.
+    const supabase = createOAuthClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },

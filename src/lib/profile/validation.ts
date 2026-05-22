@@ -7,6 +7,7 @@ export interface ProfileInput {
   bio?: string;
   team?: Team;
   level?: number;
+  avatar_url?: string | null;
 }
 
 export interface ValidationResult {

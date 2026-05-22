@@ -43,6 +43,7 @@ export default function ProfileEditPage() {
           bio: data.bio ?? '',
           team: data.team ?? undefined,
           level: data.level ?? undefined,
+          avatar_url: data.avatar_url ?? undefined,
         });
       }
     }
@@ -99,6 +100,7 @@ export default function ProfileEditPage() {
         {initialValues !== undefined ? (
           <ProfileForm
             t={(key) => t(key as Parameters<typeof t>[0])}
+            currentUserId={userId}
             initialValues={initialValues}
             onSubmit={handleSubmit}
             submitLabel={tEdit('submit')}
