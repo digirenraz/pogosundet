@@ -28,14 +28,19 @@ export function PlayerDirectory({ profiles, currentUserId }: PlayerDirectoryProp
 
   const onlineUserIds = usePresence(currentUserId);
 
+  const othersProfiles = useMemo(
+    () => profiles.filter((p) => p.user_id !== currentUserId),
+    [profiles, currentUserId]
+  );
+
   const filtered = useMemo(
-    () => filterProfiles(profiles, { query, filter, onlineUserIds }),
-    [profiles, query, filter, onlineUserIds]
+    () => filterProfiles(othersProfiles, { query, filter, onlineUserIds }),
+    [othersProfiles, query, filter, onlineUserIds]
   );
 
   const onlineCount = useMemo(
-    () => profiles.filter((p) => onlineUserIds.has(p.user_id)).length,
-    [profiles, onlineUserIds]
+    () => othersProfiles.filter((p) => onlineUserIds.has(p.user_id)).length,
+    [othersProfiles, onlineUserIds]
   );
 
   const chips: { key: DirectoryFilter; label: string }[] = [
