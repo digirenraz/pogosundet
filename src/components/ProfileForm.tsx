@@ -185,14 +185,13 @@ export function ProfileForm({
             </span>
           </div>
           <input
-            type="number"
-            min={1}
-            max={80}
+            type="text"
             inputMode="numeric"
-            value={levelSet ? level : ''}
+            maxLength={2}
+            value={levelSet ? String(level) : ''}
             placeholder="1–80"
             onChange={(e) => {
-              const raw = e.target.value;
+              const raw = e.target.value.replace(/\D/g, '').slice(0, 2);
               if (raw === '') {
                 setLevelSet(false);
               } else {
