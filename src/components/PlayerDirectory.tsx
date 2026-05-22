@@ -70,6 +70,7 @@ export function PlayerDirectory({ profiles, currentUserId }: PlayerDirectoryProp
         {chips.map((c) => {
           const active = filter === c.key;
           const color = TEAM_COLOR[c.key];
+          const isTeam = c.key === 'mystic' || c.key === 'valor' || c.key === 'instinct';
           return (
             <button
               key={c.key}
@@ -77,9 +78,10 @@ export function PlayerDirectory({ profiles, currentUserId }: PlayerDirectoryProp
               onClick={() => setFilter(c.key)}
               className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold"
               style={{
-                border: active ? `1.5px solid ${color}` : '1px solid var(--color-border)',
+                border: active ? `1.5px solid ${color}` : isTeam ? `1px solid ${color}` : '1px solid var(--color-border)',
                 background: active ? `color-mix(in srgb, ${color} 8%, transparent)` : 'var(--color-card)',
-                color: active ? color : 'var(--color-muted-foreground)',
+                color: active ? color : isTeam ? color : 'var(--color-muted-foreground)',
+                opacity: isTeam && !active ? 0.55 : 1,
               }}
             >
               {c.key === 'online' && (
