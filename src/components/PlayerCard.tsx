@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Copy, Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
+import { lastSeenRelative } from '@/lib/profile/time';
 import { Avatar, TEAMS, type AvatarTeam } from './Avatar';
 
 interface PlayerCardProps {
@@ -59,6 +60,11 @@ export function PlayerCard({ profile, online = false }: PlayerCardProps) {
               <span className="text-[12px] font-semibold text-primary">· {t('onlineLabel')}</span>
             )}
           </div>
+          {!online && profile.last_seen_at && (
+            <span className="text-[11px] text-muted-foreground font-medium">
+              {lastSeenRelative(profile.last_seen_at, new Date())}
+            </span>
+          )}
         </div>
         {team !== 'none' && (
           <span

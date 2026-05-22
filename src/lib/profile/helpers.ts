@@ -7,6 +7,7 @@ export interface Profile extends ProfileInput {
   avatar_url?: string | null;
   created_at?: string;
   updated_at?: string;
+  last_seen_at?: string | null;
 }
 
 // Insert a new profile row. Returns { data, error } mirroring Supabase conventions.

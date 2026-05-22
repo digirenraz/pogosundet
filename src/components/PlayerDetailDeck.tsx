@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronLeft, ChevronRight, ChevronsLeftRight, Check, Copy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
+import { lastSeenRelative } from '@/lib/profile/time';
 import { Avatar, TeamChip, TEAMS, type AvatarTeam } from './Avatar';
 import { FriendCodeQR } from './FriendCodeQR';
 
@@ -242,6 +243,11 @@ function PlayerDetailCard({ profile, online, copied, onCopy }: PlayerDetailCardP
             </span>
           )}
         </div>
+        {!online && profile.last_seen_at && (
+          <span className="text-[11px] text-muted-foreground font-medium mt-1">
+            {lastSeenRelative(profile.last_seen_at, new Date())}
+          </span>
+        )}
       </div>
 
       {/* QR */}
