@@ -12,7 +12,7 @@ test("PWA manifest and icons are wired up", async ({ page, request }) => {
   await page.goto("/");
 
   const appleIcon = page.locator('link[rel="apple-touch-icon"]');
-  await expect(appleIcon).toHaveAttribute("href", "/icon-192.png");
+  await expect(appleIcon).toHaveAttribute("href", "/apple-touch-icon.png");
 
   const manifestResponse = await request.get("/manifest.json");
   expect(manifestResponse.ok()).toBe(true);
@@ -22,7 +22,7 @@ test("PWA manifest and icons are wired up", async ({ page, request }) => {
     { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
   ]);
 
-  for (const path of ["/icon-192.png", "/icon-512.png"]) {
+  for (const path of ["/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"]) {
     const res = await request.get(path);
     expect(res.status()).toBe(200);
     expect(res.headers()["content-type"]).toContain("image/png");

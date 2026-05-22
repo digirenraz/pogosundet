@@ -10,13 +10,13 @@
 // before painting, which made the installed PWA feel as slow as a normal browser tab.
 // SWR serves the cached shell instantly while a fresh copy is fetched in the background.
 
-const SHELL_CACHE = 'pogosundet-shell-v4';
-const RUNTIME_CACHE = 'pogosundet-runtime-v4';
+const SHELL_CACHE = 'pogosundet-shell-v5';
+const RUNTIME_CACHE = 'pogosundet-runtime-v5';
 
 // URLs precached on install. /login is a safe entry point for cold reopens —
 // the server still re-checks auth on every navigation, so showing the cached
 // login shell for an unauthenticated user is harmless.
-const PRECACHE = ['/login', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const PRECACHE = ['/login', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -79,7 +79,7 @@ self.addEventListener('fetch', event => {
   }
 
   // PWA assets.
-  if (url.pathname === '/manifest.json' || url.pathname.startsWith('/icon-') || url.pathname.startsWith('/icons/')) {
+  if (url.pathname === '/manifest.json' || url.pathname === '/apple-touch-icon.png' || url.pathname.startsWith('/icon-') || url.pathname.startsWith('/icons/')) {
     event.respondWith(cacheFirst(event.request));
     return;
   }
