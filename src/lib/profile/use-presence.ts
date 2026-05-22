@@ -11,6 +11,17 @@ import { createClient } from '@/lib/supabase/client';
 export function usePresence(userId: string | null | undefined): Set<string> {
   const [online, setOnline] = useState<Set<string>>(new Set());
 
+  // Write last_seen_at immediately via HTTP — independent of the WebSocket so
+  // it works even if the Realtime connection is slow or fails on mobile PWAs.
+  useEffect(() => {
+    if (!userId) return;
+    const supabase = createClient();
+    void supabase
+      .from('profiles')
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq('user_id', userId);
+  }, [userId]);
+
   useEffect(() => {
     if (!userId) return;
     const supabase = createClient();
@@ -37,12 +48,6 @@ export function usePresence(userId: string | null | undefined): Set<string> {
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await channel.track({ user_id: userId });
-          // Fire-and-forget: keep last_seen_at reasonably fresh. No await/error
-          // handling needed — best-effort, runs on every authenticated page load.
-          void supabase
-            .from('profiles')
-            .update({ last_seen_at: new Date().toISOString() })
-            .eq('user_id', userId);
         }
       });
 
