@@ -247,7 +247,15 @@
     "typingMany": "{n} medlemmer skriver…",
     "noMessages": "Ingen beskeder endnu",
     "empty": "Ingen beskeder. Vær den første.",
-    "sentAt": "Sendt · {time}"
+    "sentAt": "Sendt · {time}",
+    "actionSvar": "Svar",
+    "actionKopier": "Kopiér tekst",
+    "actionCopied": "Kopieret",
+    "replyingTo": "Svarer {name}",
+    "replyPlaceholder": "Skriv et svar til {name}",
+    "cancelReply": "Annullér svar",
+    "closeSheet": "Luk",
+    "you_lowercase": "dig"
   },
   "ProfileEdit": {
     "headerTitle": "Rediger profil",

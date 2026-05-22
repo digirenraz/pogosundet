@@ -180,7 +180,15 @@
     "typingMany": "{n} medlemmer skriver…",
     "noMessages": "Ingen beskeder endnu",
     "empty": "Ingen beskeder. Vær den første.",
-    "sentAt": "Sendt · {time}"
+    "sentAt": "Sendt · {time}",
+    "actionSvar": "Reply",
+    "actionKopier": "Copy text",
+    "actionCopied": "Copied",
+    "replyingTo": "Replying to {name}",
+    "replyPlaceholder": "Write a reply to {name}",
+    "cancelReply": "Cancel reply",
+    "closeSheet": "Close",
+    "you_lowercase": "you"
   },
   "ProfileEdit": {
     "headerTitle": "Edit profile",
