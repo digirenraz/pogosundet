@@ -10,8 +10,8 @@
 // before painting, which made the installed PWA feel as slow as a normal browser tab.
 // SWR serves the cached shell instantly while a fresh copy is fetched in the background.
 
-const SHELL_CACHE = 'pogosundet-shell-v5';
-const RUNTIME_CACHE = 'pogosundet-runtime-v5';
+const SHELL_CACHE = 'pogosundet-shell-v6';
+const RUNTIME_CACHE = 'pogosundet-runtime-v6';
 
 // URLs precached on install. /login is a safe entry point for cold reopens —
 // the server still re-checks auth on every navigation, so showing the cached

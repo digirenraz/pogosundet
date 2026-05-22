@@ -2,7 +2,7 @@
   "name": "PoGoSundet",
   "short_name": "PoGoSundet",
   "description": "Find dit lokale Pokémon GO community i Frederikssund",
-  "start_url": "/raids",
+  "start_url": "/players",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#00b09f",
