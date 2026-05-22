@@ -34,7 +34,7 @@ export default function NewRaidPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [gymName, setGymName] = useState('');
   const [bossName, setBossName] = useState('');
-  const [startsAtOption, setStartsAtOption] = useState<'now' | '+5' | '+10' | '+15'>('now');
+  const [startsAtOption, setStartsAtOption] = useState<'now' | '+5' | '+10' | '+15' | null>(null);
   const [note, setNote] = useState('');
   const [extra, setExtra] = useState(0); // how many extra people the poster is bringing
   const [loading, setLoading] = useState(false);
@@ -55,6 +55,7 @@ export default function NewRaidPage() {
   }
 
   function getStartsAt(): string | null {
+    if (startsAtOption === null) return null;
     if (startsAtOption === 'now') return new Date().toISOString();
     const times = getStartTimes();
     if (startsAtOption === '+5') return times.plus5.toISOString();
@@ -274,20 +275,24 @@ export default function NewRaidPage() {
               <span className="text-[12px] text-muted-foreground">{t('form.optional')}</span>
             </div>
             <div className="grid grid-cols-4 gap-2">
-              {startOptions.map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setStartsAtOption(key)}
-                  className={`py-2 rounded-lg text-[13px] font-semibold border transition-colors ${
-                    startsAtOption === key
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-card-foreground border-border'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+              {startOptions.map(({ key, label }) => {
+                const selected = startsAtOption === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setStartsAtOption(selected ? null : key)}
+                    className={`py-2 rounded-lg text-[13px] font-semibold border transition-colors ${
+                      selected
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-card-foreground border-border'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

@@ -23,9 +23,10 @@ For first-time environment setup (Supabase project, env vars, Google OAuth), see
 | Run all e2e tests | `npm run test:e2e` |
 | Run e2e in UI mode | `npm run test:e2e:ui` |
 | Run single e2e file | `npx playwright test e2e/smoke.spec.ts` |
+| Typecheck (manual) | `npx tsc --noEmit` |
 | Deploy Edge Function | `npx supabase functions deploy notify-raid` |
 
-No standalone typecheck script — `npm run build` is the type gate (Next.js fails the build on TS errors).
+No `npm` typecheck script — `npm run build` is the canonical type gate (Next.js fails the build on TS errors). Use `npx tsc --noEmit` for a fast standalone check without a full build.
 
 ---
 
@@ -118,13 +119,18 @@ The product owner is a non-technical product manager. Claude Code is the primary
 
 ## Phase plan
 
-### Phase 1 — complete
-Registration and login (Google OAuth + email/password), user profiles, browse and search community members, display Trainer Codes, GDPR compliance.
+### Shipped
+- **Auth + profiles + directory** (Slices 1–5): Google OAuth + email/password, profile creation/edit, browse and search community members, display Trainer Codes, GDPR compliance.
+- **Raid MVP** (Slices 6–8, smoke test passed 2026-05-10): post a raid, see active raids, join/leave, per-raid chat, PWA installability, web push notifications. Feature bar: **faster than taking a screenshot and posting it in Messenger**.
+- **Profile team/level + online presence + friend-code QR** (Slice 10, 2026-05-12).
+- **Performance pass + auth hot-path** (2026-05-17 / 2026-05-18): SW stale-while-revalidate, segment skeletons, `optimizePackageImports`, hot-path indexes (migration 007), `getClaims()` over `getUser()`, centralised profile guard in middleware.
+- **Community chat** (Slice 11, 2026-05-18): `/chat` + `/chat/[channelId]` with `#generelt` and `#app-feedback`. Migration 008.
+- **Chat unread counts** (Slice 12, 2026-05-19): live BottomNav badge + per-row badges. Migration 009.
+- **Branded PWA icon + cold-open splash** (2026-05-19 / 2026-05-20): real PNG icons, `LoadingScreen` (Sonar design) wrapped by `InitialSplash`.
 
-### Raid MVP — shipped (Slices 6–8, smoke test passed 2026-05-10)
-Post a raid, see active raids, join/leave, per-raid chat, PWA installability, web push notifications. The feature bar: **faster than taking a screenshot and posting it in Messenger**.
+Nothing currently in flight as of 2026-05-21. Next slice not yet picked.
 
-**Do NOT build:**
+### Do NOT build (in Raid MVP)
 - Remote raid lobby code sharing
 - Recurring raids or raids scheduled more than a few hours out
 - Raid history, stats, or past-raid browsing
@@ -206,18 +212,6 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 
 | Date       | Decision                                              | Reason                              |
 |------------|-------------------------------------------------------|--------------------------------------|
-| 2026-05-03 | git user.email must be renraz@googlemail.com | Vercel blocks deployments from commits with unmatched email |
-| 2026-05-07 | `useMounted` hook for client-only gating | React 19 `react-hooks/set-state-in-effect` fires on useState+useEffect mount pattern |
-| 2026-05-07 | CI: lint → vitest → Playwright on every PR/push | Three GitHub Actions secrets drive the e2e dev server |
-| 2026-05-11 | All server routes/pages export `preferredRegion = "dub1"` | Co-locating with Supabase EU (Ireland) dropped FCP from 6.6s → 1.2s |
-| 2026-05-11 | `unstable_cache` uses admin client, not server client | Server client calls `cookies()` which is unavailable outside request context |
-| 2026-05-11 | Page components parallelise independent Supabase queries with `Promise.all` | Queries are independent once `user.id` is known — serial execution was pure waste |
-| 2026-05-11 | Realtime chat messages appended to local state, not `router.refresh()` | Per-message refresh caused full RSC page refetches |
-| 2026-05-11 | `ref.current` writes go in `useEffect`, not during render | React 19 `react-hooks/refs` rule disallows synchronous ref writes during render |
-| 2026-05-12 | Tailwind v4 `@theme` tree-shakes CSS vars only referenced via inline `style={{ var(--x) }}` | The class scanner can't see JS strings, so `--color-team-*` vars (used by team-color rings in `Avatar` / chips) disappeared at runtime. Fix: declare them in a plain `:root {}` block outside `@theme` so they're emitted unconditionally. Applies to any future design tokens read from JS rather than via utility classes. |
-| 2026-05-12 | Profile: added `team` + `level` columns (migration 006); BottomNav profile tab → `/profile` not `/profile/edit` | Slice 10A. `team` (mystic/valor/instinct) and `level` (1–80) are both nullable / "Valgfri". The new `/profile` is the "Min profil" view; `/profile/edit` is reached from there. Privacy Policy not bumped — team/level are voluntary public profile info, same category as bio. |
-| 2026-05-12 | Online presence via Supabase Realtime presence channel `players-online` (no DB writes) | `src/lib/profile/use-presence.ts` returns a `Set<user_id>` of currently connected clients. Channel auto-cleans on disconnect. The directory shows `Online (n)` and avatars get a green dot. "Last seen" timestamps were deferred — would need a `last_active_at` column. |
-| 2026-05-12 | Friend code QR uses `qrcode` lib, encodes the raw 12-digit string | PoGo's in-game friend QR is a proprietary format we can't replicate, so scanning this QR will NOT add the friend in PoGo. Generic QR readers do read it as the 12-digit code — useful for copy-paste / sharing elsewhere. Honest trade-off vs. a purely decorative QR. |
 | 2026-05-17 | Service worker switched to stale-while-revalidate for HTML + cache-first for `/_next/static`; per-segment `loading.tsx` skeletons added; `optimizePackageImports: ['lucide-react']`; migration 007 adds hot-path indexes (`raids.created_at`, `raid_messages(raid_id, created_at)`, partial `profiles.team`) | Previous network-first SW made the installed PWA paint as slow as a normal tab on reopen — single biggest cause of "slow when opening the app after being away". Segment skeletons remove the cross-screen stall (no streaming UI before this). Follow-up branch `chore/perf-auth-hot-path` will replace per-page `getUser()` with `getClaims()` and drop the redundant profile-guard query. |
 | 2026-05-18 | Server pages and `Header` switched from `supabase.auth.getUser()` to `getClaims()`; profile-existence guard centralised in `src/lib/supabase/middleware.ts` | `getClaims()` verifies the access-token JWT locally via Supabase's asymmetric signing keys — no network round-trip to Auth on every page render. The profile guard (`profiles.select('id').eq('user_id', …)`) now runs once in middleware with a locale-stripped skiplist (`/`, `/login`, `/register`, `/privacy`, `/profile/setup`, `/reset`, `/reset/confirm`, `/onboarding/ios`); pages no longer repeat the query. `proxy.ts` short-circuits on a 3xx from `updateSession`; refreshed auth cookies are copied onto the redirect response so the freshly-rotated token isn't dropped. Middleware itself keeps `getUser()` because that call is what actually refreshes the session token. `/api/account/delete` keeps `getUser()` (privileged op wants server-side validation). |
 | 2026-05-18 | Slice 11: community chat — `/chat` + `/chat/[channelId]` with `#generelt` and `#app-feedback`. Migration 008 adds `channel_messages`. DMs deferred to Phase 2 | Channel set is a hard-coded TypeScript constant + DB CHECK; adding a third channel later means a migration + constant edit. `channel_messages` matches `raid_messages` policies (RLS `auth.uid() = user_id`, `length(trim(body)) > 0`, FK to `profiles(user_id)`, ON DELETE CASCADE on the auth user). Typing indicators ride the same Supabase channel as messages via `broadcast` event `typing`, throttled ≤ once/2s with a 3s idle decay — no DB writes. Message list uses `column-reverse` so newest pins to the bottom without an imperative `scrollIntoView` (replaces the pattern in `RaidDetail.tsx:98-101`). DM scaffolding (`DMRow`, `DMScreen`, `DMHeader`) from the Claude Design handoff was intentionally not ported — DMs remain Phase 2 per CLAUDE.md. Known one-time UX gotcha on the deploy that flips Chat live: the stale-while-revalidate service worker (from `chore/perf-quick-wins`) serves the previous `BottomNav` HTML once, causing a hydration mismatch flash; cleared on the next request. |
@@ -227,6 +221,7 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-19 | PWA icon replaced: `public/icon.svg` placeholder → `icon-192.png` + `icon-512.png` (glossy Pokéball on teal brand background, Claude Design handoff) | Manifest updated to proper PNG sizes with `purpose: "any maskable"`; `layout.tsx` apple-touch-icon and `sw.js` precache/push icon/badge all point to PNGs; SW cache bumped v2→v3 to force refresh on existing installs. |
 | 2026-05-19 | GitHub repo: auto-delete head branches enabled; branch protection + auto-merge skipped | `gh repo edit --delete-branch-on-merge` is on, so merged PR branches now clean up automatically. Branch protection (classic + Rulesets) and the "Allow auto-merge" toggle are both Pro-only for private repos on the Free plan — both API and UI return 403 / greyed out. Manual merge workflow stays. Revisit if the repo goes public or upgrades to Pro. |
 | 2026-05-20 | Branded splash on cold open: `LoadingScreen` (Sonar design) wrapped by `InitialSplash` in `[locale]/layout.tsx` | Claude Design "Sonar over Sundet" handoff. Splash markup ships in SSR HTML so it paints before JS loads; `InitialSplash` (Client) keeps it visible for ≥1600ms from navigation start, then fades over 200ms. On slow phones hydration alone covers the minimum and no artificial wait is added — measured via `performance.now()` in the hydration effect. Locale layouts persist across client-side nav, so the splash only fires on a true cold open — per-segment `loading.tsx` skeletons keep handling in-app transitions. Strings live under `messages/*.json` → `LoadingScreen`. Reduced-motion fallback freezes the pulses to one static ring. Wordmark uses project Inter, not the design's Plus Jakarta Sans (consistent with the locked font decision from 2026-04-11). |
+| 2026-05-21 | Friend code QR strips non-digits before encoding (`FriendCodeQR.tsx`) | Corrects the 2026-05-12 archive note: PoGo's in-app scanner *does* accept plain-numeric QRs as a fallback (verified against `pokemongo.gishan.net` — its QRs encode `XXXXXXXXXXXX` with no spaces and reportedly scan inside PoGo). Ours was encoding `XXXX XXXX XXXX` because `profile.friend_code` is stored formatted; whitespace broke the parser. Side benefit: pure-numeric strings use `qrcode`'s denser numeric mode, so the QR now matches gishan's visual density. Still needs verification on a Vercel preview by scanning a real profile from PoGo. |
 
 ---
 
@@ -234,6 +229,8 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 
 - **Messenger vs Discord:** If "Share to Messenger" creates too much friction post-launch, evaluate migrating to Discord (webhook-based auto-posting is trivial). Decide after 2–4 weeks of real usage.
 - **Raid boss list maintenance:** Currently manual. Consider a lightweight admin edit screen only if it becomes a real burden.
+- **"Last seen" timestamps in the directory:** Deferred 2026-05-12 in favour of live presence-only. Adding it would need a `last_active_at` column on `profiles` (or a separate table) plus a write path. Revisit if users ask for offline-context (e.g. "active today" vs. "active last week").
+- **`pushStatus` drift between DB and live browser subscription:** `raids/page.tsx` reads `pushStatus` from the `push_subscriptions` row, not the live Push API state — they can disagree (e.g. user revoked permission in the browser without unsubscribing in-app). Acceptable for now; revisit if it causes support tickets.
 
 ---
 
