@@ -10,37 +10,45 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('code');
-    if (!code) {
-      // Wrap in setTimeout to avoid synchronous setState in effect.
-      setTimeout(() => {
-        setErrorMsg('Ingen kode fundet i URL');
-        setStatus('error');
-      }, 0);
-      return;
-    }
-
-    // 1. Exchange code using localStorage-based client (verifier survived ITP).
     const oauthClient = createOAuthClient();
-    oauthClient.auth
-      .exchangeCodeForSession(code)
-      .then(async ({ data, error }) => {
+
+    const handleSession = async (accessToken: string, refreshToken: string) => {
+      // Transfer tokens from the OAuth client (localStorage) to the SSR client
+      // (cookies) so the server can read the session on subsequent requests.
+      const ssrClient = createClient();
+      const { error } = await ssrClient.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (error) {
+        setErrorMsg(`setSession fejlede: ${error.message}`);
+        setStatus('error');
+      } else {
+        window.location.href = '/';
+      }
+    };
+
+    if (code) {
+      // PKCE fallback (shouldn't happen with implicit flow, kept for safety).
+      oauthClient.auth.exchangeCodeForSession(code).then(({ data, error }) => {
         if (error || !data.session) {
-          console.error('[auth/callback] exchange error:', error?.message);
           setErrorMsg(error?.message ?? 'Exchange fejlede');
           setStatus('error');
-          return;
+        } else {
+          void handleSession(data.session.access_token, data.session.refresh_token);
         }
-
-        // 2. Transfer session to cookie storage so the server can read it.
-        const ssrClient = createClient();
-        await ssrClient.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-
-        // 3. Full page reload so the server gets fresh cookies on the next request.
-        window.location.href = '/';
       });
+    } else {
+      // Implicit flow: tokens are in the URL hash. getSession() auto-detects them.
+      oauthClient.auth.getSession().then(({ data, error }) => {
+        if (error || !data.session) {
+          setErrorMsg(error?.message ?? 'Ingen session fundet i URL');
+          setStatus('error');
+        } else {
+          void handleSession(data.session.access_token, data.session.refresh_token);
+        }
+      });
+    }
   }, []);
 
   if (status === 'error') {

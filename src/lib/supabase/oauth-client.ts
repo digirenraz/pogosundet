@@ -18,6 +18,9 @@ import { createClient } from '@supabase/supabase-js';
 export function createOAuthClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    // implicit flow: tokens arrive in the URL hash — no code verifier stored
+    // anywhere, so iOS Safari's ITP storage purge can't break the OAuth flow.
+    { auth: { flowType: 'implicit' } }
   );
 }
