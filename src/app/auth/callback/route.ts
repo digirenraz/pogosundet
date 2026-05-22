@@ -40,6 +40,11 @@ export async function GET(request: NextRequest) {
   );
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) return errorResponse;
+  if (error) {
+    console.error('[auth/callback] exchangeCodeForSession error:', error.message, error.status);
+    return NextResponse.redirect(
+      `${origin}/login?error=auth-error&details=${encodeURIComponent(error.message)}`
+    );
+  }
   return successResponse;
 }
