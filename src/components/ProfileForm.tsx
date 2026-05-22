@@ -174,61 +174,38 @@ export function ProfileForm({
           {errors.team && <p className="text-[13px] text-destructive">{errors.team}</p>}
         </div>
 
-        {/* Level slider — optional */}
+        {/* Level — optional number input */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
             <label className="text-[14px] font-semibold text-foreground">
-              {t('levelLabel')} <span className="text-primary">{levelSet ? level : '—'}</span>
+              {t('levelLabel')}
             </label>
             <span className="px-2 py-1 rounded-[24px] bg-secondary text-secondary-foreground text-[12px] font-semibold">
               {t('optional')}
             </span>
           </div>
-          <div className="bg-input border border-border rounded-md px-3.5 pt-3.5 pb-2.5">
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] text-muted-foreground font-semibold">1</span>
-              <input
-                type="range"
-                min={1}
-                max={80}
-                value={level}
-                onChange={(e) => {
-                  setLevel(Number(e.target.value));
+          <input
+            type="number"
+            min={1}
+            max={80}
+            inputMode="numeric"
+            value={levelSet ? level : ''}
+            placeholder="1–80"
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (raw === '') {
+                setLevelSet(false);
+              } else {
+                const n = Number(raw);
+                if (!Number.isNaN(n)) {
+                  setLevel(n);
                   setLevelSet(true);
-                }}
-                className="flex-1 accent-primary"
-                aria-label={t('levelLabel')}
-              />
-              <span className="text-[11px] text-muted-foreground font-semibold">80</span>
-            </div>
-            <div className="flex justify-between mt-1.5">
-              {[20, 40, 60, 80].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => {
-                    setLevel(n);
-                    setLevelSet(true);
-                  }}
-                  className="text-[11px] font-bold"
-                  style={{
-                    color: levelSet && level === n ? 'var(--color-primary)' : 'var(--color-muted-foreground)',
-                  }}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-          {levelSet && (
-            <button
-              type="button"
-              onClick={() => setLevelSet(false)}
-              className="self-start text-[12px] font-semibold text-muted-foreground"
-            >
-              {t('levelClearLabel')}
-            </button>
-          )}
+                }
+              }
+            }}
+            className="bg-input border border-border rounded-lg px-3.5 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground w-full outline-none focus:border-primary"
+            aria-label={t('levelLabel')}
+          />
           {errors.level && <p className="text-[13px] text-destructive">{errors.level}</p>}
         </div>
 
