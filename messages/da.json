@@ -133,14 +133,14 @@
     "copiedButton": "Kopieret!",
     "swipeHint": "Stryg for at se næste træner",
     "onlineLabel": "Online nu",
-    "levelChip": "Niveau {level}",
+    "levelChip": "Level {level}",
     "bioLabel": "Mini bio"
   },
   "ProfileTab": {
     "headerTitle": "Min profil",
     "editButton": "Rediger profil",
     "qrButton": "Vis QR kode",
-    "levelChip": "Niveau {level}",
+    "levelChip": "Level {level}",
     "bioLabel": "Mini bio"
   },
   "Raids": {
