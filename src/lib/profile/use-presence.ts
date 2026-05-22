@@ -16,10 +16,13 @@ export function usePresence(userId: string | null | undefined): Set<string> {
   useEffect(() => {
     if (!userId) return;
     const supabase = createClient();
-    void supabase
+    supabase
       .from('profiles')
       .update({ last_seen_at: new Date().toISOString() })
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .then(({ error }) => {
+        if (error) console.error('[last_seen_at] write failed:', error.message);
+      });
   }, [userId]);
 
   useEffect(() => {
