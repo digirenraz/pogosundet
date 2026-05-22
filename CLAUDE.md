@@ -90,7 +90,7 @@ Chat messages (`raid_messages`) are appended to local React state via Realtime I
 ### Database migrations
 SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
 
-Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`, `010_chat_reactions_and_replies`, `011_friend_code_constraint`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`, `010_chat_reactions_and_replies`, `011_friend_code_constraint`, `012_last_seen_at`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
 
 ---
 
@@ -230,6 +230,8 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-22 | Level field: replaced range slider with `<input type="number">` (1–80, `inputMode="numeric"`) then `type="text"` + `maxLength={2}` | The slider was imprecise and frustrating on mobile. Switched to a number input, then immediately followed up with a `type="text"` + `inputMode="numeric"` + `maxLength={2}` refinement because `type="number"` ignores `maxLength` in all browsers. Non-digits stripped in `onChange`. |
 | 2026-05-22 | Current user excluded from the player directory (`PlayerDirectory.tsx`) | Seeing your own profile in the list you're browsing to find other players is confusing. Filtered by `user_id` in a `useMemo` before `filterProfiles` — online count and search results both reflect the exclusion automatically. |
 | 2026-05-22 | Team filter chips show their team colour even when inactive (`PlayerDirectory.tsx`) | Chips were all grey when unselected, making Mystic/Valor/Instinct visually indistinguishable. Inactive team chips now render with the team colour at 55% opacity; active chips show full colour + tinted background. "All" and "Online" chips unchanged. |
+| 2026-05-22 | Slice 14: "last seen" badge on player cards + detail page. Migration 012 adds `profiles.last_seen_at`. | Write path: `use-presence.ts` fires a best-effort `profiles.update({ last_seen_at })` on every presence subscribe — no extra round-trip since the subscription already exists. `lastSeenRelative()` in `src/lib/profile/time.ts` returns humanized Danish strings across 10 buckets ("For 5 min. siden", "I går", "For en uge siden", etc.). Badge only shows when the player is offline and `last_seen_at` is non-null; online players keep the green dot only. Badges won't appear until each user has opened the app at least once after deploy. Resolves the open question deferred on 2026-05-12. |
+| 2026-05-22 | PWA `start_url` changed from `/raids` to `/players`; SW bumped v5→v6 to evict cached manifest | Players is the primary landing screen — raids is a secondary feature reached via bottom nav. SW v6 ensures the updated manifest is fetched fresh so new installs open to the right page. |
 
 ---
 
