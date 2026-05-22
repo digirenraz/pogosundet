@@ -247,6 +247,8 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 - **No staging environment — preview and prod share the same Supabase project:** profiles, raids, chat messages created on a Vercel preview deploy are visible in prod (and vice-versa), so we can't safely test data-writing flows in isolation. Surfaced 2026-05-22 while shipping the QR fix. Cheapest fix is probably a second Supabase project wired up via `vercel env` overrides on preview deploys; revisit before any change that risks corrupting prod data.
 - **TODO: Use `avatar_url` everywhere in the app** — profile pictures are now uploadable but only shown in a few places. Audit all surfaces that display a player's identity (player card, player detail, chat message bubbles, raid attendee list, raid chat, BottomNav profile link, etc.) and ensure `avatar_url` is shown with the existing `<Avatar>` component where it makes sense.
 - **TODO: Investigate account deletion issues** — user noticed problems with account deletion during the 2026-05-22 session but didn't have time to look into it. Reproduce the issue and fix before launch.
+- **TODO: Refine push notifications — define what triggers a notification** — currently only new raid posts trigger a push. Decide which other events should notify users (e.g. someone joins your raid, reply to a raid you're attending, new chat message in a channel, DM when implemented). Avoid notification fatigue.
+- **TODO: Replies to raid chat** — raid chat (`raid_messages`) currently has no threading/reply support. Channel chat got replies + reactions in Slice 13; the same pattern should be extended to raid chat when prioritised.
 
 ---
 
