@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
 // Types
 // ---------------------------------------------------------------------------
 
-type Stage = 'intro' | 'cropping' | 'done';
+type Stage = 'intro' | 'position' | 'done';
 
 interface AvatarUploadSheetProps {
   userId: string;
@@ -174,37 +174,21 @@ function PoGoScreenshotIllustration() {
 }
 
 // ---------------------------------------------------------------------------
-// Crop logic — extracts the circular avatar region from a PoGo screenshot
+// Helpers for the drag-to-position stage
 // ---------------------------------------------------------------------------
 
-function cropFromImage(url: string): Promise<string> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      try {
-        // The PoGo trainer-code screen places the avatar circle at ~8–22% from
-        // the top on a portrait screenshot. The original 0.18 started in the
-        // trainer-name/friend-code area. 0.08 starts just below the tab bar.
-        const cw = img.naturalWidth * 0.35;
-        const cx = img.naturalWidth / 2 - cw / 2;
-        const cy = img.naturalHeight * 0.08;
-        const canvas = document.createElement('canvas');
-        canvas.width = 200;
-        canvas.height = 200;
-        const ctx = canvas.getContext('2d')!;
-        ctx.beginPath();
-        ctx.arc(100, 100, 100, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(img, cx, cy, cw, cw, 0, 0, 200, 200);
-        resolve(canvas.toDataURL('image/png'));
-      } catch {
-        resolve(url);
-      }
-    };
-    img.onerror = () => resolve(url);
-    img.src = url;
-  });
+const CIRCLE_SIZE = 280;
+
+function coverScale(nw: number, nh: number) {
+  return Math.max(CIRCLE_SIZE / nw, CIRCLE_SIZE / nh);
+}
+
+function clampOffset(ox: number, oy: number, nw: number, nh: number) {
+  const sc = coverScale(nw, nh);
+  return {
+    x: Math.min(0, Math.max(CIRCLE_SIZE - nw * sc, ox)),
+    y: Math.min(0, Math.max(CIRCLE_SIZE - nh * sc, oy)),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -218,26 +202,65 @@ export function AvatarUploadSheet({ onCancel, onPick }: AvatarUploadSheetProps) 
   const [pickedSrc, setPickedSrc] = useState<string | null>(null);
   const [croppedSrc, setCroppedSrc] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
+  const [imgNaturalSize, setImgNaturalSize] = useState({ w: 0, h: 0 });
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
     const url = URL.createObjectURL(f);
     setPickedSrc(url);
-    setStage('cropping');
-    // Run the scan animation for 1600ms, then crop
-    setTimeout(async () => {
-      const cropped = await cropFromImage(url);
-      setCroppedSrc(cropped);
+    const img = new Image();
+    img.onload = () => {
+      const { naturalWidth: nw, naturalHeight: nh } = img;
+      setImgNaturalSize({ w: nw, h: nh });
+      const sc = coverScale(nw, nh);
+      // Start at top-center so the avatar (typically near the top) is visible
+      setOffset({ x: (CIRCLE_SIZE - nw * sc) / 2, y: 0 });
+      setStage('position');
+    };
+    img.src = url;
+  }
+
+  function handlePointerDown(e: React.PointerEvent) {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = { sx: e.clientX, sy: e.clientY, ox: offset.x, oy: offset.y };
+  }
+
+  function handlePointerMove(e: React.PointerEvent) {
+    if (!dragRef.current) return;
+    const { sx, sy, ox, oy } = dragRef.current;
+    setOffset(clampOffset(ox + e.clientX - sx, oy + e.clientY - sy, imgNaturalSize.w, imgNaturalSize.h));
+  }
+
+  function handlePointerUp() { dragRef.current = null; }
+
+  function commitCrop() {
+    if (!pickedSrc || !imgNaturalSize.w) return;
+    const img = new Image();
+    img.onload = () => {
+      const sc = coverScale(img.naturalWidth, img.naturalHeight);
+      const canvas = document.createElement('canvas');
+      canvas.width = 200; canvas.height = 200;
+      const ctx = canvas.getContext('2d')!;
+      ctx.beginPath(); ctx.arc(100, 100, 100, 0, Math.PI * 2); ctx.clip();
+      ctx.drawImage(
+        img,
+        -offset.x / sc, -offset.y / sc,
+        CIRCLE_SIZE / sc, CIRCLE_SIZE / sc,
+        0, 0, 200, 200,
+      );
+      setCroppedSrc(canvas.toDataURL('image/png'));
       setStage('done');
-    }, 1600);
+    };
+    img.src = pickedSrc;
   }
 
   async function handleConfirm() {
     if (!croppedSrc) return;
     setPicking(true);
     await onPick(croppedSrc);
-    // Parent handles closing the sheet after upload completes
     setPicking(false);
   }
 
@@ -305,59 +328,62 @@ export function AvatarUploadSheet({ onCancel, onPick }: AvatarUploadSheetProps) 
           </>
         )}
 
-        {/* ── STAGE: cropping ── */}
-        {stage === 'cropping' && (
-          <div className="flex flex-col items-center gap-3.5 py-2">
-            <p className="text-[16px] font-bold">{t('uploadScanning')}</p>
+        {/* ── STAGE: position ── */}
+        {stage === 'position' && (
+          <div className="flex flex-col items-center gap-3 py-2">
+            <p className="text-[16px] font-bold self-start">{t('uploadPositionTitle')}</p>
 
-            {/* Phone viewport showing the picked screenshot */}
+            {/* Circular drag viewport */}
             <div
-              className="relative rounded-xl overflow-hidden border border-border"
-              style={{ width: 220, aspectRatio: '9/16' }}
+              style={{
+                width: CIRCLE_SIZE, height: CIRCLE_SIZE,
+                borderRadius: '50%', overflow: 'hidden',
+                position: 'relative', flexShrink: 0,
+                border: '3px solid #00b09f',
+                cursor: 'grab', touchAction: 'none', userSelect: 'none',
+              }}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
             >
-              <FakePoGoScreenshot fullImage={pickedSrc} />
-
-              {/* Scan overlay: dark vignette with a green circle targeting the avatar */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div
+              {pickedSrc && imgNaturalSize.w > 0 && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={pickedSrc}
+                  alt=""
+                  draggable={false}
                   style={{
                     position: 'absolute',
-                    left: '50%',
-                    top: '29%',
-                    width: 60,
-                    height: 60,
-                    marginLeft: -30,
-                    marginTop: -30,
-                    border: '2px solid #00b09f',
-                    borderRadius: '9999px',
-                    boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
-                    animation: 'pogo-scan-pulse 1s ease-in-out infinite',
+                    width: imgNaturalSize.w * coverScale(imgNaturalSize.w, imgNaturalSize.h),
+                    height: imgNaturalSize.h * coverScale(imgNaturalSize.w, imgNaturalSize.h),
+                    left: offset.x,
+                    top: offset.y,
+                    userSelect: 'none',
+                    pointerEvents: 'none',
                   }}
-                >
-                  {/* Corner markers */}
-                  {(['tl', 'tr', 'bl', 'br'] as const).map((c) => (
-                    <span
-                      key={c}
-                      style={{
-                        position: 'absolute',
-                        width: 12,
-                        height: 12,
-                        borderColor: '#00b09f',
-                        borderStyle: 'solid',
-                        borderTopWidth: c[0] === 't' ? 3 : 0,
-                        borderBottomWidth: c[0] === 'b' ? 3 : 0,
-                        borderLeftWidth: c[1] === 'l' ? 3 : 0,
-                        borderRightWidth: c[1] === 'r' ? 3 : 0,
-                        [c[0] === 't' ? 'top' : 'bottom']: -8,
-                        [c[1] === 'l' ? 'left' : 'right']: -8,
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
+                />
+              )}
             </div>
 
-            <p className="text-[12px] text-muted-foreground">{t('uploadScanCaption')}</p>
+            <p className="text-[12px] text-muted-foreground">{t('uploadPositionHint')}</p>
+
+            <div className="flex gap-2.5 w-full mt-1">
+              <button
+                type="button"
+                onClick={() => setStage('intro')}
+                className="flex-1 h-12 bg-card text-foreground border border-border rounded-xl text-[14px] font-bold"
+              >
+                {t('uploadRetry')}
+              </button>
+              <button
+                type="button"
+                onClick={commitCrop}
+                className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl text-[14px] font-bold"
+              >
+                {t('uploadConfirm')}
+              </button>
+            </div>
           </div>
         )}
 
@@ -404,18 +430,6 @@ export function AvatarUploadSheet({ onCancel, onPick }: AvatarUploadSheetProps) 
         )}
       </div>
 
-      {/* Scan pulse animation — injected as a style tag so no external CSS dep needed */}
-      <style>{`
-        @keyframes pogo-scan-pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.06); opacity: 0.8; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          @keyframes pogo-scan-pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-          }
-        }
-      `}</style>
     </div>
   );
 }

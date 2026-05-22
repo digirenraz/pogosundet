@@ -227,7 +227,9 @@
     "uploadDoneTitle": "There you are!",
     "uploadRetry": "Try again",
     "uploadConfirm": "Use photo",
-    "uploadError": "Something went wrong. Please try again."
+    "uploadError": "Something went wrong. Please try again.",
+    "uploadPositionTitle": "Position your avatar",
+    "uploadPositionHint": "Drag to adjust"
   },
   "ProfileSetup": {
     "subtitle": "Create your local trainer profile",

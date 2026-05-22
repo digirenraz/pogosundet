@@ -328,7 +328,9 @@
     "uploadDoneTitle": "Sådan! Sådan ser du ud.",
     "uploadRetry": "Prøv igen",
     "uploadConfirm": "Brug billede",
-    "uploadError": "Noget gik galt. Prøv igen."
+    "uploadError": "Noget gik galt. Prøv igen.",
+    "uploadPositionTitle": "Placer dit avatar",
+    "uploadPositionHint": "Træk billedet for at justere"
   },
   "ProfileSetup": {
     "subtitle": "Opret din lokale trænerprofil",
