@@ -12,13 +12,22 @@ export interface ChannelMessageProfile {
   level: number | null;
 }
 
+export interface ChannelMessageReactionRow {
+  emoji: string;
+  user_id: string;
+}
+
 export interface ChannelMessage {
   id: string;
   channel: ChannelId;
   user_id: string;
   body: string;
   created_at: string;
+  reply_to_id: string | null;
   profiles: ChannelMessageProfile | null;
+  // Embedded via FK from channel_message_reactions.message_id. The list is
+  // grouped/keyed on the client by groupReactions().
+  reactions: ChannelMessageReactionRow[];
 }
 
 // Latest message in a channel — used for the channel-list "last message" preview.
@@ -28,13 +37,16 @@ export async function getLatestMessageForChannel(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('channel_messages')
-    .select('*, profiles(trainer_name, avatar_url, team, level)')
+    .select(
+      'id, channel, user_id, body, created_at, reply_to_id, profiles(trainer_name, avatar_url, team, level)'
+    )
     .eq('channel', channelId)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
   if (error || !data) return null;
-  return data as unknown as ChannelMessage;
+  // Preview rows don't need reactions — synthesise an empty list to satisfy the type.
+  return { ...(data as unknown as Omit<ChannelMessage, 'reactions'>), reactions: [] };
 }
 
 // Latest N messages for a channel, oldest-first so the UI can render in order.
@@ -46,7 +58,9 @@ export async function getMessagesForChannel(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('channel_messages')
-    .select('*, profiles(trainer_name, avatar_url, team, level)')
+    .select(
+      'id, channel, user_id, body, created_at, reply_to_id, profiles(trainer_name, avatar_url, team, level), reactions:channel_message_reactions(emoji, user_id)'
+    )
     .eq('channel', channelId)
     .order('created_at', { ascending: false })
     .limit(limit);
