@@ -183,11 +183,10 @@ function coverScale(nw: number, nh: number) {
   return Math.max(CIRCLE_SIZE / nw, CIRCLE_SIZE / nh);
 }
 
-function clampOffset(ox: number, oy: number, nw: number, nh: number) {
-  const sc = coverScale(nw, nh);
+function clampOffset(ox: number, oy: number, nw: number, nh: number, effectiveScale: number) {
   return {
-    x: Math.min(0, Math.max(CIRCLE_SIZE - nw * sc, ox)),
-    y: Math.min(0, Math.max(CIRCLE_SIZE - nh * sc, oy)),
+    x: Math.min(0, Math.max(CIRCLE_SIZE - nw * effectiveScale, ox)),
+    y: Math.min(0, Math.max(CIRCLE_SIZE - nh * effectiveScale, oy)),
   };
 }
 
@@ -204,7 +203,10 @@ export function AvatarUploadSheet({ onCancel, onPick }: AvatarUploadSheetProps) 
   const [picking, setPicking] = useState(false);
   const [imgNaturalSize, setImgNaturalSize] = useState({ w: 0, h: 0 });
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(1); // multiplier on top of cover scale; 1 = cover
   const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const lastPinchDistRef = useRef<number | null>(null);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -216,6 +218,7 @@ export function AvatarUploadSheet({ onCancel, onPick }: AvatarUploadSheetProps) 
       const { naturalWidth: nw, naturalHeight: nh } = img;
       setImgNaturalSize({ w: nw, h: nh });
       const sc = coverScale(nw, nh);
+      setScale(1);
       // Start at top-center so the avatar (typically near the top) is visible
       setOffset({ x: (CIRCLE_SIZE - nw * sc) / 2, y: 0 });
       setStage('position');
@@ -225,30 +228,62 @@ export function AvatarUploadSheet({ onCancel, onPick }: AvatarUploadSheetProps) 
 
   function handlePointerDown(e: React.PointerEvent) {
     e.currentTarget.setPointerCapture(e.pointerId);
-    dragRef.current = { sx: e.clientX, sy: e.clientY, ox: offset.x, oy: offset.y };
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointersRef.current.size === 1) {
+      dragRef.current = { sx: e.clientX, sy: e.clientY, ox: offset.x, oy: offset.y };
+    } else {
+      // Second finger down — switch to pinch mode, cancel drag
+      dragRef.current = null;
+      const pts = [...pointersRef.current.values()];
+      lastPinchDistRef.current = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+    }
   }
 
   function handlePointerMove(e: React.PointerEvent) {
-    if (!dragRef.current) return;
-    const { sx, sy, ox, oy } = dragRef.current;
-    setOffset(clampOffset(ox + e.clientX - sx, oy + e.clientY - sy, imgNaturalSize.w, imgNaturalSize.h));
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const { w: nw, h: nh } = imgNaturalSize;
+    if (!nw) return;
+
+    if (pointersRef.current.size >= 2) {
+      // Pinch-to-zoom
+      const pts = [...pointersRef.current.values()];
+      const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      if (lastPinchDistRef.current !== null && lastPinchDistRef.current > 0) {
+        const ratio = dist / lastPinchDistRef.current;
+        const newScale = Math.max(1, Math.min(6, scale * ratio));
+        const cs = coverScale(nw, nh);
+        const eff = cs * newScale;
+        setScale(newScale);
+        setOffset(prev => clampOffset(prev.x, prev.y, nw, nh, eff));
+      }
+      lastPinchDistRef.current = dist;
+    } else if (dragRef.current) {
+      // Single-finger drag
+      const { sx, sy, ox, oy } = dragRef.current;
+      const eff = coverScale(nw, nh) * scale;
+      setOffset(clampOffset(ox + e.clientX - sx, oy + e.clientY - sy, nw, nh, eff));
+    }
   }
 
-  function handlePointerUp() { dragRef.current = null; }
+  function handlePointerUp(e: React.PointerEvent) {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) lastPinchDistRef.current = null;
+    if (pointersRef.current.size === 0) dragRef.current = null;
+  }
 
   function commitCrop() {
     if (!pickedSrc || !imgNaturalSize.w) return;
     const img = new Image();
     img.onload = () => {
-      const sc = coverScale(img.naturalWidth, img.naturalHeight);
+      const eff = coverScale(img.naturalWidth, img.naturalHeight) * scale;
       const canvas = document.createElement('canvas');
       canvas.width = 200; canvas.height = 200;
       const ctx = canvas.getContext('2d')!;
       ctx.beginPath(); ctx.arc(100, 100, 100, 0, Math.PI * 2); ctx.clip();
       ctx.drawImage(
         img,
-        -offset.x / sc, -offset.y / sc,
-        CIRCLE_SIZE / sc, CIRCLE_SIZE / sc,
+        -offset.x / eff, -offset.y / eff,
+        CIRCLE_SIZE / eff, CIRCLE_SIZE / eff,
         0, 0, 200, 200,
       );
       setCroppedSrc(canvas.toDataURL('image/png'));
@@ -347,23 +382,26 @@ export function AvatarUploadSheet({ onCancel, onPick }: AvatarUploadSheetProps) 
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
             >
-              {pickedSrc && imgNaturalSize.w > 0 && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={pickedSrc}
-                  alt=""
-                  draggable={false}
-                  style={{
-                    position: 'absolute',
-                    width: imgNaturalSize.w * coverScale(imgNaturalSize.w, imgNaturalSize.h),
-                    height: imgNaturalSize.h * coverScale(imgNaturalSize.w, imgNaturalSize.h),
-                    left: offset.x,
-                    top: offset.y,
-                    userSelect: 'none',
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
+              {pickedSrc && imgNaturalSize.w > 0 && (() => {
+                const eff = coverScale(imgNaturalSize.w, imgNaturalSize.h) * scale;
+                return (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={pickedSrc}
+                    alt=""
+                    draggable={false}
+                    style={{
+                      position: 'absolute',
+                      width: imgNaturalSize.w * eff,
+                      height: imgNaturalSize.h * eff,
+                      left: offset.x,
+                      top: offset.y,
+                      userSelect: 'none',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                );
+              })()}
             </div>
 
             <p className="text-[12px] text-muted-foreground">{t('uploadPositionHint')}</p>

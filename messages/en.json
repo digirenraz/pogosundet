@@ -229,7 +229,7 @@
     "uploadConfirm": "Use photo",
     "uploadError": "Something went wrong. Please try again.",
     "uploadPositionTitle": "Position your avatar",
-    "uploadPositionHint": "Drag to adjust"
+    "uploadPositionHint": "Drag to move · pinch to zoom"
   },
   "ProfileSetup": {
     "subtitle": "Create your local trainer profile",
