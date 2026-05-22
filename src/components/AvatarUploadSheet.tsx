@@ -183,9 +183,12 @@ function cropFromImage(url: string): Promise<string> {
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       try {
-        const cw = img.naturalWidth * 0.32;
+        // The PoGo trainer-code screen places the avatar circle at ~8–22% from
+        // the top on a portrait screenshot. The original 0.18 started in the
+        // trainer-name/friend-code area. 0.08 starts just below the tab bar.
+        const cw = img.naturalWidth * 0.35;
         const cx = img.naturalWidth / 2 - cw / 2;
-        const cy = img.naturalHeight * 0.18;
+        const cy = img.naturalHeight * 0.08;
         const canvas = document.createElement('canvas');
         canvas.width = 200;
         canvas.height = 200;
