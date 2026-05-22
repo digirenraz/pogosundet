@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   }
 
   // 200 response — cookies set here will always be stored by the browser.
-  const successHtml = `<!DOCTYPE html><html><head><title>Logger ind…</title></head><body><script>window.location.replace('/')</script><p style="font-family:sans-serif;padding:32px;color:#555">Logger ind…</p></body></html>`;
+  const successHtml = `<!DOCTYPE html><html><head><title>Logger ind…</title></head><body><script>setTimeout(function(){window.location.replace('/players')},300)</script><p style="font-family:sans-serif;padding:32px;color:#555">Logger ind…</p></body></html>`;
   const successResponse = new NextResponse(successHtml, {
     status: 200,
     headers: { "Content-Type": "text/html; charset=utf-8" },
