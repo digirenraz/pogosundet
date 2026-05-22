@@ -242,6 +242,8 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 
 ## Design workflow
 
+**Design system project:** `https://claude.ai/design/p/f4dae200-a4eb-4523-9cc1-3e2c4b174958` — the source of truth for colours, typography, radii, shadows, and spacing. The full token set is available in `colors_and_type.css` inside any exported handoff bundle (the chat handoff at `/tmp/pogo-design/chat/project/colors_and_type.css` is the latest extracted copy). For small UI changes Claude Code can work directly from the existing code; a new handoff bundle is only needed for new full screens or complex layouts.
+
 Designs come from **Claude Design** (claude.ai/design). The user exports a handoff bundle and shares the URL. The bundle is a gzip-compressed tar archive containing:
 - `README.md` — full spec: screens, measurements, design tokens, interaction logic
 - `*.html` — interactive prototype (read the source; do not screenshot)
