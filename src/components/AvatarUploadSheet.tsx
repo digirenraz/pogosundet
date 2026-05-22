@@ -394,6 +394,7 @@ export function AvatarUploadSheet({ onCancel, onPick }: AvatarUploadSheetProps) 
                       position: 'absolute',
                       width: imgNaturalSize.w * eff,
                       height: imgNaturalSize.h * eff,
+                      maxWidth: 'none',  // override global img { max-width: 100% }
                       left: offset.x,
                       top: offset.y,
                       userSelect: 'none',
