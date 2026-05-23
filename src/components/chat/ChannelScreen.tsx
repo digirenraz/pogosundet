@@ -24,6 +24,7 @@ import {
 } from '@/lib/chat/time';
 import type { Channel } from '@/lib/chat/channels';
 import type { ChannelMessage } from '@/lib/chat/server-helpers';
+import type { ChatMessage } from '@/lib/chat/types';
 import type { OnlineStripProfile } from './OnlineStrip';
 import { Composer } from './Composer';
 import { MembersSheet } from './MembersSheet';
@@ -31,22 +32,9 @@ import { MessageActionSheet } from './MessageActionSheet';
 import { MessageGroupView } from './MessageGroup';
 import { TypingDots } from './TypingDots';
 
-// Shape consumed by MessageGroupView — sent_at is a Date for the grouping helper.
-// `reactions` is the pre-grouped emoji → user_id[] map.
-export interface ChatMessage {
-  id: string;
-  author_id: string;
-  body: string;
-  sent_at: Date;
-  reply_to_id: string | null;
-  reactions: Record<string, string[]>;
-  profiles: {
-    trainer_name: string;
-    avatar_url: string | null;
-    team: 'mystic' | 'valor' | 'instinct' | null;
-    level: number | null;
-  } | null;
-}
+// Re-exported for backward compatibility — the type lives in `@/lib/chat/types`
+// so both channel chat and raid chat can consume it without circular imports.
+export type { ChatMessage };
 
 interface ChannelScreenProps {
   channel: Channel;

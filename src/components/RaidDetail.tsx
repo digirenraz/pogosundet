@@ -1,13 +1,32 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, MapPin, Check, Minus, Plus, Send } from 'lucide-react';
+import { ArrowLeft, MapPin, Check, Minus, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { joinRaid, leaveRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
-import { sendMessage, type RaidMessage, type RaidMessageRow } from '@/lib/raids/message-helpers';
+import {
+  sendMessage,
+  type RaidMessage,
+  type RaidMessageRow,
+} from '@/lib/raids/message-helpers';
+import {
+  groupReactions,
+  toggleReaction,
+  type RaidReactionRow,
+} from '@/lib/raids/reactions-helpers';
 import { useRaidsRealtime } from '@/lib/raids/use-raids-realtime';
+import { useRaidReactionsRealtime } from '@/lib/raids/use-raid-reactions-realtime';
+import {
+  daySeparator,
+  groupMessages,
+  type MessageGroup as MessageGroupType,
+} from '@/lib/chat/time';
+import type { ChatMessage } from '@/lib/chat/types';
 import type { RaidWithDetails } from '@/lib/raids/server-helpers';
+import { Composer } from '@/components/chat/Composer';
+import { MessageActionSheet } from '@/components/chat/MessageActionSheet';
+import { MessageGroupView } from '@/components/chat/MessageGroup';
 
 interface RaidDetailProps {
   raid: RaidWithDetails;
@@ -35,17 +54,57 @@ function relativeLabel(raid: RaidWithDetails): string {
   return `Startede for ${diffMin} min siden`;
 }
 
+// Convert server `RaidMessage` (column name `message`) into the canonical
+// `ChatMessage` shape consumed by `MessageGroupView`. Reactions are
+// pre-grouped here so the renderer can stay synchronous.
+function toChatMessage(row: RaidMessage): ChatMessage {
+  const reactionRows = (row.reactions ?? []).map((r) => ({
+    message_id: row.id,
+    user_id: r.user_id,
+    emoji: r.emoji,
+  }));
+  return {
+    id: row.id,
+    author_id: row.user_id,
+    body: row.message,
+    sent_at: new Date(row.created_at),
+    reply_to_id: row.reply_to_id ?? null,
+    reactions: groupReactions(reactionRows),
+    profiles: row.profiles
+      ? {
+          trainer_name: row.profiles.trainer_name,
+          avatar_url: row.profiles.avatar_url,
+          team: row.profiles.team,
+          level: row.profiles.level,
+        }
+      : null,
+  };
+}
+
 // Full-screen detail view for a single raid — includes RSVP, attendees, and chat.
 export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailProps) {
   const t = useTranslations('Raids');
+  const tChat = useTranslations('Chat');
   const router = useRouter();
 
   const myAttendee = raid.raid_attendees.find(a => a.user_id === currentUserId);
   const [joined, setJoined] = useState(!!myAttendee);
   const [extra, setExtra] = useState(myAttendee?.extra_count ?? 0);
-  const [messages, setMessages] = useState<RaidMessage[]>(raid.raid_messages);
-  const [chatInput, setChatInput] = useState('');
-  const [sending, setSending] = useState(false);
+
+  // Messages live in client state — raid chat stays local-state-driven (the
+  // realtime hook below appends INSERTs directly instead of refreshing the RSC).
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    raid.raid_messages.map(toChatMessage)
+  );
+
+  // Slice 16 chat orchestration — mirrors ChannelScreen.
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [actionMsgId, setActionMsgId] = useState<string | null>(null);
+  // Sparse overlay: messageId → grouped reactions. Wins over messages[i].reactions
+  // when present. Set via realtime + optimistic toggles.
+  const [reactionOverrides, setReactionOverrides] = useState<
+    Record<string, Record<string, string[]>>
+  >({});
 
   // Optimistic attendees — seeded from server data
   const [attendees, setAttendees] = useState(raid.raid_attendees);
@@ -57,24 +116,37 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
   useEffect(() => { attendeesRef.current = attendees; }, [attendees]);
 
   const timeLabel = relativeLabel(raid);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Realtime: attendee changes trigger router.refresh (needs the profile join);
   // message INSERTs are handled locally — avoids a full RSC refetch per chat message.
   // The sender's trainer_name is resolved from the local attendees list (fast path);
-  // if not found (sender hasn't RSVP'd), the name falls back to null.
-  // Optimistic messages from the current user are replaced when the real row arrives.
+  // if not found (sender hasn't RSVP'd), the name falls back to null. Realtime
+  // INSERTs don't carry the joined profile so avatar/team/level remain null
+  // until the next router.refresh hydrates them — acceptable for the in-raid
+  // chat (small audience, attendees usually known).
   useRaidsRealtime(raid.id, (row: RaidMessageRow) => {
     const knownAttendee = attendeesRef.current.find(a => a.user_id === row.user_id);
-    const msg: RaidMessage = {
-      ...row,
-      profiles: knownAttendee?.profiles ?? null,
+    const msg: ChatMessage = {
+      id: row.id,
+      author_id: row.user_id,
+      body: row.message,
+      sent_at: new Date(row.created_at),
+      reply_to_id: row.reply_to_id ?? null,
+      reactions: {},
+      profiles: knownAttendee?.profiles
+        ? {
+            trainer_name: knownAttendee.profiles.trainer_name,
+            avatar_url: null,
+            team: null,
+            level: null,
+          }
+        : null,
     };
     setMessages(prev => {
       // Replace the optimistic placeholder for this sender if one exists
-      if (prev.some(m => m.id.startsWith('opt-') && m.user_id === row.user_id)) {
+      if (prev.some(m => m.id.startsWith('opt-') && m.author_id === row.user_id)) {
         return prev.map(m =>
-          m.id.startsWith('opt-') && m.user_id === row.user_id ? msg : m
+          m.id.startsWith('opt-') && m.author_id === row.user_id ? msg : m
         );
       }
       // Deduplicate (defensive against double-delivery)
@@ -95,10 +167,78 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
     setAttendees(raid.raid_attendees);
   }
 
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  // Apply reaction overrides on top of the source messages.
+  const displayedMessages = useMemo(
+    () =>
+      messages.map((m) => {
+        const override = reactionOverrides[m.id];
+        return override !== undefined ? { ...m, reactions: override } : m;
+      }),
+    [messages, reactionOverrides]
+  );
+
+  // Index for ReplyQuote lookups and sheet-target resolution.
+  const messagesById = useMemo(() => {
+    const map: Record<string, ChatMessage> = {};
+    for (const m of displayedMessages) map[m.id] = m;
+    return map;
+  }, [displayedMessages]);
+
+  // Live set of known message IDs — passed to the reactions realtime hook to
+  // filter out events for messages we haven't loaded.
+  const messageIdSet = useMemo(
+    () => new Set(messages.map((m) => m.id)),
+    [messages]
+  );
+
+  // Merge a single realtime/optimistic delta into reactionOverrides.
+  const applyReactionDelta = useCallback(
+    (
+      messageId: string,
+      emoji: string,
+      userId: string,
+      kind: 'add' | 'remove'
+    ) => {
+      setReactionOverrides((prev) => {
+        // Base: existing override OR the source message's grouped reactions.
+        const sourceMsg = messages.find((m) => m.id === messageId);
+        const base =
+          prev[messageId] ??
+          (sourceMsg ? sourceMsg.reactions : ({} as Record<string, string[]>));
+        const list = base[emoji] ?? [];
+        let nextList: string[];
+        if (kind === 'add') {
+          if (list.includes(userId)) return prev; // no-op
+          nextList = [...list, userId];
+        } else {
+          if (!list.includes(userId)) return prev;
+          nextList = list.filter((id) => id !== userId);
+        }
+        const next = { ...base };
+        if (nextList.length === 0) delete next[emoji];
+        else next[emoji] = nextList;
+        return { ...prev, [messageId]: next };
+      });
+    },
+    [messages]
+  );
+
+  const reactionCallbacks = useMemo(
+    () => ({
+      onInsert: (row: RaidReactionRow) =>
+        applyReactionDelta(row.message_id, row.emoji, row.user_id, 'add'),
+      onDelete: (row: RaidReactionRow) =>
+        applyReactionDelta(row.message_id, row.emoji, row.user_id, 'remove'),
+    }),
+    [applyReactionDelta]
+  );
+
+  useRaidReactionsRealtime(
+    raid.id,
+    currentUserId,
+    messageIdSet,
+    reactionCallbacks
+  );
 
   async function handleJoin() {
     setJoined(true);
@@ -127,30 +267,73 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
     await updateAttendeeExtra(raid.id, currentUserId, next);
   }
 
-  async function handleSend() {
-    const text = chatInput.trim();
-    if (!text || sending) return;
-    setSending(true);
+  async function handleSend(body: string) {
+    const replyId = replyTo?.id ?? null;
     // Optimistic append
-    const optimistic: RaidMessage = {
+    const optimistic: ChatMessage = {
       id: `opt-${Date.now()}`,
-      raid_id: raid.id,
-      user_id: currentUserId,
-      message: text,
-      created_at: new Date().toISOString(),
-      profiles: { trainer_name: currentUserName },
+      author_id: currentUserId,
+      body,
+      sent_at: new Date(),
+      reply_to_id: replyId,
+      reactions: {},
+      profiles: {
+        trainer_name: currentUserName,
+        avatar_url: null,
+        team: null,
+        level: null,
+      },
     };
     setMessages(prev => [...prev, optimistic]);
-    setChatInput('');
-    await sendMessage(raid.id, currentUserId, text);
-    setSending(false);
+    setReplyTo(null);
+    await sendMessage(raid.id, currentUserId, body, replyId);
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+  // Tap a bubble → open the action sheet (skip optimistic placeholders).
+  function handleMessageTap(message: ChatMessage) {
+    if (message.id.startsWith('opt-')) return;
+    setActionMsgId(message.id);
+  }
+
+  // Toggle a reaction from a chip OR from the sheet. Optimistically update the
+  // override map, then fire the DB write — realtime echo will reconcile.
+  function handleReactToggle(messageId: string, emoji: string) {
+    const sourceMsg = messages.find((m) => m.id === messageId);
+    if (!sourceMsg || messageId.startsWith('opt-')) return;
+    const currentList =
+      reactionOverrides[messageId]?.[emoji] ??
+      sourceMsg.reactions[emoji] ??
+      [];
+    const has = currentList.includes(currentUserId);
+    applyReactionDelta(
+      messageId,
+      emoji,
+      currentUserId,
+      has ? 'remove' : 'add'
+    );
+    void toggleReaction(messageId, currentUserId, emoji);
+  }
+
+  function handleSheetReact(emoji: string) {
+    if (actionMsgId) handleReactToggle(actionMsgId, emoji);
+    setActionMsgId(null);
+  }
+
+  function handleSheetReply() {
+    if (actionMsgId) {
+      const target = messagesById[actionMsgId];
+      if (target) setReplyTo(target);
     }
+    setActionMsgId(null);
+  }
+
+  function handleSheetCopy() {
+    if (!actionMsgId) return;
+    const target = messagesById[actionMsgId];
+    if (target && typeof navigator !== 'undefined' && navigator.clipboard) {
+      void navigator.clipboard.writeText(target.body);
+    }
+    setActionMsgId(null);
   }
 
   function handleOpenMap() {
@@ -164,6 +347,62 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
   // Friendly time string for meta bar
   const startsAtDate = raid.starts_at ? new Date(raid.starts_at) : new Date(raid.created_at);
   const timeString = startsAtDate.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+
+  // Build the visual row list — day separators between groups whose first
+  // message crosses a calendar day boundary from the previous group.
+  const rows = useMemo(() => {
+    const groups = groupMessages(displayedMessages);
+    let lastOwnGroupIdx = -1;
+    for (let i = groups.length - 1; i >= 0; i--) {
+      if (groups[i].author_id === currentUserId) {
+        lastOwnGroupIdx = i;
+        break;
+      }
+    }
+    const lastGroupIsMine =
+      groups.length > 0 &&
+      groups[groups.length - 1].author_id === currentUserId;
+
+    const out: Array<
+      | { kind: 'sep'; key: string; label: string }
+      | {
+          kind: 'group';
+          key: string;
+          group: MessageGroupType<ChatMessage>;
+          mine: boolean;
+          isLastOwnGroup: boolean;
+        }
+    > = [];
+    let prevDayKey: string | null = null;
+    const now = new Date();
+    groups.forEach((g, gi) => {
+      const dayKey = new Date(g.messages[0].sent_at).toDateString();
+      if (dayKey !== prevDayKey) {
+        out.push({
+          kind: 'sep',
+          key: `sep-${dayKey}`,
+          label: daySeparator(g.messages[0].sent_at, now),
+        });
+        prevDayKey = dayKey;
+      }
+      out.push({
+        kind: 'group',
+        key: `g-${gi}`,
+        group: g,
+        mine: g.author_id === currentUserId,
+        isLastOwnGroup: gi === lastOwnGroupIdx && lastGroupIsMine,
+      });
+    });
+    return out;
+  }, [displayedMessages, currentUserId]);
+
+  // Composer reply preview name: "dig" when replying to yourself, otherwise
+  // the resolved trainer name. Computed here so Composer stays presentational.
+  const replyToName = replyTo
+    ? replyTo.author_id === currentUserId
+      ? tChat('you_lowercase')
+      : replyTo.profiles?.trainer_name ?? ''
+    : '';
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -180,7 +419,7 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
       </div>
 
       {/* Scrollable body */}
-      <div className="pt-14 pb-[72px] overflow-y-auto flex-1">
+      <div className="pt-14 pb-[140px] overflow-y-auto flex-1">
         {/* Hero image */}
         <div className="relative h-[190px] bg-input">
           {raid.image_url ? (
@@ -293,64 +532,64 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
         </div>
 
         {/* Chat section */}
-        <div className="px-4 pt-3.5 pb-4">
-          <p className="text-[14px] font-bold mb-3">{t('detail.chatTitle')}</p>
+        <div className="px-3 pt-3.5 pb-4">
+          <p className="text-[14px] font-bold mb-3 px-1">{t('detail.chatTitle')}</p>
 
-          {messages.length === 0 ? (
+          {rows.length === 0 ? (
             <p className="text-[13px] text-muted-foreground text-center py-6">
               {t('detail.noMessages')}
             </p>
           ) : (
-            messages.map(msg => (
-              <div key={msg.id} className="flex gap-2.5 mb-3">
-                {/* Avatar */}
-                <div className="w-7 h-7 rounded-full bg-secondary text-primary text-[11px] font-bold flex items-center justify-center shrink-0">
-                  {msg.profiles?.trainer_name ? initials(msg.profiles.trainer_name) : '?'}
-                </div>
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-bold">
-                      {msg.profiles?.trainer_name ?? '—'}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {new Date(msg.created_at).toLocaleTimeString('da-DK', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                  <div className="bg-input rounded-[4px_10px_10px_10px] px-2.5 py-1.5 text-[14px] leading-snug mt-0.5 break-words">
-                    {msg.message}
-                  </div>
-                </div>
-              </div>
-            ))
+            <div className="flex flex-col">
+              {rows.map((row) => {
+                if (row.kind === 'sep') {
+                  return (
+                    <div key={row.key} className="flex items-center gap-2.5 mt-3.5 mb-1.5 mx-1">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+                        {row.label}
+                      </span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                  );
+                }
+                return (
+                  <MessageGroupView
+                    key={row.key}
+                    group={row.group}
+                    mine={row.mine}
+                    isLastOwnGroup={row.isLastOwnGroup}
+                    messagesById={messagesById}
+                    currentUserId={currentUserId}
+                    highlightedId={actionMsgId}
+                    onTap={handleMessageTap}
+                    onReactToggle={handleReactToggle}
+                  />
+                );
+              })}
+            </div>
           )}
-          <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Pinned chat input */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-2.5 flex gap-2 items-center z-10">
-        <input
-          type="text"
-          value={chatInput}
-          onChange={e => setChatInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={t('detail.chatPlaceholder')}
-          className="flex-1 h-10 rounded-full border border-border bg-input px-4 text-[14px] placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary"
-        />
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={!chatInput.trim() || sending}
-          className="w-10 h-10 rounded-full bg-primary flex items-center justify-center disabled:opacity-60"
-          aria-label={t('detail.send')}
-        >
-          <Send size={16} className="text-white" />
-        </button>
-      </div>
+      {/* Composer (replaces the old pinned <input> strip). Passes the
+          channelName-shaped placeholder using the raid's boss/gym header. */}
+      <Composer
+        channelName={headerTitle}
+        onSend={handleSend}
+        replyTo={replyTo}
+        replyToName={replyToName}
+        onCancelReply={() => setReplyTo(null)}
+      />
+
+      <MessageActionSheet
+        message={actionMsgId ? messagesById[actionMsgId] ?? null : null}
+        currentUserId={currentUserId}
+        onClose={() => setActionMsgId(null)}
+        onReact={handleSheetReact}
+        onReply={handleSheetReply}
+        onCopy={handleSheetCopy}
+      />
     </div>
   );
 }

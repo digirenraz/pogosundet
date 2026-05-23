@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Avatar } from '@/components/Avatar';
 import { clockTime, type MessageGroup as MessageGroupType } from '@/lib/chat/time';
-import type { ChatMessage } from './ChannelScreen';
+import type { ChatMessage } from '@/lib/chat/types';
 import { Reactions } from './Reactions';
 import { ReplyQuote } from './ReplyQuote';
 
