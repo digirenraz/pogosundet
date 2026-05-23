@@ -2,7 +2,7 @@
 
 import { Reply, Copy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { ChatMessage } from './ChannelScreen';
+import type { ChatMessage } from '@/lib/chat/types';
 
 interface MessageActionSheetProps {
   message: ChatMessage | null;

@@ -95,13 +95,16 @@ export async function getRecentRaids(): Promise<{
 }
 
 // Fetches a single raid with full message data for the detail screen.
+// Embeds the richer profile shape (trainer_name + avatar/team/level) and the
+// reactions table — aliased as `reactions` — so the chat UI can render with
+// the same data shape as community chat.
 export async function getRaidById(id: string): Promise<RaidWithDetails | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('raids')
     .select(
-      '*, raid_attendees(user_id, extra_count, profiles(trainer_name)), raid_messages(id, user_id, message, created_at, profiles(trainer_name))'
+      '*, raid_attendees(user_id, extra_count, profiles(trainer_name)), raid_messages(id, raid_id, user_id, message, created_at, reply_to_id, profiles(trainer_name, avatar_url, team, level), reactions:raid_message_reactions(user_id, emoji))'
     )
     .eq('id', id)
     .single();

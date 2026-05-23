@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { Reply, SendHorizontal, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { ChatMessage } from './ChannelScreen';
+import type { ChatMessage } from '@/lib/chat/types';
 
 interface ComposerProps {
   channelName: string;

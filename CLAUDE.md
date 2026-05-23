@@ -90,7 +90,7 @@ Chat messages (`raid_messages`) are appended to local React state via Realtime I
 ### Database migrations
 SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
 
-Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`, `010_chat_reactions_and_replies`, `011_friend_code_constraint`, `012_last_seen_at`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`, `010_chat_reactions_and_replies`, `011_friend_code_constraint`, `012_last_seen_at`, `013_raid_chat_reactions_and_replies`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
 
 ---
 
@@ -209,7 +209,6 @@ Pickable TODOs, in no particular order. Promote one to a branch and start a slic
 - **Use `avatar_url` everywhere in the app** — profile pictures are uploadable but only shown in a few places. Audit all surfaces that display a player's identity (player card, player detail, chat message bubbles, raid attendee list, raid chat, BottomNav profile link, etc.) and render `avatar_url` with the existing `<Avatar>` component where it makes sense.
 - **Investigate account deletion issues** — user noticed problems with account deletion during the 2026-05-22 session but didn't have time to look into it. Reproduce and fix before launch.
 - **Define push notification triggers** — currently only new raid posts trigger a push. Decide which other events should notify users (someone joins your raid, reply to a raid you're attending, new chat message in a channel, DM when implemented). Avoid notification fatigue.
-- **Replies on raid chat** — `raid_messages` has no threading/reply support. Channel chat got replies + reactions in Slice 13; extend the same pattern to raid chat when prioritised.
 
 ---
 
@@ -226,6 +225,7 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-22 | Slice 15: PoGo screenshot avatar upload. Supabase Storage bucket `avatars`. `src/lib/profile/avatar-helpers.ts` uploads to `{userId}/avatar.png` (upsert) | `AvatarUploadSheet` lets the user drag + pinch-to-zoom inside a 280px circle before cropping. Auto-crop at fixed coordinates failed (PoGo positions the avatar differently across devices). `maxWidth: 'none'` required on the img to prevent global CSS distorting it during zoom. |
 | 2026-05-22 | PWA `start_url` → `/players`; level field uses `<input type="text" inputMode="numeric" maxLength={2}>` (not `type="number"`); current user excluded from directory; team filter chips show team colour at 55% opacity when inactive | Players is the primary landing screen. `type="number"` ignores `maxLength` in all browsers. Self in directory is confusing. All-grey team chips were indistinguishable. |
 | 2026-05-22 | iOS OAuth: keep `createClient()` (SSR, cookies) on login page + simple route handler (`exchangeCodeForSession` + redirect) | A `createOAuthClient` (plain `@supabase/supabase-js`, localStorage) variant was introduced to dodge iOS ITP purging the PKCE verifier cookie — but the server route reads cookies, so they never matched and prod login broke. iOS Safari OAuth on preview deploys remains broken due to ITP; prod works. Do not reintroduce the localStorage client. |
+| 2026-05-23 | Slice 16: raid chat reactions + replies. Migration 013 adds `raid_messages.reply_to_id` and `raid_message_reactions`. `RaidDetail` chat section refactored to use the shared `MessageGroupView` / `Composer` / `MessageActionSheet` stack from channel chat. SW bumped v7→v8 | Reaches feature parity with Slice 13 (channel chat). `ChatMessage` extracted to `src/lib/chat/types.ts` so both `ChannelScreen` and `RaidDetail` feed the same components without a circular import. `raid_messages.message` column kept (not renamed to `body`) — the adapter in `RaidDetail.toChatMessage()` maps `message → body` at the boundary. New helpers: `src/lib/raids/reactions-helpers.ts` + `use-raid-reactions-realtime.ts` (topic suffixed with `Math.random()` per the 2026-05-19 collision rule). Raid chat keeps the existing local-state-driven message INSERT path via `useRaidsRealtime`; reactions live in a parallel hook. Realtime INSERTs don't carry the joined profile shape so avatar/team/level stay null until the next `router.refresh` — acceptable trade-off. |
 
 ---
 
