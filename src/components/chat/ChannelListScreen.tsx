@@ -2,12 +2,15 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { usePresence } from '@/lib/profile/use-presence';
 import { useChannelUnread, type UnreadCounts } from '@/lib/chat/use-channel-unread';
 import { useChannelListTyping } from '@/lib/chat/use-channel-list-typing';
+import { useDMListRealtime } from '@/lib/dm/use-dm-list-realtime';
 import { OnlineStrip, type OnlineStripProfile } from './OnlineStrip';
 import { TypingDots } from './TypingDots';
+import { DMRow, type DMRowEntry } from './DMRow';
 import { relTime } from '@/lib/chat/time';
 import type { Channel } from '@/lib/chat/channels';
 
@@ -27,30 +30,82 @@ interface ChannelListScreenProps {
   totalMembers: number;
   currentUserId: string;
   initialUnreadCounts: UnreadCounts;
+  // Slice 17 — DM section feed.
+  dmEntries: DMRowEntry[];
 }
 
-// Root component for /chat. Online strip + channel rows.
-// DMs deferred (Phase 2) — no DM section rendered.
+// Root component for /chat. Online strip + channel rows + DM rows.
 export function ChannelListScreen({
   entries,
   profiles,
   totalMembers,
   currentUserId,
   initialUnreadCounts,
+  dmEntries,
 }: ChannelListScreenProps) {
   const t = useTranslations('Chat');
+  const router = useRouter();
   const onlineIds = usePresence(currentUserId);
   const { counts, clearChannel, latestByChannel } = useChannelUnread({
     userId: currentUserId,
     initialCounts: initialUnreadCounts,
   });
   const typingByChannel = useChannelListTyping(currentUserId);
+  const { latestByPartner } = useDMListRealtime({ userId: currentUserId });
+
   const nameById = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of profiles) map.set(p.user_id, p.trainer_name);
     return map;
   }, [profiles]);
   const now = new Date();
+
+  // Merge realtime DM previews + bump unread for live arrivals. Sorting is
+  // recomputed by most-recent-message timestamp.
+  const liveDmEntries = useMemo(() => {
+    const map = new Map<string, DMRowEntry>();
+    for (const e of dmEntries) map.set(e.partnerId, e);
+    for (const [partnerId, live] of Object.entries(latestByPartner)) {
+      if (!live) continue;
+      const existing = map.get(partnerId);
+      const partnerProfile = profiles.find((p) => p.user_id === partnerId);
+      const partner = existing?.partner
+        ? existing.partner
+        : partnerProfile
+          ? {
+              user_id: partnerProfile.user_id,
+              trainer_name: partnerProfile.trainer_name,
+              avatar_url: partnerProfile.avatar_url,
+              team: partnerProfile.team ?? null,
+              level: partnerProfile.level,
+              last_seen_at: null,
+            }
+          : null;
+      const baseUnread = existing?.unread ?? 0;
+      // Only bump unread if the incoming row is newer than what we already had.
+      const incomingNewer =
+        !existing?.lastMessage ||
+        new Date(live.created_at).getTime() >
+          new Date(existing.lastMessage.created_at).getTime();
+      map.set(partnerId, {
+        partnerId,
+        partner,
+        lastMessage: incomingNewer
+          ? {
+              body: live.body,
+              created_at: live.created_at,
+              sender_id: live.sender_id,
+            }
+          : existing!.lastMessage,
+        unread: incomingNewer ? baseUnread + 1 : baseUnread,
+      });
+    }
+    return Array.from(map.values()).sort(
+      (a, b) =>
+        new Date(b.lastMessage?.created_at ?? 0).getTime() -
+        new Date(a.lastMessage?.created_at ?? 0).getTime()
+    );
+  }, [dmEntries, latestByPartner, profiles]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,6 +119,7 @@ export function ChannelListScreen({
           onlineIds={onlineIds}
           totalMembers={totalMembers}
           currentUserId={currentUserId}
+          onAvatarTap={(partnerId) => router.push(`/chat/dm/${partnerId}`)}
         />
 
         <section className="flex flex-col gap-2.5">
@@ -78,9 +134,6 @@ export function ChannelListScreen({
               const typingNames = typingIds
                 .map((id) => nameById.get(id))
                 .filter((n): n is string => Boolean(n));
-              // Prefer the most recent realtime INSERT over the server-rendered
-              // preview when it's actually newer — this keeps the channel-list
-              // row updated as messages arrive without a page refresh.
               const live = latestByChannel[channel.id];
               const livePreview =
                 live &&
@@ -107,6 +160,45 @@ export function ChannelListScreen({
             })}
           </div>
         </section>
+
+        <section className="flex flex-col gap-2.5">
+          <div className="flex justify-between items-baseline px-1 gap-2">
+            <span className="text-[13px] font-bold text-card-foreground uppercase tracking-wider whitespace-nowrap">
+              {t('dmSectionTitle')}
+            </span>
+            {liveDmEntries.length > 0 && (
+              <span className="text-[12px] font-semibold text-muted-foreground whitespace-nowrap">
+                {t('dmConversations', { n: liveDmEntries.length })}
+              </span>
+            )}
+          </div>
+          {liveDmEntries.length === 0 ? (
+            <div className="flex flex-col gap-1 px-1">
+              <p className="text-[13px] text-muted-foreground italic">
+                {t('dmSectionEmpty')}
+              </p>
+              <p className="text-[12px] text-muted-foreground">
+                {t('dmSectionHint')}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {liveDmEntries.map((entry) => (
+                <DMRow
+                  key={entry.partnerId}
+                  entry={entry}
+                  online={onlineIds.has(entry.partnerId)}
+                  isMineLast={entry.lastMessage?.sender_id === currentUserId}
+                  typing={false}
+                  onOpen={() => {
+                    /* unread is cleared server-side on DM page render */
+                  }}
+                  now={now}
+                />
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
@@ -126,7 +218,6 @@ function ChannelRow({ channel, lastMessage, now, unread, onOpen, typingNames }: 
   const hasUnread = unread > 0;
   const isTyping = typingNames.length > 0;
 
-  // Typing preview takes priority over last-message — matches the design.
   let typingSentence = '';
   if (isTyping) {
     if (typingNames.length === 1) {
@@ -195,4 +286,3 @@ function ChannelRow({ channel, lastMessage, now, unread, onOpen, typingNames }: 
     </Link>
   );
 }
-

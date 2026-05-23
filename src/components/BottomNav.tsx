@@ -7,9 +7,10 @@ import { useTranslations } from 'next-intl';
 import { Users, Swords, MessageCircle, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useChannelUnread } from '@/lib/chat/use-channel-unread';
+import { useDMUnread } from '@/lib/dm/use-dm-unread';
 
 // Bottom navigation bar. Shown on all authenticated "app" pages.
-// The Chat tab carries a live unread badge driven by useChannelUnread.
+// The Chat tab carries a live unread badge driven by useChannelUnread + useDMUnread.
 export function BottomNav() {
   const pathname = usePathname();
   const t = useTranslations('BottomNav');
@@ -28,7 +29,9 @@ export function BottomNav() {
     };
   }, []);
 
-  const { total: unreadTotal } = useChannelUnread({ userId });
+  const { total: channelUnread } = useChannelUnread({ userId });
+  const { total: dmUnread } = useDMUnread({ userId });
+  const unreadTotal = channelUnread + dmUnread;
 
   const isActive = (path: string) => pathname.endsWith(path);
   // Profile tab is active for /profile and /profile/edit alike.
@@ -54,7 +57,7 @@ export function BottomNav() {
         <span className="text-[11px] font-semibold">{t('raids')}</span>
       </Link>
 
-      {/* Chat — live unread badge */}
+      {/* Chat — live unread badge (channels + DMs) */}
       <Link
         href="/chat"
         className={`relative flex flex-col items-center justify-center gap-1 w-16 ${isActive('/chat') || pathname.includes('/chat/') ? 'text-primary' : 'text-muted-foreground'}`}

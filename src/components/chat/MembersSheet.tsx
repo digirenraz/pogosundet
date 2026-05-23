@@ -1,6 +1,6 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { MessageCircle, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Avatar } from '@/components/Avatar';
 import type { OnlineStripProfile } from './OnlineStrip';
@@ -11,22 +11,31 @@ interface MembersSheetProps {
   profiles: OnlineStripProfile[];
   onlineIds: Set<string>;
   currentUserId: string | null;
+  // Slice 17: tap a non-self row → opens a DM with that partner. The sheet
+  // closes first via onClose; the parent does the routing.
+  onOpenDM?: (partnerId: string) => void;
 }
 
-// Bottom-sheet member list. Online + offline sections. Tapping a member is a
-// no-op for v1 — DMs are deferred. Click outside or X to close.
+// Bottom-sheet member list. Online + offline sections. Non-self rows are
+// tappable when `onOpenDM` is provided — closes the sheet then routes.
 export function MembersSheet({
   open,
   onClose,
   profiles,
   onlineIds,
   currentUserId,
+  onOpenDM,
 }: MembersSheetProps) {
   const t = useTranslations('Chat');
   if (!open) return null;
 
   const online = profiles.filter((p) => onlineIds.has(p.user_id));
   const offline = profiles.filter((p) => !onlineIds.has(p.user_id));
+
+  function handleSelect(partnerId: string) {
+    onClose();
+    onOpenDM?.(partnerId);
+  }
 
   return (
     <div className="fixed inset-0 z-30 flex flex-col justify-end">
@@ -62,12 +71,14 @@ export function MembersSheet({
             members={online}
             showOnline
             currentUserId={currentUserId}
+            onSelect={onOpenDM ? handleSelect : undefined}
           />
           <MemberSection
             title={t('offline_section')}
             members={offline}
             showOnline={false}
             currentUserId={currentUserId}
+            onSelect={onOpenDM ? handleSelect : undefined}
           />
         </div>
       </div>
@@ -80,9 +91,16 @@ interface MemberSectionProps {
   members: OnlineStripProfile[];
   showOnline: boolean;
   currentUserId: string | null;
+  onSelect?: (partnerId: string) => void;
 }
 
-function MemberSection({ title, members, showOnline, currentUserId }: MemberSectionProps) {
+function MemberSection({
+  title,
+  members,
+  showOnline,
+  currentUserId,
+  onSelect,
+}: MemberSectionProps) {
   const t = useTranslations('Chat');
   if (members.length === 0) return null;
   return (
@@ -93,11 +111,9 @@ function MemberSection({ title, members, showOnline, currentUserId }: MemberSect
       <div className="flex flex-col">
         {members.map((p) => {
           const isMe = p.user_id === currentUserId;
-          return (
-            <div
-              key={p.user_id}
-              className="flex items-center gap-3 px-2 py-2.5 rounded-md"
-            >
+          const tappable = !isMe && Boolean(onSelect);
+          const rowContent = (
+            <>
               <Avatar
                 src={p.avatar_url}
                 name={p.trainer_name}
@@ -122,6 +138,33 @@ function MemberSection({ title, members, showOnline, currentUserId }: MemberSect
                   {showOnline ? t('online') : t('offline')}
                 </div>
               </div>
+              {tappable && (
+                <MessageCircle
+                  size={18}
+                  className="shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              )}
+            </>
+          );
+          if (tappable) {
+            return (
+              <button
+                type="button"
+                key={p.user_id}
+                onClick={() => onSelect?.(p.user_id)}
+                className="flex items-center gap-3 px-2 py-2.5 rounded-md text-left"
+              >
+                {rowContent}
+              </button>
+            );
+          }
+          return (
+            <div
+              key={p.user_id}
+              className="flex items-center gap-3 px-2 py-2.5 rounded-md"
+            >
+              {rowContent}
             </div>
           );
         })}

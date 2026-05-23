@@ -90,7 +90,7 @@ Chat messages (`raid_messages`) are appended to local React state via Realtime I
 ### Database migrations
 SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
 
-Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`, `010_chat_reactions_and_replies`, `011_friend_code_constraint`, `012_last_seen_at`, `013_raid_chat_reactions_and_replies`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`, `010_chat_reactions_and_replies`, `011_friend_code_constraint`, `012_last_seen_at`, `013_raid_chat_reactions_and_replies`, `014_direct_messages`. Current Edge Functions: `notify-raid` (in `supabase/functions/`). All migrations applied.
 
 ---
 
@@ -127,8 +127,9 @@ The product owner is a non-technical product manager. Claude Code is the primary
 - **Community chat** (Slice 11, 2026-05-18): `/chat` + `/chat/[channelId]` with `#generelt` and `#app-feedback`. Migration 008.
 - **Chat unread counts** (Slice 12, 2026-05-19): live BottomNav badge + per-row badges. Migration 009.
 - **Branded PWA icon + cold-open splash** (2026-05-19 / 2026-05-20): real PNG icons, `LoadingScreen` (Sonar design) wrapped by `InitialSplash`.
+- **Direct messages** (Slice 17, 2026-05-23): 1:1 DMs between any two profiles. New route `/chat/dm/[partnerId]`, DM section on `/chat`, entry points from the `OnlineStrip` avatars + `MembersSheet` rows, reuse of the channel-chat reactions + replies stack. Migration 014.
 
-Nothing currently in flight as of 2026-05-22 (afternoon). Next slice not yet picked.
+Nothing currently in flight as of 2026-05-23. Next slice not yet picked.
 
 ### Do NOT build (in Raid MVP)
 - Remote raid lobby code sharing
@@ -138,7 +139,7 @@ Nothing currently in flight as of 2026-05-22 (afternoon). Next slice not yet pic
 - Host/organiser roles
 
 ### Phase 2 — do not build yet
-DMs, trade requests, admin/moderation, richer raid features (remote lobby codes, filters, recurring raids, history).
+Trade requests, admin/moderation, richer raid features (remote lobby codes, filters, recurring raids, history). DMs shipped early in Slice 17.
 
 **If a feature would require significant refactoring to support Phase 2, flag it and ask. Otherwise, do not pre-build Phase 2 functionality.**
 
@@ -226,6 +227,7 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | 2026-05-22 | PWA `start_url` → `/players`; level field uses `<input type="text" inputMode="numeric" maxLength={2}>` (not `type="number"`); current user excluded from directory; team filter chips show team colour at 55% opacity when inactive | Players is the primary landing screen. `type="number"` ignores `maxLength` in all browsers. Self in directory is confusing. All-grey team chips were indistinguishable. |
 | 2026-05-22 | iOS OAuth: keep `createClient()` (SSR, cookies) on login page + simple route handler (`exchangeCodeForSession` + redirect) | A `createOAuthClient` (plain `@supabase/supabase-js`, localStorage) variant was introduced to dodge iOS ITP purging the PKCE verifier cookie — but the server route reads cookies, so they never matched and prod login broke. iOS Safari OAuth on preview deploys remains broken due to ITP; prod works. Do not reintroduce the localStorage client. |
 | 2026-05-23 | Slice 16: raid chat reactions + replies. Migration 013 adds `raid_messages.reply_to_id` and `raid_message_reactions`. `RaidDetail` chat section refactored to use the shared `MessageGroupView` / `Composer` / `MessageActionSheet` stack from channel chat. SW bumped v7→v8 | Reaches feature parity with Slice 13 (channel chat). `ChatMessage` extracted to `src/lib/chat/types.ts` so both `ChannelScreen` and `RaidDetail` feed the same components without a circular import. `raid_messages.message` column kept (not renamed to `body`) — the adapter in `RaidDetail.toChatMessage()` maps `message → body` at the boundary. New helpers: `src/lib/raids/reactions-helpers.ts` + `use-raid-reactions-realtime.ts` (topic suffixed with `Math.random()` per the 2026-05-19 collision rule). Raid chat keeps the existing local-state-driven message INSERT path via `useRaidsRealtime`; reactions live in a parallel hook. Realtime INSERTs don't carry the joined profile shape so avatar/team/level stay null until the next `router.refresh` — acceptable trade-off. |
+| 2026-05-23 | Slice 17: 1:1 direct messages (built early at user's explicit request despite the Phase 2 designation). Migration 014 adds `direct_messages`, `direct_message_reactions`, `dm_reads`. New route `/chat/dm/[partnerId]`; new section on `/chat`; entry points from `OnlineStrip` avatars + `MembersSheet` rows. SW bumped v8→v9. Privacy Policy s13 added. Push notifications for new DMs explicitly out of scope — owned by the "Define push notification triggers" TODO. | RLS pattern: `direct_messages` policies use `auth.uid() IN (sender_id, recipient_id)`; `direct_message_reactions` SELECT/INSERT use an `EXISTS` subquery against the parent message so reactions are participants-only without a denormalised conversation column. Realtime topics use `dm:${pairKey(a,b)}:${Math.random()...}` where `pairKey(a,b) === pairKey(b,a)` is the canonical 2-user identifier — sorted-join so both ends share one channel. PostgREST realtime filters are single-column, so we filter `recipient_id=eq.{me}` server-side and apply the sender filter client-side. DM page mirrors channel chat structurally — reuses `MessageGroupView` / `Composer` / `MessageActionSheet`; only the data layer (`src/lib/dm/`) differs. Shared `ChatMessage` type works for DMs by mapping `sender_id → author_id` at the boundary (no parallel `DMMessage` type). `direct_messages.body` (not `message` like raid chat). DM page guards `partnerId !== currentUserId` and 404s otherwise. Account deletion cascades all DMs the user has sent or received plus their reactions plus their `dm_reads`. |
 
 ---
 

@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-05-18",
+    "lastUpdated": "Sidst opdateret: 2026-05-23",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
@@ -99,7 +99,9 @@
     "s11Title": "11. Push-notifikationer",
     "s11Body": "Hvis du vælger at modtage push-notifikationer, gemmer vi din browsers push-abonnement (endpoint og krypteringsnøgler) i vores database. Disse oplysninger bruges udelukkende til at sende dig besked om nye raids. Du kan til enhver tid afmelde notifikationer via din browser- eller enhedsindstillinger — abonnementet slettes automatisk.",
     "s12Title": "12. Community chat",
-    "s12Body": "Når du skriver i fælleskanalerne (#generelt og #app-feedback), gemmer vi din besked sammen med dit bruger-id og tidspunktet. Beskederne er synlige for alle indloggede brugere af PoGoSundet og opbevares på ubestemt tid. Når du sletter din konto, slettes alle dine chat-beskeder automatisk sammen med din profil."
+    "s12Body": "Når du skriver i fælleskanalerne (#generelt og #app-feedback), gemmer vi din besked sammen med dit bruger-id og tidspunktet. Beskederne er synlige for alle indloggede brugere af PoGoSundet og opbevares på ubestemt tid. Når du sletter din konto, slettes alle dine chat-beskeder automatisk sammen med din profil.",
+    "s13Title": "13. Direkte beskeder",
+    "s13Body": "Direkte beskeder (DMs) mellem dig og en anden træner gemmes i vores database hos Supabase (EU/Irland). Hver besked består af afsenderens og modtagerens bruger-id, beskedteksten, et tidspunkt og eventuelle reaktioner (emojis). Kun de to deltagere i samtalen kan læse beskederne — det er håndhævet på databaseniveau med Row Level Security. Beskederne opbevares på ubestemt tid, indtil du sletter din konto. Når du sletter din konto, slettes alle dine direkte beskeder (både sendte og modtagne) samt dine reaktioner automatisk."
   },
   "Header": {
     "appName": "PoGoSundet",
@@ -255,7 +257,14 @@
     "replyPlaceholder": "Skriv et svar til {name}",
     "cancelReply": "Annullér svar",
     "closeSheet": "Luk",
-    "you_lowercase": "dig"
+    "you_lowercase": "dig",
+    "dmSectionTitle": "Direkte beskeder",
+    "dmSectionEmpty": "Ingen samtaler endnu",
+    "dmSectionHint": "Tryk på en træner i Online nu for at starte en ny samtale.",
+    "dmIntroLine": "Direkte besked · kun jer to kan se den",
+    "dmConversations": "{n, plural, =1 {# samtale} other {# samtaler}}",
+    "dmUnread": "{n} ulæste",
+    "dmTypingShort": "skriver…"
   },
   "ProfileEdit": {
     "headerTitle": "Rediger profil",

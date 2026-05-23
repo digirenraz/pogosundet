@@ -1,145 +1,145 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { usePresence } from '@/lib/profile/use-presence';
-import { useChannelRealtime } from '@/lib/chat/use-channel-realtime';
-import { useChannelReactionsRealtime } from '@/lib/chat/use-channel-reactions-realtime';
-import {
-  sendMessage,
-  type ChannelMessageRow,
-} from '@/lib/chat/helpers';
+import { useDMRealtime } from '@/lib/dm/use-dm-realtime';
+import { useDMReactionsRealtime } from '@/lib/dm/use-dm-reactions-realtime';
+import { sendDM, type DirectMessageRow } from '@/lib/dm/helpers';
 import {
   groupReactions,
   toggleReaction,
-  type ChannelReactionRow,
-} from '@/lib/chat/reactions-helpers';
+  type DMReactionRow,
+} from '@/lib/dm/reactions-helpers';
 import {
   daySeparator,
   groupMessages,
   type MessageGroup as MessageGroupType,
 } from '@/lib/chat/time';
-import type { Channel } from '@/lib/chat/channels';
-import type { ChannelMessage } from '@/lib/chat/server-helpers';
+import type { DirectMessage, DMProfile } from '@/lib/dm/server-helpers';
 import type { ChatMessage } from '@/lib/chat/types';
 import type { OnlineStripProfile } from './OnlineStrip';
 import { Composer } from './Composer';
-import { MembersSheet } from './MembersSheet';
+import { DMHeader } from './DMHeader';
 import { MessageActionSheet } from './MessageActionSheet';
 import { MessageGroupView } from './MessageGroup';
 import { TypingDots } from './TypingDots';
 
-// Re-exported for backward compatibility — the type lives in `@/lib/chat/types`
-// so both channel chat and raid chat can consume it without circular imports.
-export type { ChatMessage };
-
-interface ChannelScreenProps {
-  channel: Channel;
-  initialMessages: ChannelMessage[];
+interface DMScreenProps {
+  partner: DMProfile;
+  initialMessages: DirectMessage[];
   profiles: OnlineStripProfile[];
-  memberCount: number;
   currentUserId: string;
   currentUserName: string;
 }
 
-// Convert server row → client message with Date `sent_at` and grouped reactions.
-// The embedded reactions list omits message_id (it IS the parent row); we add
-// it back so groupReactions has a uniform input shape.
-function toChatMessage(row: ChannelMessage): ChatMessage {
+// Convert a server DirectMessage → shared ChatMessage. Maps sender_id to
+// author_id at the boundary so MessageGroupView / ReplyQuote / Reactions all
+// work without DM-specific changes.
+function toChatMessage(row: DirectMessage, partner: DMProfile, me: { user_id: string; trainer_name: string; avatar_url: string | null; team: 'mystic' | 'valor' | 'instinct' | null; level: number | null } | null): ChatMessage {
   const reactionRows = (row.reactions ?? []).map((r) => ({
     message_id: row.id,
     user_id: r.user_id,
     emoji: r.emoji,
   }));
+  // The DM page only has two participants — prefer the embedded sender profile
+  // when present, otherwise fall back to the resolved partner/me blob.
+  const isFromPartner = row.sender_id === partner.user_id;
+  const profile = row.sender
+    ? {
+        trainer_name: row.sender.trainer_name,
+        avatar_url: row.sender.avatar_url,
+        team: isFromPartner ? partner.team : me?.team ?? null,
+        level: isFromPartner ? partner.level : me?.level ?? null,
+      }
+    : isFromPartner
+      ? {
+          trainer_name: partner.trainer_name,
+          avatar_url: partner.avatar_url,
+          team: partner.team,
+          level: partner.level,
+        }
+      : me
+        ? {
+            trainer_name: me.trainer_name,
+            avatar_url: me.avatar_url,
+            team: me.team,
+            level: me.level,
+          }
+        : null;
   return {
     id: row.id,
-    author_id: row.user_id,
+    author_id: row.sender_id,
     body: row.body,
     sent_at: new Date(row.created_at),
     reply_to_id: row.reply_to_id,
     reactions: groupReactions(reactionRows),
-    profiles: row.profiles,
+    profiles: profile,
   };
 }
 
-// Root for /chat/[channelId]. Header + reverse-stacked message list + composer.
-export function ChannelScreen({
-  channel,
+// Root for /chat/dm/[partnerId]. Header + reverse-stacked message stream + composer.
+// Mirrors ChannelScreen.tsx structurally — same MessageGroupView, Composer, and
+// MessageActionSheet, but wired to direct_messages instead of channel_messages.
+export function DMScreen({
+  partner,
   initialMessages,
   profiles,
-  memberCount,
   currentUserId,
   currentUserName,
-}: ChannelScreenProps) {
-  const router = useRouter();
+}: DMScreenProps) {
   const t = useTranslations('Chat');
 
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    initialMessages.map(toChatMessage)
-  );
-  const [membersOpen, setMembersOpen] = useState(false);
-
-  // Reply / action-sheet state — slice 13.
-  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
-  const [actionMsgId, setActionMsgId] = useState<string | null>(null);
-  // Sparse overlay: messageId → grouped reactions. Wins over messages[i].reactions
-  // when present. Set via realtime + optimistic toggles.
-  const [reactionOverrides, setReactionOverrides] = useState<
-    Record<string, Record<string, string[]>>
-  >({});
-
-  const onlineIds = usePresence(currentUserId);
-
-  // Resolve a profile blob for messages whose row doesn't have one embedded
-  // (Realtime INSERTs don't carry the join).
   const profileById = useMemo(() => {
     const map = new Map<string, OnlineStripProfile>();
     for (const p of profiles) map.set(p.user_id, p);
     return map;
   }, [profiles]);
+  const me = profileById.get(currentUserId)
+    ? { ...profileById.get(currentUserId)!, trainer_name: currentUserName }
+    : null;
 
-  const { typingUserIds, broadcastTyping } = useChannelRealtime(
-    channel.id,
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    initialMessages.map((m) => toChatMessage(m, partner, me))
+  );
+
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [actionMsgId, setActionMsgId] = useState<string | null>(null);
+  const [reactionOverrides, setReactionOverrides] = useState<
+    Record<string, Record<string, string[]>>
+  >({});
+
+  const onlineIds = usePresence(currentUserId);
+  const partnerOnline = onlineIds.has(partner.user_id);
+
+  const { typingUserIds, broadcastTyping } = useDMRealtime(
     currentUserId,
-    (row: ChannelMessageRow) => {
-      const profile = profileById.get(row.user_id);
+    partner.user_id,
+    (row: DirectMessageRow) => {
+      // Only the partner's messages arrive via realtime (self-sent reconcile
+      // through optimistic state).
       const msg: ChatMessage = {
         id: row.id,
-        author_id: row.user_id,
+        author_id: row.sender_id,
         body: row.body,
         sent_at: new Date(row.created_at),
         reply_to_id: row.reply_to_id ?? null,
         reactions: {},
-        profiles: profile
-          ? {
-              trainer_name: profile.trainer_name,
-              avatar_url: profile.avatar_url,
-              team: profile.team,
-              level: profile.level,
-            }
-          : null,
+        profiles: {
+          trainer_name: partner.trainer_name,
+          avatar_url: partner.avatar_url,
+          team: partner.team,
+          level: partner.level,
+        },
       };
       setMessages((prev) => {
-        // Replace optimistic placeholder from this sender, if any.
-        if (
-          prev.some(
-            (m) => m.id.startsWith('opt-') && m.author_id === row.user_id
-          )
-        ) {
-          return prev.map((m) =>
-            m.id.startsWith('opt-') && m.author_id === row.user_id ? msg : m
-          );
-        }
         if (prev.some((m) => m.id === row.id)) return prev;
         return [...prev, msg];
       });
     }
   );
 
-  // Apply overrides on top of the source messages.
   const displayedMessages = useMemo(
     () =>
       messages.map((m) => {
@@ -149,21 +149,17 @@ export function ChannelScreen({
     [messages, reactionOverrides]
   );
 
-  // Index for ReplyQuote lookups and sheet-target resolution.
   const messagesById = useMemo(() => {
     const map: Record<string, ChatMessage> = {};
     for (const m of displayedMessages) map[m.id] = m;
     return map;
   }, [displayedMessages]);
 
-  // Live set of known message IDs — passed to the reactions realtime hook to
-  // filter out events for messages we haven't loaded.
   const messageIdSet = useMemo(
     () => new Set(messages.map((m) => m.id)),
     [messages]
   );
 
-  // Merge a single realtime/optimistic delta into reactionOverrides.
   const applyReactionDelta = useCallback(
     (
       messageId: string,
@@ -172,7 +168,6 @@ export function ChannelScreen({
       kind: 'add' | 'remove'
     ) => {
       setReactionOverrides((prev) => {
-        // Base: existing override OR the source message's grouped reactions.
         const sourceMsg = messages.find((m) => m.id === messageId);
         const base =
           prev[messageId] ??
@@ -180,7 +175,7 @@ export function ChannelScreen({
         const list = base[emoji] ?? [];
         let nextList: string[];
         if (kind === 'add') {
-          if (list.includes(userId)) return prev; // no-op
+          if (list.includes(userId)) return prev;
           nextList = [...list, userId];
         } else {
           if (!list.includes(userId)) return prev;
@@ -195,21 +190,19 @@ export function ChannelScreen({
     [messages]
   );
 
-  // Stable callbacks object for the realtime hook — it caches via ref so
-  // changing identity per render is fine, but keeping it stable is cheap.
   const reactionCallbacks = useMemo(
     () => ({
-      onInsert: (row: ChannelReactionRow) =>
+      onInsert: (row: DMReactionRow) =>
         applyReactionDelta(row.message_id, row.emoji, row.user_id, 'add'),
-      onDelete: (row: ChannelReactionRow) =>
+      onDelete: (row: DMReactionRow) =>
         applyReactionDelta(row.message_id, row.emoji, row.user_id, 'remove'),
     }),
     [applyReactionDelta]
   );
 
-  useChannelReactionsRealtime(
-    channel.id,
+  useDMReactionsRealtime(
     currentUserId,
+    partner.user_id,
     messageIdSet,
     reactionCallbacks
   );
@@ -225,25 +218,21 @@ export function ChannelScreen({
       reactions: {},
       profiles: {
         trainer_name: currentUserName,
-        avatar_url: profileById.get(currentUserId)?.avatar_url ?? null,
-        team: profileById.get(currentUserId)?.team ?? null,
-        level: profileById.get(currentUserId)?.level ?? null,
+        avatar_url: me?.avatar_url ?? null,
+        team: me?.team ?? null,
+        level: me?.level ?? null,
       },
     };
     setMessages((prev) => [...prev, optimistic]);
     setReplyTo(null);
-    await sendMessage(channel.id, currentUserId, body, replyId);
+    await sendDM(currentUserId, partner.user_id, body, replyId);
   }
 
-  // Tap a bubble → open the action sheet.
   function handleMessageTap(message: ChatMessage) {
-    // Don't open the sheet for optimistic placeholders (id not in DB yet).
     if (message.id.startsWith('opt-')) return;
     setActionMsgId(message.id);
   }
 
-  // Toggle a reaction from a chip OR from the sheet. Optimistically update the
-  // override map, then fire the DB write — realtime echo will reconcile.
   function handleReactToggle(messageId: string, emoji: string) {
     const sourceMsg = messages.find((m) => m.id === messageId);
     if (!sourceMsg || messageId.startsWith('opt-')) return;
@@ -283,8 +272,6 @@ export function ChannelScreen({
     setActionMsgId(null);
   }
 
-  // Build the visual row list — day separators between groups whose first
-  // message crosses a calendar day boundary from the previous group.
   const rows = useMemo(() => {
     const groups = groupMessages(displayedMessages);
     let lastOwnGroupIdx = -1;
@@ -331,19 +318,12 @@ export function ChannelScreen({
     return out;
   }, [displayedMessages, currentUserId]);
 
-  // column-reverse pins to the bottom by default — the FIRST DOM child becomes
-  // the visual bottom, so the rows must be reversed and the welcome banner
-  // (visually on top) sits at the END.
   const reversedRows = [...rows].reverse();
 
-  const onlineMembers = profiles.filter((p) => onlineIds.has(p.user_id));
-  const headerStack = onlineMembers.slice(0, 3);
-  const typingNames = Array.from(typingUserIds)
-    .map((id) => profileById.get(id)?.trainer_name)
-    .filter((n): n is string => Boolean(n));
+  // Only the partner's typing matters in a 1:1 thread; the hook already filters
+  // out the current user.
+  const partnerTyping = typingUserIds.has(partner.user_id);
 
-  // Composer reply preview names: "dig" when replying to yourself, otherwise
-  // the resolved trainer name. Computed here so Composer stays presentational.
   const replyToName = replyTo
     ? replyTo.author_id === currentUserId
       ? t('you_lowercase')
@@ -352,63 +332,15 @@ export function ChannelScreen({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-10 bg-card border-b border-border h-[60px] flex items-center gap-2 px-2">
-        <button
-          type="button"
-          onClick={() => router.push('/chat')}
-          aria-label={t('back')}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-card-foreground"
-        >
-          <ChevronLeft size={24} />
-        </button>
-        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-          <div className="flex items-baseline gap-1">
-            <span className="text-[13px] font-bold text-muted-foreground">#</span>
-            <span className="text-[17px] font-bold text-card-foreground">
-              {channel.name}
-            </span>
-          </div>
-          <div className="text-[12px] font-semibold text-muted-foreground flex items-center gap-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
-            {t('headerOnline', { online: onlineMembers.length, total: memberCount })}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setMembersOpen(true)}
-          aria-label={t('members')}
-          className="flex items-center pl-2 pr-1.5 py-1 rounded-full"
-        >
-          <div className="flex">
-            {headerStack.map((p, i) => (
-              <div key={p.user_id} style={{ marginLeft: i === 0 ? 0 : -10 }}>
-                <Avatar
-                  src={p.avatar_url}
-                  name={p.trainer_name}
-                  team={p.team ?? 'none'}
-                  size={28}
-                  ring
-                  ringWidth={2}
-                />
-              </div>
-            ))}
-          </div>
-        </button>
-      </div>
+      <DMHeader partner={partner} online={partnerOnline} />
 
-      {/* Message list — column-reverse pins to bottom */}
       <main className="fixed left-0 right-0 top-[60px] bottom-[70px] overflow-y-auto px-3 pt-2.5 pb-1.5 flex flex-col-reverse">
-        {typingNames.length > 0 && (
+        {partnerTyping && (
           <div className="flex gap-2 mt-2">
             <div className="w-8 shrink-0" />
             <div className="flex flex-col gap-1 min-w-0 flex-1">
               <span className="text-[11px] font-semibold text-muted-foreground px-1 whitespace-nowrap">
-                {typingNames.length === 1
-                  ? t('typingOne', { name: typingNames[0] })
-                  : typingNames.length === 2
-                    ? t('typingTwo', { a: typingNames[0], b: typingNames[1] })
-                    : t('typingMany', { n: typingNames.length })}
+                {t('typingOne', { name: partner.trainer_name })}
               </span>
               <div className="bg-input px-3.5 py-3 rounded-2xl self-start">
                 <TypingDots size={6} className="text-muted-foreground" />
@@ -420,7 +352,10 @@ export function ChannelScreen({
         {reversedRows.map((row) => {
           if (row.kind === 'sep') {
             return (
-              <div key={row.key} className="flex items-center gap-2.5 mt-3.5 mb-1.5 mx-1">
+              <div
+                key={row.key}
+                className="flex items-center gap-2.5 mt-3.5 mb-1.5 mx-1"
+              >
                 <div className="flex-1 h-px bg-border" />
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
                   {row.label}
@@ -444,41 +379,35 @@ export function ChannelScreen({
           );
         })}
 
-        {/* Welcome banner — last DOM child = visual top in column-reverse */}
+        {/* Intro card — last DOM child = visual top in column-reverse */}
         <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-1.5 my-2.5">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-md bg-secondary flex items-center justify-center">
-              <span className="text-[20px] font-extrabold text-primary leading-none">#</span>
-            </div>
+            <Avatar
+              src={partner.avatar_url}
+              name={partner.trainer_name}
+              team={partner.team ?? 'none'}
+              size={40}
+              ring={false}
+            />
             <div className="min-w-0">
-              <div className="text-[15px] font-bold text-card-foreground">
-                {t('welcomeTo', { channel: channel.name })}
+              <div className="text-[15px] font-bold text-card-foreground truncate">
+                {partner.trainer_name}
               </div>
               <div className="text-[12px] font-semibold text-muted-foreground">
-                {t('memberCount', { n: memberCount })}
+                {t('dmIntroLine')}
               </div>
             </div>
           </div>
-          <p className="text-[13px] text-card-foreground leading-snug">{channel.description}</p>
         </div>
       </main>
 
       <Composer
-        channelName={channel.name}
+        channelName={partner.trainer_name}
         onSend={handleSend}
         onTyping={broadcastTyping}
         replyTo={replyTo}
         replyToName={replyToName}
         onCancelReply={() => setReplyTo(null)}
-      />
-
-      <MembersSheet
-        open={membersOpen}
-        onClose={() => setMembersOpen(false)}
-        profiles={profiles}
-        onlineIds={onlineIds}
-        currentUserId={currentUserId}
-        onOpenDM={(partnerId) => router.push(`/chat/dm/${partnerId}`)}
       />
 
       <MessageActionSheet
