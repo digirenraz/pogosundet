@@ -11,6 +11,12 @@ export type LatestByPartner = Record<
   { body: string; created_at: string; sender_id: string } | null
 >;
 
+// Count of unread messages observed live (since mount) per partner. Added on
+// top of the server-rendered baseline to drive the per-row badge. Each INSERT
+// bumps the count — mirrors useDMUnread's global accumulation so the row badge
+// and the BottomNav total track together.
+export type UnreadByPartner = Record<string, number>;
+
 interface Options {
   userId: string | null | undefined;
 }
@@ -24,9 +30,11 @@ interface Options {
 // Topic uses a Math.random() suffix to dodge the 2026-05-19 collision rule.
 export function useDMListRealtime({ userId }: Options): {
   latestByPartner: LatestByPartner;
+  unreadByPartner: UnreadByPartner;
   onInsertCallback: (cb: (row: DirectMessageRow) => void) => void;
 } {
   const [latestByPartner, setLatestByPartner] = useState<LatestByPartner>({});
+  const [unreadByPartner, setUnreadByPartner] = useState<UnreadByPartner>({});
   const externalCbRef = useRef<((row: DirectMessageRow) => void) | null>(null);
 
   useEffect(() => {
@@ -53,6 +61,10 @@ export function useDMListRealtime({ userId }: Options): {
               sender_id: row.sender_id,
             },
           }));
+          setUnreadByPartner((prev) => ({
+            ...prev,
+            [row.sender_id]: (prev[row.sender_id] ?? 0) + 1,
+          }));
           externalCbRef.current?.(row);
         }
       )
@@ -66,5 +78,5 @@ export function useDMListRealtime({ userId }: Options): {
     externalCbRef.current = cb;
   }
 
-  return { latestByPartner, onInsertCallback };
+  return { latestByPartner, unreadByPartner, onInsertCallback };
 }

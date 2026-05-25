@@ -52,7 +52,9 @@ export function ChannelListScreen({
     initialCounts: initialUnreadCounts,
   });
   const typingByChannel = useChannelListTyping(currentUserId);
-  const { latestByPartner } = useDMListRealtime({ userId: currentUserId });
+  const { latestByPartner, unreadByPartner } = useDMListRealtime({
+    userId: currentUserId,
+  });
 
   const nameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -83,7 +85,13 @@ export function ChannelListScreen({
             }
           : null;
       const baseUnread = existing?.unread ?? 0;
-      // Only bump unread if the incoming row is newer than what we already had.
+      // Unread = server baseline + every message seen live since mount. The
+      // live count is accumulated per-partner by useDMListRealtime (not derived
+      // from `latestByPartner`, which only holds the newest message) so the
+      // badge keeps climbing per message and tracks the BottomNav total.
+      const liveUnread = unreadByPartner[partnerId] ?? 0;
+      // Show the live message as the preview only when it's newer than what we
+      // already had (the SSR baseline).
       const incomingNewer =
         !existing?.lastMessage ||
         new Date(live.created_at).getTime() >
@@ -98,7 +106,7 @@ export function ChannelListScreen({
               sender_id: live.sender_id,
             }
           : existing!.lastMessage,
-        unread: incomingNewer ? baseUnread + 1 : baseUnread,
+        unread: baseUnread + liveUnread,
       });
     }
     return Array.from(map.values()).sort(
@@ -106,7 +114,7 @@ export function ChannelListScreen({
         new Date(b.lastMessage?.created_at ?? 0).getTime() -
         new Date(a.lastMessage?.created_at ?? 0).getTime()
     );
-  }, [dmEntries, latestByPartner, profiles]);
+  }, [dmEntries, latestByPartner, unreadByPartner, profiles]);
 
   const dmPartnerIds = useMemo(
     () => liveDmEntries.map((e) => e.partnerId),
