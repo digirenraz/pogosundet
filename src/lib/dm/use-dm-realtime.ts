@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { DirectMessageRow } from './helpers';
-import { pairKey } from './pair-key';
+import { dmTypingTopic, pairKey } from './pair-key';
 
 const TYPING_IDLE_MS = 3000;
 
@@ -37,11 +37,23 @@ export function useDMRealtime(
   useEffect(() => {
     if (!currentUserId || !partnerId) return;
     const supabase = createClient();
-    // Random suffix dodges the 2026-05-19 multi-subscriber collision.
-    const topic = `dm:${pairKey(currentUserId, partnerId)}:${Math.random()
+
+    // Message channel — postgres_changes only. Random suffix dodges the
+    // 2026-05-19 multi-subscriber collision; the topic name is irrelevant for
+    // postgres_changes delivery (it's replication-based).
+    const messageTopic = `dm:${pairKey(currentUserId, partnerId)}:${Math.random()
       .toString(36)
       .slice(2)}`;
-    const channel = supabase.channel(topic);
+    const messageChannel = supabase.channel(messageTopic);
+
+    // Typing channel — broadcast only, on a STABLE shared topic. Broadcast
+    // events only reach clients on the identical topic string, so both
+    // participants must compute the same name (they can't share the random
+    // message topic). Broadcast-only ⇒ no postgres_changes ⇒ immune to the
+    // collision rule even if mounted twice.
+    const typingChannel = supabase.channel(
+      dmTypingTopic(currentUserId, partnerId)
+    );
 
     function recomputeTyping() {
       const now = Date.now();
@@ -58,7 +70,7 @@ export function useDMRealtime(
       }
     }
 
-    channel
+    messageChannel
       .on(
         'postgres_changes',
         {
@@ -76,6 +88,9 @@ export function useDMRealtime(
           if (onMessageInsertRef.current) onMessageInsertRef.current(row);
         }
       )
+      .subscribe();
+
+    typingChannel
       .on('broadcast', { event: 'typing' }, (payload) => {
         const userId = (payload.payload as { user_id?: string } | undefined)?.user_id;
         if (!userId || userId === currentUserId) return;
@@ -89,7 +104,7 @@ export function useDMRealtime(
       const now = Date.now();
       if (now - lastBroadcastRef.current < 2000) return;
       lastBroadcastRef.current = now;
-      channel.send({
+      typingChannel.send({
         type: 'broadcast',
         event: 'typing',
         payload: { user_id: currentUserId },
@@ -98,7 +113,8 @@ export function useDMRealtime(
 
     return () => {
       if (expireTimerRef.current) clearTimeout(expireTimerRef.current);
-      supabase.removeChannel(channel);
+      supabase.removeChannel(messageChannel);
+      supabase.removeChannel(typingChannel);
     };
   }, [currentUserId, partnerId]);
 

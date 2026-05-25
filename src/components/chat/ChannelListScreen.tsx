@@ -8,6 +8,7 @@ import { usePresence } from '@/lib/profile/use-presence';
 import { useChannelUnread, type UnreadCounts } from '@/lib/chat/use-channel-unread';
 import { useChannelListTyping } from '@/lib/chat/use-channel-list-typing';
 import { useDMListRealtime } from '@/lib/dm/use-dm-list-realtime';
+import { useDMListTyping } from '@/lib/dm/use-dm-list-typing';
 import { OnlineStrip, type OnlineStripProfile } from './OnlineStrip';
 import { TypingDots } from './TypingDots';
 import { DMRow, type DMRowEntry } from './DMRow';
@@ -107,6 +108,12 @@ export function ChannelListScreen({
     );
   }, [dmEntries, latestByPartner, profiles]);
 
+  const dmPartnerIds = useMemo(
+    () => liveDmEntries.map((e) => e.partnerId),
+    [liveDmEntries]
+  );
+  const typingPartners = useDMListTyping(currentUserId, dmPartnerIds);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="fixed top-0 left-0 right-0 z-10 bg-card border-b border-border px-4 h-[60px] flex items-center">
@@ -189,7 +196,7 @@ export function ChannelListScreen({
                   entry={entry}
                   online={onlineIds.has(entry.partnerId)}
                   isMineLast={entry.lastMessage?.sender_id === currentUserId}
-                  typing={false}
+                  typing={typingPartners.has(entry.partnerId)}
                   onOpen={() => {
                     /* unread is cleared server-side on DM page render */
                   }}
