@@ -149,6 +149,8 @@ Trade requests, admin/moderation, richer raid features (remote lobby codes, filt
 
 Self-hosted web-push: PWA service worker + `push_subscriptions` table + `notify-raid` Edge Function (triggered on raid INSERT). **iOS 16.4+ requires Add-to-Home-Screen via Safari** — users who don't install the PWA get no push (the "Share to Messenger" button on each raid card is their fallback). iOS onboarding flow at `/onboarding/ios`.
 
+**[`docs/notifications.md`](docs/notifications.md) is the authoritative list of exactly when we send notifications** (current triggers, deliberate exclusions, and the target state for message notifications). Keep it in sync whenever you change what we notify on.
+
 The 6-step debugging runbook lives in [`docs/launch-checklist.md`](docs/launch-checklist.md). Go there first if push regresses.
 
 ---
