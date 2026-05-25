@@ -15,12 +15,12 @@ test.describe("Chat — channels", () => {
     await page.waitForURL(/\/players$/);
   });
 
-  test("channel list shows #generelt + #app-feedback, no DM section", async ({ page }) => {
+  test("channel list shows #generelt + #app-feedback + Direct messages section", async ({ page }) => {
     await page.goto("/chat");
     await expect(page.getByRole("heading", { name: /^Chat$/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /generelt/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /app-feedback/ })).toBeVisible();
-    await expect(page.getByText(/Direkte beskeder/i)).toHaveCount(0);
+    await expect(page.getByText(/Direkte beskeder/i)).toBeVisible();
   });
 
   test("send a message in #generelt — it appears in the stream", async ({ page }) => {

@@ -4,30 +4,31 @@ import { getAllProfiles } from '@/lib/profile/server-helpers';
 import { CHANNELS } from '@/lib/chat/channels';
 import { getLatestMessageForChannel } from '@/lib/chat/server-helpers';
 import { getUnreadCountsForUser, markChannelsSeen } from '@/lib/chat/read-helpers';
+import { getDMConversations } from '@/lib/dm/server-helpers';
 import { ChannelListScreen, type ChannelListEntry } from '@/components/chat/ChannelListScreen';
+import type { DMRowEntry } from '@/components/chat/DMRow';
 import { BottomNav } from '@/components/BottomNav';
 import type { OnlineStripProfile } from '@/components/chat/OnlineStrip';
 import type { Team } from '@/lib/profile/validation';
 
 export const preferredRegion = 'dub1';
 
-// /chat — channel list. Server Component.
+// /chat — channel list + DM list. Server Component.
 export default async function ChatPage() {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
   if (!userId) redirect('/login');
 
-  // Unread counts must be read BEFORE the seed upsert — the seed only inserts
-  // missing rows (DO NOTHING) so it won't clobber an existing last_read_at,
-  // but reading first keeps the ordering explicit. Parallel with the rest.
   const channelIds = CHANNELS.map((c) => c.id);
-  const [initialUnreadCounts, , profilesResult, ...latestPerChannel] = await Promise.all([
-    getUnreadCountsForUser(userId),
-    markChannelsSeen(userId, channelIds),
-    getAllProfiles(),
-    ...CHANNELS.map((c) => getLatestMessageForChannel(c.id)),
-  ]);
+  const [initialUnreadCounts, , profilesResult, dmConversations, ...latestPerChannel] =
+    await Promise.all([
+      getUnreadCountsForUser(userId),
+      markChannelsSeen(userId, channelIds),
+      getAllProfiles(),
+      getDMConversations(userId),
+      ...CHANNELS.map((c) => getLatestMessageForChannel(c.id)),
+    ]);
 
   const profiles: OnlineStripProfile[] = profilesResult.data.map((p) => ({
     user_id: p.user_id,
@@ -52,6 +53,13 @@ export default async function ChatPage() {
     };
   });
 
+  const dmEntries: DMRowEntry[] = dmConversations.map((c) => ({
+    partnerId: c.partner_id,
+    partner: c.partner,
+    lastMessage: c.last_message,
+    unread: c.unread_count,
+  }));
+
   return (
     <>
       <ChannelListScreen
@@ -60,6 +68,7 @@ export default async function ChatPage() {
         totalMembers={profiles.length}
         currentUserId={userId}
         initialUnreadCounts={initialUnreadCounts}
+        dmEntries={dmEntries}
       />
       <BottomNav />
     </>

@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-05-18",
+    "lastUpdated": "Sidst opdateret: 2026-05-23",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
@@ -89,7 +89,7 @@
     "s6Title": "6. Videregivelse",
     "s6Body": "Vi sælger, udlejer eller deler ikke dine personoplysninger med tredjepart. Dine profiloplysninger (trænernavn, vennekode, fornavn, bio) er synlige for andre registrerede brugere af PoGoSundet.",
     "s7Title": "7. Databehandlere",
-    "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase handler som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR.",
+    "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase fungerer som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR.",
     "s8Title": "8. Dine rettigheder",
     "s8Body": "Du har ret til indsigt i dine data, berigtigelse af forkerte oplysninger, sletning (\"retten til at blive glemt\"), dataportabilitet samt retten til at klage til Datatilsynet (datatilsynet.dk). Kontakt os på renraz@gmail.com for at udøve disse rettigheder.",
     "s9Title": "9. Cookies og sporing",
@@ -99,7 +99,9 @@
     "s11Title": "11. Push-notifikationer",
     "s11Body": "Hvis du vælger at modtage push-notifikationer, gemmer vi din browsers push-abonnement (endpoint og krypteringsnøgler) i vores database. Disse oplysninger bruges udelukkende til at sende dig besked om nye raids. Du kan til enhver tid afmelde notifikationer via din browser- eller enhedsindstillinger — abonnementet slettes automatisk.",
     "s12Title": "12. Community chat",
-    "s12Body": "Når du skriver i fælleskanalerne (#generelt og #app-feedback), gemmer vi din besked sammen med dit bruger-id og tidspunktet. Beskederne er synlige for alle indloggede brugere af PoGoSundet og opbevares på ubestemt tid. Når du sletter din konto, slettes alle dine chat-beskeder automatisk sammen med din profil."
+    "s12Body": "Når du skriver i fælleskanalerne (#generelt og #app-feedback), gemmer vi din besked sammen med dit bruger-id og tidspunktet. Beskederne er synlige for alle indloggede brugere af PoGoSundet og opbevares på ubestemt tid. Når du sletter din konto, slettes alle dine chat-beskeder automatisk sammen med din profil.",
+    "s13Title": "13. Direkte beskeder",
+    "s13Body": "Når du sender en direkte besked (DM) til en anden træner, gemmer vi beskeden sammen med afsenderens og modtagerens bruger-id, beskedteksten, tidspunktet og eventuelle reaktioner (emojis). Kun de to deltagere i samtalen kan læse beskederne — det er sikret teknisk på databaseniveau, så ingen andre har adgang. Beskederne opbevares på ubestemt tid, indtil du sletter din konto. Når du sletter din konto, slettes alle dine direkte beskeder (både sendte og modtagne) samt dine reaktioner automatisk."
   },
   "Header": {
     "appName": "PoGoSundet",
@@ -255,7 +257,14 @@
     "replyPlaceholder": "Skriv et svar til {name}",
     "cancelReply": "Annullér svar",
     "closeSheet": "Luk",
-    "you_lowercase": "dig"
+    "you_lowercase": "dig",
+    "dmSectionTitle": "Direkte beskeder",
+    "dmSectionEmpty": "Ingen samtaler endnu",
+    "dmSectionHint": "Tryk på en træner i Online nu for at starte en ny samtale.",
+    "dmIntroLine": "Direkte besked · kun jer to kan se den",
+    "dmConversations": "{n, plural, =1 {# samtale} other {# samtaler}}",
+    "dmUnread": "{n} ulæste",
+    "dmTypingShort": "skriver…"
   },
   "ProfileEdit": {
     "headerTitle": "Rediger profil",
