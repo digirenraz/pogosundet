@@ -4,13 +4,13 @@ Authoritative list of every push / system notification PoGoSundet sends.
 **Keep this in sync with the code whenever notification triggers change** (there
 is a Claude memory rule enforcing this).
 
-Last reviewed: 2026-05-25.
+Last reviewed: 2026-05-26.
 
 ---
 
 ## Currently sent
 
-### 1. New raid posted — the ONLY notification we send today
+### 1. New raid posted
 
 | | |
 |---|---|
@@ -21,13 +21,23 @@ Last reviewed: 2026-05-25.
 | **Tap action** | Opens `/raids/<raid_id>`. |
 | **Delivery** | Self-hosted web-push (VAPID) via the `web-push` library. Subscriptions returning HTTP 410 (Gone) are deleted. |
 
+### 2. New direct message
+
+| | |
+|---|---|
+| **Trigger** | Supabase Database Webhook on `INSERT` into `public.direct_messages` → Edge Function `notify-dm` (`supabase/functions/notify-dm/index.ts`). |
+| **Recipients** | The message recipient only (`push_subscriptions` rows for `recipient_id`). The sender never gets it. |
+| **Title** | The sender's `trainer_name` (fallback `Ny besked` if missing). |
+| **Body** | Generic `Ny besked` — **no message content** is ever included (GDPR-minimising). |
+| **Tap action** | Opens `/chat/dm/<sender_id>` (the conversation with the sender). |
+| **Delivery** | Self-hosted web-push (VAPID) via the `web-push` library. Subscriptions returning HTTP 410 (Gone) are deleted. Also drives the home-screen app-icon badge (`type: 'dm'`). |
+
 That is the complete list. No other event sends a notification.
 
 ---
 
 ## NOT sent (deliberately, as of today)
 
-- Direct messages (DMs)
 - Channel chat messages (`#generelt`, `#app-feedback`)
 - Replies or reactions (raid chat **or** channel chat)
 - Someone joining or leaving a raid you posted/attend
@@ -49,8 +59,6 @@ each raid card.
 
 ## Planned / proposed (NOT implemented)
 
-- **DM push (`notify-dm`)** — proposed in [`docs/plans/app-icon-badge.md`](plans/app-icon-badge.md);
-  it drives the home-screen icon badge. Content-free payload (sender name only).
 - **Channel-message push** — deliberately deferred (notification fatigue).
 
 ---
@@ -62,9 +70,8 @@ are the message notifications we should add, in priority order. All of them must
 respect the **cross-cutting behaviours** further down. None are built yet.
 
 ### Priority 1 — needed to feel like a messaging app at all
-- **New direct message → notify the recipient.** Title = sender's trainer name.
-  (Proposed as `notify-dm`.) This is the single biggest gap; users assume a 1:1
-  message always notifies.
+- ~~**New direct message → notify the recipient.**~~ **Shipped** — see "Currently
+  sent" entry #2 (`notify-dm`). Content-free payload (sender name only).
 - **Reply to your message → notify the author of the replied-to message**
   (channel chat *and* raid chat). We already store `reply_to_id`; a reply is our
   closest analogue to an @mention — high signal, low volume. Should fire even in
