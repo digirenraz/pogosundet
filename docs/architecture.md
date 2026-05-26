@@ -42,6 +42,21 @@ This file documents the contents of `src/lib/` in detail. Update it when a new h
 
 **Realtime topic-name collision:** when two components mount a Supabase Realtime hook on the same page (e.g. `BottomNav` + `ChannelListScreen`), they collide on a shared channel name and the second instance throws `cannot add postgres_changes callbacks after subscribe()`. Suffix each per-mount topic with `Math.random()` to disambiguate. `useId()` does NOT work — its `:r0:`-style ids break Supabase's colon-delimited topic parsing.
 
+### `src/lib/dm/`
+1:1 direct messages (Slice 17). Mirrors `src/lib/chat/` structurally; only the data layer differs.
+- `helpers.ts` — client: `sendMessage`
+- `server-helpers.ts` — fetch a conversation + the DM list for `/chat`
+- `pair-key.ts` + `pair-key.test.ts` — `pairKey(a,b)` is the canonical sorted 2-user identifier (`pairKey(a,b) === pairKey(b,a)`), so both ends share one channel. `dmTypingTopic(a,b)` = `dm-typing:${pairKey(a,b)}` is a **stable broadcast-only** topic, separate from the random-suffixed message channel (broadcast needs a shared deterministic topic; the `Math.random()` rule applies only to postgres_changes)
+- `read-helpers.ts` — `getUnreadCountsForUser` (server-only) + mark-read
+- `reactions-helpers.ts` + `reactions-helpers.test.ts`
+- `use-dm-realtime.ts` — one conversation's messages (postgres_changes, topic suffixed `Math.random()`) + typing (broadcast on `dmTypingTopic`)
+- `use-dm-list-realtime.ts` — accumulates `unreadByPartner` (count++ per INSERT) for the `/chat` DM rows
+- `use-dm-list-typing.ts` — per-partner typing previews on `/chat`
+- `use-dm-reactions-realtime.ts` — INSERT/DELETE filtered client-side by live message-id set
+- `use-dm-unread.ts` — BottomNav DM badge; mount-fetches the real per-partner total over RLS (client-side replica of `read-helpers.getUnreadCountsForUser`) then increments on live INSERTs
+
+**Single-column realtime filter:** PostgREST realtime filters one column, so we filter `recipient_id=eq.{me}` server-side and apply the sender filter client-side.
+
 ### `src/lib/push/`
 - `subscription-helpers.ts` — `getPushStatus`, `subscribeToPush`, `unsubscribeFromPush` (browser Push API + Supabase upsert)
 
@@ -54,5 +69,15 @@ This file documents the contents of `src/lib/` in detail. Update it when a new h
 ### `src/lib/hooks/`
 - `use-mounted.ts` — `useSyncExternalStore`-based mount detector. Use instead of useState+useEffect for client-only gating (localStorage, navigator, matchMedia) — React 19's `react-hooks/set-state-in-effect` lint rule fires on the canonical did-mount pattern.
 
-### Tests
+## Shared chat component stack (`src/components/chat/`)
+The biggest cross-cutting pattern: **three different chat surfaces render through the same components.** `ChannelScreen` (community channels), `RaidDetail` (per-raid chat, in `src/components/`), and `DMScreen` (1:1 DMs) all feed the same `MessageGroup` / `Composer` / `MessageActionSheet` / `Reactions` / `ReplyQuote` components.
+
+They unify on the `ChatMessage` type in `src/lib/chat/types.ts` (extracted there to avoid a circular import). Each surface maps its own row shape onto `ChatMessage` at the data boundary:
+- channel: native fields
+- raid: `raid_messages.message → body`
+- DM: `sender_id → author_id`
+
+So a change to message rendering, the action sheet, reactions, or replies lands in all three at once — and a new chat-like surface should reuse this stack rather than rebuild it. The data layers (`src/lib/chat/`, `src/lib/raids/`, `src/lib/dm/`) stay separate per surface; only the presentation components are shared.
+
+## Tests
 Vitest + jsdom + `@testing-library/jest-dom`. Setup file at `src/test/setup.ts`. `@` alias maps to `src/`.

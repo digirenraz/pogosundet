@@ -76,6 +76,9 @@ Server page components parallelise independent Supabase queries with `Promise.al
 ### Realtime — chat vs. attendees
 Chat messages (`raid_messages`) are appended to local React state via Realtime INSERT events — triggering `router.refresh()` per message caused full RSC page refetches. Attendee changes (`raid_attendees`) still use `router.refresh()` because they need the profile join. The `useRaidsRealtime` hook manages both.
 
+### Shared chat component stack
+Channel chat (`ChannelScreen`), raid chat (`RaidDetail`), and DMs (`DMScreen`) all render through the same `src/components/chat/` components (`MessageGroup`, `Composer`, `MessageActionSheet`, `Reactions`, `ReplyQuote`), unified on the `ChatMessage` type in `src/lib/chat/types.ts`. Each surface maps its row shape onto `ChatMessage` at the boundary (raid: `message → body`; DM: `sender_id → author_id`). Edit message rendering once; it lands in all three. Data layers stay separate (`src/lib/{chat,raids,dm}/`). See [`docs/architecture.md`](docs/architecture.md).
+
 ### React 19 patterns
 - **Client-only gating** (localStorage, navigator, matchMedia): use `useMounted` from `src/lib/hooks/use-mounted.ts` instead of useState+useEffect. React 19's `react-hooks/set-state-in-effect` lint rule fires on the canonical "did mount" pattern. The hook uses `useSyncExternalStore` and returns `false` on the server, `true` post-hydration.
 - **Ref writes during render**: move `ref.current = value` assignments into a `useEffect(() => { ref.current = value; }, [value])` — the `react-hooks/refs` rule disallows synchronous ref writes during render.
