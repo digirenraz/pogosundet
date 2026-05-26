@@ -1,37 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Users, Swords, MessageCircle, User } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { useChannelUnread } from '@/lib/chat/use-channel-unread';
-import { useDMUnread } from '@/lib/dm/use-dm-unread';
+import { useUnread } from '@/components/UnreadProvider';
 
 // Bottom navigation bar. Shown on all authenticated "app" pages.
-// The Chat tab carries a live unread badge driven by useChannelUnread + useDMUnread.
+// The Chat tab carries a live unread badge. The unread total comes from the
+// shared UnreadProvider (mounted once in the [locale] layout) rather than
+// running the unread hooks per-instance — this avoids the badge flicker that
+// occurred when BottomNav remounted on every navigation.
 export function BottomNav() {
   const pathname = usePathname();
   const t = useTranslations('BottomNav');
-  const [userId, setUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getClaims();
-      const sub = data?.claims?.sub ?? null;
-      if (!cancelled) setUserId(sub);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const { total: channelUnread } = useChannelUnread({ userId });
-  const { total: dmUnread } = useDMUnread({ userId });
-  const unreadTotal = channelUnread + dmUnread;
+  const { total: unreadTotal } = useUnread();
 
   const isActive = (path: string) => pathname.endsWith(path);
   // Profile tab is active for /profile and /profile/edit alike.
