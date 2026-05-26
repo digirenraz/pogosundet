@@ -1,6 +1,6 @@
 # Plan: App-icon unread badge (closed-app, push-driven)
 
-Status: planned — implement on a later date (user's call).
+Status: implemented (2026-05-26) — both parts shipped (part 1: client + SW plumbing; part 2: `notify-dm` Edge Function + DM-push privacy/docs). User must still deploy `notify-dm` and create the `direct_messages` INSERT webhook.
 
 ## Context
 
