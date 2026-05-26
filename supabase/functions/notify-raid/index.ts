@@ -42,6 +42,7 @@ Deno.serve(async (req: Request) => {
     const targets = subscriptions.filter((s: { user_id: string }) => s.user_id !== raid.user_id);
 
     const notification = JSON.stringify({
+      type: 'raid',
       title: `Nyt raid!${raid.boss_name ? ` ${raid.boss_name}` : ''}`,
       body: `${raid.gym_name ? `${raid.gym_name} — ` : ''}Tryk for at se detaljerne`,
       url: `/raids/${raid.id}`,
