@@ -10,8 +10,8 @@
 // before painting, which made the installed PWA feel as slow as a normal browser tab.
 // SWR serves the cached shell instantly while a fresh copy is fetched in the background.
 
-const SHELL_CACHE = 'pogosundet-shell-v10';
-const RUNTIME_CACHE = 'pogosundet-runtime-v10';
+const SHELL_CACHE = 'pogosundet-shell-v11';
+const RUNTIME_CACHE = 'pogosundet-runtime-v11';
 
 // URLs precached on install. /login is a safe entry point for cold reopens —
 // the server still re-checks auth on every navigation, so showing the cached
@@ -166,14 +166,25 @@ self.addEventListener('push', event => {
   );
 });
 
-// Open the relevant raid when the user taps the notification.
+// Open the target URL when the user taps the notification.
+// If a PWA window is already open we navigate it to the URL and focus it;
+// otherwise we open a fresh window at the URL. The previous code only called
+// focus() on the existing client, which refocused whatever screen the user
+// was last on instead of the conversation/raid from the push.
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const url = event.notification.data?.url ?? '/raids';
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-      for (const client of windowClients) {
-        if ('focus' in client) return client.focus();
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async windowClients => {
+      const existing = windowClients.find(c => 'focus' in c);
+      if (existing) {
+        try {
+          const navigated = await existing.navigate(url);
+          if (navigated && 'focus' in navigated) return navigated.focus();
+        } catch {
+          // navigate() throws on cross-origin or detached clients — fall through to focus().
+        }
+        return existing.focus();
       }
       return clients.openWindow(url);
     })
