@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This file is read automatically at the start of every Claude Code session.
 Do not delete it. Update it at the end of each session if any decisions changed.
 
-For first-time environment setup (Supabase project, env vars, Google OAuth), see `docs/setup.md`. Pre-launch operational tasks (env vars, push debugging runbook, PWA icon replacement, etc.) live in [`docs/launch-checklist.md`](docs/launch-checklist.md).
+For first-time environment setup (Supabase project, env vars, Google OAuth), see `docs/setup.md`. The required env vars are templated in `.env.local.example` — copy to `.env.local` and fill in. Pre-launch operational tasks (env vars, push debugging runbook, PWA icon replacement, etc.) live in [`docs/launch-checklist.md`](docs/launch-checklist.md).
 
 ---
 
@@ -27,6 +27,8 @@ For first-time environment setup (Supabase project, env vars, Google OAuth), see
 | Deploy Edge Function | `npx supabase functions deploy notify-raid` |
 
 No `npm` typecheck script — `npm run build` is the canonical type gate (Next.js fails the build on TS errors). Use `npx tsc --noEmit` for a fast standalone check without a full build.
+
+`npm run lint` is bare `eslint` (Next 16 dropped `next lint`). Don't expect `next lint`-flavored output or pass `--dir src` — the flat config in `eslint.config.mjs` already scopes the run.
 
 ---
 
@@ -82,6 +84,12 @@ Channel chat (`ChannelScreen`), raid chat (`RaidDetail`), and DMs (`DMScreen`) a
 ### React 19 patterns
 - **Client-only gating** (localStorage, navigator, matchMedia): use `useMounted` from `src/lib/hooks/use-mounted.ts` instead of useState+useEffect. React 19's `react-hooks/set-state-in-effect` lint rule fires on the canonical "did mount" pattern. The hook uses `useSyncExternalStore` and returns `false` on the server, `true` post-hydration.
 - **Ref writes during render**: move `ref.current = value` assignments into a `useEffect(() => { ref.current = value; }, [value])` — the `react-hooks/refs` rule disallows synchronous ref writes during render.
+
+### Service worker versioning
+`public/sw.js` carries a cache version constant (`SHELL_CACHE` / `RUNTIME_CACHE`). Bump it on every change to SW behavior — push handlers, cache strategy, `notificationclick`, precache list. The bump evicts the stale cache on installed PWAs; `skipWaiting()` + `clients.claim()` activate the new SW on first visit (users still need one extra navigation per device before the old SW closes). Current: v10. History lives in the decisions archive.
+
+### Unread state lives in `UnreadProvider`
+`src/components/UnreadProvider.tsx` is mounted in `src/app/[locale]/layout.tsx` and owns `useChannelUnread` + `useDMUnread`. `BottomNav` and the app-icon badge (`src/lib/push/app-badge.ts`) read from it. Do **not** move the hooks back into `BottomNav` — that component remounts on every navigation, so the in-memory counts would reset. The Badging API mirror in `app-badge.ts` + IndexedDB lets `public/sw.js` increment the home-screen badge from a `push` handler while the app is closed.
 
 ### Supabase Storage
 - Bucket `raid-images` — stores raid screenshots uploaded by users
@@ -198,6 +206,8 @@ When building any feature that touches personal data, verify GDPR compliance.
 
 **PR gate:** all tests must pass before opening a PR.
 
+**CI:** `.github/workflows/ci.yml` runs `npm run lint` + Vitest + Playwright (chromium) on every PR and push to `main` (Node 24, Ubuntu). Supabase env vars come from repo secrets. The Playwright HTML report is uploaded as an artifact on failure (14-day retention).
+
 ---
 
 ## Git workflow
@@ -232,12 +242,6 @@ Update this section at the end of each session. Entries older than ~4 weeks live
 | Date       | Decision                                              | Reason                              |
 |------------|-------------------------------------------------------|--------------------------------------|
 | 2026-05-19 | Supabase Realtime cross-user delivery is unreliable in `npm run dev` / Turbopack — verify on the Vercel preview instead | Burned hours debugging slice 12's badge "not firing" against a second account locally. Worked fine on prod. Future Realtime features: don't chase missing INSERT events locally if the code looks correct — push to preview and verify there. Single-user / own-optimistic paths DO work locally. |
-| 2026-05-22 | Migration 011: DB-level CHECK constraint on `profiles.friend_code` enforcing `^\d{4} \d{4} \d{4}$` | App-layer validation already enforces this, but a direct DB insert could bypass it. The constraint makes the format impossible to violate at the storage layer. |
-| 2026-05-22 | Slice 13: emoji reactions + threaded replies on community channel chat. Migration 010 adds `channel_messages.reply_to_id` and `channel_message_reactions` | Tap bubble → action sheet (6 quick-reactions + Svar + Kopiér). Optimistic local apply, realtime reconciles. Reactions realtime uses a separate hook on INSERT/DELETE filtered client-side by the live `messageIdSet` (no `channel` FK on the reactions table). |
-| 2026-05-22 | Slice 14: "last seen" badge. Migration 012 adds `profiles.last_seen_at` | Write in `use-presence.ts` is a plain `useEffect` (must NOT be inside the Realtime SUBSCRIBED callback — silently fails on mobile PWAs). `lastSeenRelative()` in `src/lib/profile/time.ts` returns Danish strings across 10 buckets. Badge only when offline + non-null. `getAllProfiles()` (60s cache) returns stale `last_seen_at`; pages do a parallel uncached select and merge fresh values. |
-| 2026-05-22 | Slice 15: PoGo screenshot avatar upload. Supabase Storage bucket `avatars`. `src/lib/profile/avatar-helpers.ts` uploads to `{userId}/avatar.png` (upsert) | `AvatarUploadSheet` lets the user drag + pinch-to-zoom inside a 280px circle before cropping. Auto-crop at fixed coordinates failed (PoGo positions the avatar differently across devices). `maxWidth: 'none'` required on the img to prevent global CSS distorting it during zoom. |
-| 2026-05-22 | PWA `start_url` → `/players`; level field uses `<input type="text" inputMode="numeric" maxLength={2}>` (not `type="number"`); current user excluded from directory; team filter chips show team colour at 55% opacity when inactive | Players is the primary landing screen. `type="number"` ignores `maxLength` in all browsers. Self in directory is confusing. All-grey team chips were indistinguishable. |
-| 2026-05-22 | iOS OAuth: keep `createClient()` (SSR, cookies) on login page + simple route handler (`exchangeCodeForSession` + redirect) | A `createOAuthClient` (plain `@supabase/supabase-js`, localStorage) variant was introduced to dodge iOS ITP purging the PKCE verifier cookie — but the server route reads cookies, so they never matched and prod login broke. iOS Safari OAuth on preview deploys remains broken due to ITP; prod works. Do not reintroduce the localStorage client. |
 | 2026-05-23 | Slice 16: raid chat reactions + replies. Migration 013 adds `raid_messages.reply_to_id` and `raid_message_reactions`. `RaidDetail` chat section refactored to use the shared `MessageGroupView` / `Composer` / `MessageActionSheet` stack from channel chat. SW bumped v7→v8 | Reaches feature parity with Slice 13 (channel chat). `ChatMessage` extracted to `src/lib/chat/types.ts` so both `ChannelScreen` and `RaidDetail` feed the same components without a circular import. `raid_messages.message` column kept (not renamed to `body`) — the adapter in `RaidDetail.toChatMessage()` maps `message → body` at the boundary. New helpers: `src/lib/raids/reactions-helpers.ts` + `use-raid-reactions-realtime.ts` (topic suffixed with `Math.random()` per the 2026-05-19 collision rule). Raid chat keeps the existing local-state-driven message INSERT path via `useRaidsRealtime`; reactions live in a parallel hook. Realtime INSERTs don't carry the joined profile shape so avatar/team/level stay null until the next `router.refresh` — acceptable trade-off. |
 | 2026-05-23 | Slice 17: 1:1 direct messages (built early at user's explicit request despite the Phase 2 designation). Migration 014 adds `direct_messages`, `direct_message_reactions`, `dm_reads`. New route `/chat/dm/[partnerId]`; new section on `/chat`; entry points from `OnlineStrip` avatars + `MembersSheet` rows. SW bumped v8→v9. Privacy Policy s13 added. Push notifications for new DMs explicitly out of scope — owned by the "Define push notification triggers" TODO. | RLS pattern: `direct_messages` policies use `auth.uid() IN (sender_id, recipient_id)`; `direct_message_reactions` SELECT/INSERT use an `EXISTS` subquery against the parent message so reactions are participants-only without a denormalised conversation column. Realtime topics use `dm:${pairKey(a,b)}:${Math.random()...}` where `pairKey(a,b) === pairKey(b,a)` is the canonical 2-user identifier — sorted-join so both ends share one channel. PostgREST realtime filters are single-column, so we filter `recipient_id=eq.{me}` server-side and apply the sender filter client-side. DM page mirrors channel chat structurally — reuses `MessageGroupView` / `Composer` / `MessageActionSheet`; only the data layer (`src/lib/dm/`) differs. Shared `ChatMessage` type works for DMs by mapping `sender_id → author_id` at the boundary (no parallel `DMMessage` type). `direct_messages.body` (not `message` like raid chat). DM page guards `partnerId !== currentUserId` and 404s otherwise. Account deletion cascades all DMs the user has sent or received plus their reactions plus their `dm_reads`. |
 | 2026-05-25 | Slice 17 PR #52 merged to `main`. Privacy Policy proofread: §13 rewritten for tone consistency with §11/§12 (active voice, plain Danish replacing "Row Level Security", dropped redundant Supabase/EU mention since §7 owns it); §7 verb `handler` → `fungerer`. | Merged with verification check #3 done and #1 reviewed statically (RLS policies sound — third party gets 0 rows). Live RLS test and cross-user realtime were not run pre-merge; re-filed as post-merge prod spot-checks in Next up. No `lastUpdated` bump — wording-only, no new data field/service/retention change. |
