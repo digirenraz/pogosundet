@@ -48,12 +48,27 @@ question is which to add without causing notification fatigue.
 
 ---
 
-## Platform constraint (iOS)
+## Platform constraints
+
+### iOS
 
 iOS 16.4+ only delivers web push to PWAs **installed to the Home Screen via
 Safari**, with notification permission granted. iOS users who haven't installed
 the PWA receive nothing — their fallback is the "Del til Messenger" button on
 each raid card.
+
+### Android — app-icon badge shows a dot, not a count
+
+`navigator.setAppBadge(n)` works on Android Chrome (the call doesn't error and
+the SW path in `public/sw.js` runs the same as iOS), but **most Android
+launchers — including stock Pixel and Samsung — render it as a generic "new"
+dot instead of the numeric `n`**. iOS and desktop Chrome / Edge do show the
+real count.
+
+This is a launcher-side limitation, not a bug in our code. No action planned —
+the SW still writes the count to IndexedDB so the in-app `BottomNav` badge and
+the `/chat` per-row badges stay accurate; only the home-screen icon falls back
+to a dot. Confirmed 2026-05-28.
 
 ---
 
