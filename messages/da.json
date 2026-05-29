@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-05-26",
+    "lastUpdated": "Sidst opdateret: 2026-05-29",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
@@ -89,7 +89,7 @@
     "s6Title": "6. Videregivelse",
     "s6Body": "Vi sælger, udlejer eller deler ikke dine personoplysninger med tredjepart. Dine profiloplysninger (trænernavn, vennekode, fornavn, bio) er synlige for andre registrerede brugere af PoGoSundet.",
     "s7Title": "7. Databehandlere",
-    "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase fungerer som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR.",
+    "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase fungerer som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR. Til fejllogning anvender vi Sentry (EU-region), så vi kan opdage og rette tekniske fejl i appen. Sentry modtager kun tekniske fejloplysninger, og vi indsamler bevidst ikke din IP-adresse eller andre personoplysninger via fejlloggen. Begge databehandlere behandler udelukkende data på vores vegne og i overensstemmelse med GDPR.",
     "s8Title": "8. Dine rettigheder",
     "s8Body": "Du har ret til indsigt i dine data, berigtigelse af forkerte oplysninger, sletning (\"retten til at blive glemt\"), dataportabilitet samt retten til at klage til Datatilsynet (datatilsynet.dk). Kontakt os på renraz@gmail.com for at udøve disse rettigheder.",
     "s9Title": "9. Cookies og sporing",

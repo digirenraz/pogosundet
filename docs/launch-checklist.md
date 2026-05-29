@@ -14,6 +14,16 @@ Update this file as items are completed or new ones surface. Keep `CLAUDE.md`'s 
 - [ ] Decide on a real domain name and configure it in Vercel + Supabase allowed URLs
 - [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
 
+### Sentry error logging (wired 2026-05-29 — disabled until DSN is set)
+
+The code is in place but Sentry stays completely inert until `NEXT_PUBLIC_SENTRY_DSN` is set. To turn it on:
+
+- [ ] Create a Sentry project (platform: **Next.js**) in an **EU region** (DSN must contain `.de.`, e.g. `...ingest.de.sentry.io`) — required for GDPR.
+- [ ] Add `NEXT_PUBLIC_SENTRY_DSN` to Vercel env vars (Production + Preview). This alone enables error capture.
+- [ ] (Optional, for readable production stack traces) Add `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` to Vercel so the build uploads source maps. Without them the build still works; traces are just minified.
+- [x] **GDPR — Privacy Policy updated 2026-05-29:** §7 (Databehandlere) now discloses Sentry as an EU-region error-logging processor; `Privacy.lastUpdated` bumped. (Sentry deliberately collects no IP/PII — `sendDefaultPii: false`.)
+- [ ] Verify: with the DSN set, trigger a test error and confirm it lands in the Sentry dashboard (e.g. temporarily throw in a route, or use `Sentry.captureException(new Error("test"))`).
+
 ## From Raid MVP (Slices 6–8)
 
 - [x] Test PWA install flow end-to-end on a real iPhone via Safari (not simulator) — verified 2026-05-19, push notifications arriving
