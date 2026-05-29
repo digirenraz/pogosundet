@@ -8,7 +8,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    # Run inside Playwright's official image: the browsers and all OS deps are
+    # pre-installed, so CI no longer downloads Chromium from cdn.playwright.dev
+    # at runtime. That CDN download intermittently stalls after reaching 100%
+    # and hung the job for days (PRs #64–#68). The image is pulled from
+    # Microsoft's container registry instead. Pin the tag to the installed
+    # @playwright/test version — the baked-in browsers must match it.
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
 
     steps:
       - uses: actions/checkout@v4
@@ -26,9 +34,6 @@ jobs:
 
       - name: Unit tests (Vitest)
         run: npm run test
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
 
       - name: E2E tests (Playwright)
         run: npm run test:e2e
