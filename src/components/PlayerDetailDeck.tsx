@@ -6,8 +6,18 @@ import { ArrowLeft, ChevronLeft, ChevronRight, ChevronsLeftRight, Check, Copy } 
 import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
 import { lastSeenRelative } from '@/lib/profile/time';
+import dynamic from 'next/dynamic';
 import { Avatar, TeamChip, TEAMS, type AvatarTeam } from './Avatar';
-import { FriendCodeQR } from './FriendCodeQR';
+
+// Lazy-load the QR so the `qrcode` lib (~31 KB) is fetched on demand instead of
+// shipping in the player-detail route's initial bundle. `ssr: false` also keeps
+// the QR SVGs out of the server-rendered HTML — the deck mounts one QR per
+// profile in the whole directory, so that HTML adds up fast. The fixed-size
+// placeholder reserves the 224px box so nothing shifts while the chunk loads.
+const FriendCodeQR = dynamic(() => import('./FriendCodeQR').then((m) => m.FriendCodeQR), {
+  ssr: false,
+  loading: () => <div className="rounded-md bg-background" style={{ width: 224, height: 224 }} />,
+});
 
 interface PlayerDetailDeckProps {
   profiles: Profile[];
