@@ -4,7 +4,31 @@ Authoritative list of every push / system notification PoGoSundet sends.
 **Keep this in sync with the code whenever notification triggers change** (there
 is a Claude memory rule enforcing this).
 
-Last reviewed: 2026-05-26.
+Last reviewed: 2026-05-30.
+
+---
+
+## Foreground suppression (applies to ALL pushes)
+
+The service worker (`public/sw.js`, `push` handler) suppresses a notification
+**only when the user is already looking at the exact screen the push points to**.
+It compares each visible window client's `url` pathname against the push's
+`data.url` (`/chat/dm/<sender>` for DMs, `/raids/<id>` for raids):
+
+- **Viewing that exact conversation/raid** → return early, no notification (and
+  no badge bump — the client has already marked it read).
+- **App open on any other screen** → the notification still fires, so a DM from
+  someone else while you read a channel still alerts you.
+- **App backgrounded or closed** → notification fires as normal.
+
+The **app-icon badge** uses a coarser rule than the notification: the SW bumps it
+only when **no** window client is visible. Whenever the app is in the foreground
+— even on a different screen — the in-app realtime unread badges
+(`UnreadProvider`) own the count, so bumping in the SW too would double-count.
+
+Suppressing only against a *visible* target screen also keeps us clear of the
+iOS/Chrome penalty for repeated silent (notification-less) background pushes —
+the suppressed path is always foreground, never silent-in-background.
 
 ---
 
@@ -109,7 +133,12 @@ respect the **cross-cutting behaviours** further down. None are built yet.
 
 ### Cross-cutting behaviours users expect (apply to all of the above)
 - **Suppress when actively viewing** the conversation/channel/raid — don't notify
-  for what's already on screen. Best-effort (server can't always know).
+  for what's already on screen. **Implemented** (see "Foreground suppression"
+  above): the SW matches the visible client's route against the push target, so a
+  push is dropped only when you're on that exact screen; pushes for other screens
+  still notify even with the app open. Limited to routes that match the push
+  `data.url` — channel-message pushes don't exist yet, so there's nothing to
+  suppress for channels.
 - **Grouping / dedupe** — collapse multiple messages from the same sender into one
   notification ("3 nye beskeder fra X") instead of buzzing per message. Use a
   notification `tag` per conversation in the service worker.
