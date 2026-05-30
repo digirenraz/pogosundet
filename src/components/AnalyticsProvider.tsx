@@ -17,7 +17,9 @@ export function AnalyticsProvider() {
   // Initialise as soon as consent is granted (or on later mounts if it was
   // already granted in a previous visit).
   useEffect(() => {
-    if (consent === "granted") initAnalytics();
+    // Fire-and-forget: initAnalytics lazy-loads the SDK chunk. track() calls
+    // made before it resolves are queued and flushed by the wrapper.
+    if (consent === "granted") void initAnalytics();
   }, [consent]);
 
   // page_view per route. normalizePath strips dynamic ids; query strings are
