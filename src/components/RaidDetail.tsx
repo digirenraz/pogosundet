@@ -17,6 +17,7 @@ import {
 } from '@/lib/raids/reactions-helpers';
 import { useRaidsRealtime } from '@/lib/raids/use-raids-realtime';
 import { useRaidReactionsRealtime } from '@/lib/raids/use-raid-reactions-realtime';
+import { track } from '@/lib/analytics/amplitude';
 import {
   daySeparator,
   groupMessages,
@@ -246,6 +247,8 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
       ...prev,
       { user_id: currentUserId, extra_count: 0, profiles: { trainer_name: currentUserName } },
     ]);
+    // Analytics: joined a raid from its detail screen (no PII — no ids/names).
+    track('raid_joined', { surface: 'detail' });
     await joinRaid(raid.id, currentUserId);
   }
 
@@ -305,6 +308,8 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
       sourceMsg.reactions[emoji] ??
       [];
     const has = currentList.includes(currentUserId);
+    // Analytics: only count newly-added reactions (not removals). Surface only.
+    if (!has) track('reaction_added', { surface: 'raid' });
     applyReactionDelta(
       messageId,
       emoji,

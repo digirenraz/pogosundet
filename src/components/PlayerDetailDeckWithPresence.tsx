@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import type { Profile } from '@/lib/profile/helpers';
 import { usePresence } from '@/lib/profile/use-presence';
+import { track } from '@/lib/analytics/amplitude';
 import { PlayerDetailDeck } from './PlayerDetailDeck';
 
 interface Props {
@@ -15,6 +17,12 @@ interface Props {
 // component but accepting a Set keeps it isolated from Supabase realtime.
 export function PlayerDetailDeckWithPresence({ profiles, startIndex, currentUserId }: Props) {
   const onlineUserIds = usePresence(currentUserId);
+
+  // Analytics: opened another player's detail page. No id/name — just the event.
+  useEffect(() => {
+    track('profile_viewed');
+  }, []);
+
   return (
     <PlayerDetailDeck
       profiles={profiles}

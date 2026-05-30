@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { Avatar } from '@/components/Avatar';
 import { usePresence } from '@/lib/profile/use-presence';
+import { track } from '@/lib/analytics/amplitude';
 import { useDMRealtime } from '@/lib/dm/use-dm-realtime';
 import { useDMReactionsRealtime } from '@/lib/dm/use-dm-reactions-realtime';
 import { sendDM, type DirectMessageRow } from '@/lib/dm/helpers';
@@ -225,6 +226,8 @@ export function DMScreen({
     };
     setMessages((prev) => [...prev, optimistic]);
     setReplyTo(null);
+    // Analytics: DM sent. No recipient id or body — fully anonymous.
+    track('dm_sent');
     await sendDM(currentUserId, partner.user_id, body, replyId);
   }
 
@@ -241,6 +244,8 @@ export function DMScreen({
       sourceMsg.reactions[emoji] ??
       [];
     const has = currentList.includes(currentUserId);
+    // Analytics: only count newly-added reactions (not removals). Surface only.
+    if (!has) track('reaction_added', { surface: 'dm' });
     applyReactionDelta(
       messageId,
       emoji,

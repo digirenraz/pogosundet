@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Mail, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
+import { track } from "@/lib/analytics/amplitude";
 import { Hero } from "@/components/Hero";
 import { AuthInput } from "@/components/AuthInput";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -49,6 +50,8 @@ export default function RegisterPage() {
       );
       setLoading(false);
     } else {
+      // Analytics: registration submitted successfully (no PII — email is never sent).
+      track("account_created");
       // Supabase sends a confirmation email — tell the user to check their inbox.
       setSuccess(true);
       setLoading(false);
