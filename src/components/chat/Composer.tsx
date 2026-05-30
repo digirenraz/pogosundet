@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Reply, SendHorizontal, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ChatMessage } from '@/lib/chat/types';
+import { LongPressHint } from './LongPressHint';
 
 interface ComposerProps {
   channelName: string;
@@ -65,6 +66,7 @@ export function Composer({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-10 flex flex-col">
+      {!isReplying && <LongPressHint />}
       {isReplying && replyTo && (
         <div className="flex items-start gap-2.5 px-3.5 pt-2.5 pb-2 border-b border-border">
           <Reply

@@ -188,7 +188,9 @@
     "replyPlaceholder": "Write a reply to {name}",
     "cancelReply": "Cancel reply",
     "closeSheet": "Close",
-    "you_lowercase": "you"
+    "you_lowercase": "you",
+    "longPressHint": "Hold a message down to reply, react, or copy",
+    "hintDismiss": "Dismiss hint"
   },
   "ProfileEdit": {
     "headerTitle": "Edit profile",
