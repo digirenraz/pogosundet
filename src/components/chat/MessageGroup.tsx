@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Avatar } from '@/components/Avatar';
+import { useLongPress } from '@/lib/hooks/use-long-press';
 import { clockTime, type MessageGroup as MessageGroupType } from '@/lib/chat/time';
 import type { ChatMessage } from '@/lib/chat/types';
 import { Reactions } from './Reactions';
@@ -27,10 +28,12 @@ interface MessageBubbleProps {
   onTap: () => void;
 }
 
-// Single chat bubble — clickable so taps open the action sheet. Group-aware
-// corner rounding so consecutive bubbles from the same author read as one
-// shape; the first/last flags also account for reply quotes and reaction rows
-// breaking the visual grouping.
+// Single chat bubble. A long press opens the action sheet (reply / react /
+// copy) — the standard messaging-app gesture; a plain tap does nothing.
+// Keyboard activation (Enter/Space) still opens it via onClick for a11y.
+// Group-aware corner rounding so consecutive bubbles from the same author read
+// as one shape; the first/last flags also account for reply quotes and reaction
+// rows breaking the visual grouping.
 function MessageBubble({
   body,
   mine,
@@ -39,6 +42,7 @@ function MessageBubble({
   dimmed,
   onTap,
 }: MessageBubbleProps) {
+  const longPress = useLongPress(onTap);
   const r = 16;
   const tight = 4;
   const radius = mine
@@ -58,8 +62,14 @@ function MessageBubble({
   return (
     <button
       type="button"
-      onClick={onTap}
-      className={`px-3.5 py-2 text-[15px] leading-snug max-w-[78%] w-fit break-words text-left transition-opacity ${
+      {...longPress}
+      // Keyboard-only: e.detail === 0 marks an Enter/Space activation, so a
+      // touch tap / mouse click (detail >= 1) is ignored — only long press opens
+      // the sheet on pointer devices.
+      onClick={(e) => {
+        if (e.detail === 0) onTap();
+      }}
+      className={`px-3.5 py-2 text-[15px] leading-snug max-w-[78%] w-fit break-words text-left transition-opacity select-none [-webkit-touch-callout:none] ${
         mine ? 'bg-primary text-primary-foreground' : 'bg-input text-card-foreground'
       } ${dimmed ? 'opacity-50' : 'opacity-100'}`}
       style={{
