@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { usePresence } from '@/lib/profile/use-presence';
+import { track } from '@/lib/analytics/amplitude';
 import { useChannelRealtime } from '@/lib/chat/use-channel-realtime';
 import { useChannelReactionsRealtime } from '@/lib/chat/use-channel-reactions-realtime';
 import {
@@ -92,6 +93,11 @@ export function ChannelScreen({
   >({});
 
   const onlineIds = usePresence(currentUserId);
+
+  // Analytics: channel opened. channel.id is the fixed channel slug (not PII).
+  useEffect(() => {
+    track('channel_opened', { channel: channel.id });
+  }, [channel.id]);
 
   // Resolve a profile blob for messages whose row doesn't have one embedded
   // (Realtime INSERTs don't carry the join).
@@ -232,6 +238,8 @@ export function ChannelScreen({
     };
     setMessages((prev) => [...prev, optimistic]);
     setReplyTo(null);
+    // Analytics: channel message sent. Channel slug only — never the body.
+    track('channel_message_sent', { channel: channel.id });
     await sendMessage(channel.id, currentUserId, body, replyId);
   }
 
@@ -252,6 +260,8 @@ export function ChannelScreen({
       sourceMsg.reactions[emoji] ??
       [];
     const has = currentList.includes(currentUserId);
+    // Analytics: only count newly-added reactions (not removals). Surface only.
+    if (!has) track('reaction_added', { surface: 'channel' });
     applyReactionDelta(
       messageId,
       emoji,

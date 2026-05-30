@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { joinRaid, leaveRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
+import { track } from '@/lib/analytics/amplitude';
 import { useRaidsRealtime } from '@/lib/raids/use-raids-realtime';
 import { RaidCard } from '@/components/RaidCard';
 import type { RaidWithAttendees } from '@/lib/raids/server-helpers';
@@ -43,6 +44,8 @@ export function RaidList({ active: initialActive, expired, currentUserId }: Raid
             }
       )
     );
+    // Analytics: joined a raid from the list (no PII — no ids/names).
+    track('raid_joined', { surface: 'list' });
     await joinRaid(raidId, currentUserId);
   }
 

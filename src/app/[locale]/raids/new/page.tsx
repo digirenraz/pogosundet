@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { ArrowLeft, Camera, Minus, Plus, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { createRaid, joinRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
+import { track } from '@/lib/analytics/amplitude';
 import { validateRaid } from '@/lib/raids/validation';
 import { BossSearch } from '@/components/BossSearch';
 import { GymSearch } from '@/components/GymSearch';
@@ -129,6 +130,13 @@ export default function NewRaidPage() {
         setError(t('form.errorGeneric'));
         return;
       }
+
+      // Analytics: raid posted. Flags only — no gym/boss name or any PII.
+      track('raid_created', {
+        has_image: imageUrl !== null,
+        has_gym: Boolean(gymName.trim()),
+        has_boss: Boolean(bossName),
+      });
 
       // Auto-join the poster and set their extra count
       await joinRaid(newRaid.id, userId);

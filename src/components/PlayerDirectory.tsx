@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
+import { track } from '@/lib/analytics/amplitude';
 import { filterProfiles, type DirectoryFilter } from '@/lib/profile/filters';
 import { usePresence } from '@/lib/profile/use-presence';
 import { PlayerCard } from './PlayerCard';
@@ -27,6 +28,15 @@ export function PlayerDirectory({ profiles, currentUserId }: PlayerDirectoryProp
   const [filter, setFilter] = useState<DirectoryFilter>('all');
 
   const onlineUserIds = usePresence(currentUserId);
+
+  // Analytics: fire one debounced player_search per typed query. The query
+  // string is deliberately NOT sent (free-text → PII risk); we only record
+  // that a search happened.
+  useEffect(() => {
+    if (!query.trim()) return;
+    const id = setTimeout(() => track('player_search'), 600);
+    return () => clearTimeout(id);
+  }, [query]);
 
   const othersProfiles = useMemo(
     () => profiles.filter((p) => p.user_id !== currentUserId),

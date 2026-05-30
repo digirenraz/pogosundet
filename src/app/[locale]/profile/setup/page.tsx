@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { MapPinned } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { createProfile } from '@/lib/profile/helpers';
+import { track } from '@/lib/analytics/amplitude';
 import type { ProfileInput } from '@/lib/profile/validation';
 import { ProfileForm } from '@/components/ProfileForm';
 
@@ -44,6 +45,8 @@ export default function ProfileSetupPage() {
       setGeneralError(t('errorGeneric'));
       return;
     }
+    // Analytics: profile created (no PII — trainer name/friend code never sent).
+    track('profile_completed');
     // Send iOS users to the PWA install onboarding; non-iOS go straight to the directory
     const dest = /iPad|iPhone|iPod/.test(navigator.userAgent) ? '/onboarding/ios' : '/players';
     router.push(dest);
