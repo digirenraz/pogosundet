@@ -264,7 +264,9 @@
     "dmIntroLine": "Direkte besked · kun jer to kan se den",
     "dmConversations": "{n, plural, =1 {# samtale} other {# samtaler}}",
     "dmUnread": "{n} ulæste",
-    "dmTypingShort": "skriver…"
+    "dmTypingShort": "skriver…",
+    "longPressHint": "Hold en besked nede for at svare, reagere eller kopiere",
+    "hintDismiss": "Skjul tip"
   },
   "ProfileEdit": {
     "headerTitle": "Rediger profil",
