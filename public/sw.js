@@ -10,8 +10,8 @@
 // before painting, which made the installed PWA feel as slow as a normal browser tab.
 // SWR serves the cached shell instantly while a fresh copy is fetched in the background.
 
-const SHELL_CACHE = 'pogosundet-shell-v11';
-const RUNTIME_CACHE = 'pogosundet-runtime-v11';
+const SHELL_CACHE = 'pogosundet-shell-v12';
+const RUNTIME_CACHE = 'pogosundet-runtime-v12';
 
 // URLs precached on install. /login is a safe entry point for cold reopens —
 // the server still re-checks auth on every navigation, so showing the cached
@@ -146,10 +146,30 @@ self.addEventListener('push', event => {
   const data = event.data ? event.data.json() : {};
   event.waitUntil(
     (async () => {
-      // DM pushes bump the home-screen icon badge while the app is closed.
-      // The client recomputes the true total on next open, so any drift here
-      // self-corrects. Raids are transient — they never touch the badge.
-      if (data.type === 'dm') {
+      // Work out the foreground state and whether the user is already looking at
+      // the exact conversation/raid this push is about.
+      const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const visibleClients = windowClients.filter(c => c.visibilityState === 'visible');
+      const appInForeground = visibleClients.length > 0;
+
+      const targetPath = new URL(data.url ?? '/raids', self.location.origin).pathname;
+      const viewingTarget = visibleClients.some(c => {
+        try { return new URL(c.url).pathname === targetPath; } catch { return false; }
+      });
+
+      // Suppress the notification only when the user is already on the exact
+      // screen this push points to — there's nothing to alert them about. Pushes
+      // for any other screen still notify, even with the app open. Suppressing
+      // only a *visible* target also keeps us clear of the iOS/Chrome penalty for
+      // silent background pushes — that path is never silent.
+      if (viewingTarget) return;
+
+      // DM pushes bump the home-screen icon badge, but ONLY when the app is not
+      // in the foreground. When it is, the in-app realtime unread badges own the
+      // count, so bumping here would double-count it. Raids are transient — they
+      // never touch the badge. The client recomputes the true total on next open,
+      // so any drift self-corrects.
+      if (data.type === 'dm' && !appInForeground) {
         const count = (await readBadgeCount()) + 1;
         await writeBadgeCount(count);
         if (typeof self.navigator !== 'undefined' && typeof self.navigator.setAppBadge === 'function') {
