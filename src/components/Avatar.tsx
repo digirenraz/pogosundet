@@ -78,8 +78,8 @@ export function Avatar({
               alt={name}
               width={inner}
               height={inner}
+              sizes={`${inner}px`}
               className="w-full h-full object-cover block"
-              unoptimized
             />
           ) : (
             initials

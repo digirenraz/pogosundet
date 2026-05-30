@@ -17,6 +17,7 @@ export function Hero({ imageSrc = "/hero-login.jpg" }: HeroProps) {
           src={imageSrc}
           alt=""
           fill
+          sizes="100vw"
           className="object-cover"
           priority
         />
