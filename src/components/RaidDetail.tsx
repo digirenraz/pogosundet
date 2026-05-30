@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { ArrowLeft, MapPin, Check, Minus, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { joinRaid, leaveRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
@@ -428,11 +429,12 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
         {/* Hero image */}
         <div className="relative h-[190px] bg-input">
           {raid.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={raid.image_url}
               alt="Raid screenshot"
-              className="w-full h-full object-cover"
+              fill
+              sizes="100vw"
+              className="object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-secondary">

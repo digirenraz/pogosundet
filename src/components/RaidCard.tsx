@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Check, Share2, MapPin, MessageCircle, Users, Minus, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { RaidWithAttendees } from '@/lib/raids/server-helpers';
@@ -93,14 +94,12 @@ export function RaidCard({
         {/* Left thumbnail */}
         <div className="relative w-[108px] shrink-0 bg-input">
           {raid.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={raid.image_url}
               alt="Raid screenshot"
-              className={`w-full h-full object-cover${expired ? ' grayscale' : ''}`}
-              width={108}
-              height={80}
-              loading="lazy"
+              fill
+              sizes="108px"
+              className={`object-cover${expired ? ' grayscale' : ''}`}
             />
           ) : (
             <div className="w-full h-full min-h-[80px] flex items-center justify-center bg-secondary">
