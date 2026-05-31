@@ -143,6 +143,14 @@
     "levelChip": "Level {level}",
     "bioLabel": "Mini bio"
   },
+  "Raids": {
+    "completed": "Completed",
+    "markCompleted": "Mark as completed",
+    "completedMark": "Completed ✓",
+    "reactionTfr": "TfR!",
+    "reactionShiny": "I got a shiny!",
+    "reactionHundo": "I got a hundo!"
+  },
   "BottomNav": {
     "players": "Players",
     "raids": "Raids",

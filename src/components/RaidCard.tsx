@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Check, Share2, MapPin, MessageCircle, Users, Minus, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { RaidWithAttendees } from '@/lib/raids/server-helpers';
+import { groupRaidReactions } from '@/lib/raids/raid-reaction-helpers';
 
 interface RaidCardProps {
   raid: RaidWithAttendees;
@@ -56,6 +57,16 @@ export function RaidCard({
   // Poster's trainer name — the poster is auto-joined so they appear in attendees
   const posterName =
     raid.raid_attendees.find(a => a.user_id === raid.user_id)?.profiles?.trainer_name ?? null;
+
+  const isCompleted = !!raid.completed_at;
+
+  // Read-only raid-reaction counts for the card summary.
+  const reactionGroups = groupRaidReactions(raid.raid_reactions ?? []);
+  const reactionSummary: { key: string; label: string; count: number }[] = [
+    { key: 'tfr', label: t('reactionTfr'), count: reactionGroups.tfr.length },
+    { key: 'shiny', label: '✨', count: reactionGroups.shiny.length },
+    { key: 'hundo', label: '💯', count: reactionGroups.hundo.length },
+  ].filter(r => r.count > 0);
 
   async function handleShare() {
     const parts = [
@@ -158,6 +169,23 @@ export function RaidCard({
             {timeLabel}
             {posterName ? ` · ${posterName}` : ''}
           </p>
+          {/* Completed badge */}
+          {isCompleted && (
+            <span className="inline-flex items-center gap-1 self-start rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">
+              <Check size={11} />
+              {t('completed')}
+            </span>
+          )}
+          {/* Read-only reaction summary — only when there are reactions */}
+          {reactionSummary.length > 0 && (
+            <div className="flex flex-wrap gap-2 text-[12px] font-semibold text-muted-foreground">
+              {reactionSummary.map(r => (
+                <span key={r.key} className="flex items-center gap-0.5">
+                  {r.label} {r.count}
+                </span>
+              ))}
+            </div>
+          )}
           {/* Stats row */}
           <div className="flex gap-3 text-[12px] text-muted-foreground mt-auto pt-1">
             <span className="flex items-center gap-1">

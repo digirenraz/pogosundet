@@ -164,6 +164,12 @@
     "expiredSection": "Sluttede raids",
     "trainers": "{count} trænere",
     "messages": "{count} beskeder",
+    "completed": "Gennemført",
+    "markCompleted": "Marker som gennemført",
+    "completedMark": "Gennemført ✓",
+    "reactionTfr": "TfR!",
+    "reactionShiny": "I got a shiny!",
+    "reactionHundo": "I got a hundo!",
     "detail": {
       "back": "Tilbage",
       "rsvpTitle": "Er du med?",

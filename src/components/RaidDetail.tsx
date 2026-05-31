@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, MapPin, Check, Minus, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { joinRaid, leaveRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
+import { joinRaid, leaveRaid, updateAttendeeExtra, toggleRaidCompleted } from '@/lib/raids/helpers';
+import {
+  REACTION_CODES,
+  groupRaidReactions,
+  toggleRaidReaction,
+  type ReactionCode,
+  type RaidReactionRow as RaidLevelReactionRow,
+} from '@/lib/raids/raid-reaction-helpers';
+import { useRaidReactionRealtime } from '@/lib/raids/use-raid-reaction-realtime';
 import {
   sendMessage,
   type RaidMessage,
@@ -79,9 +87,20 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
   const tChat = useTranslations('Chat');
   const router = useRouter();
 
+  const isPoster = currentUserId === raid.user_id;
+
   const myAttendee = raid.raid_attendees.find(a => a.user_id === currentUserId);
   const [joined, setJoined] = useState(!!myAttendee);
   const [extra, setExtra] = useState(myAttendee?.extra_count ?? 0);
+
+  // Completion state — optimistic, owned by the poster.
+  const [completedAt, setCompletedAt] = useState<string | null>(raid.completed_at);
+
+  // Raid-level reactions ("TfR!", shiny, hundo) — grouped user_id lists per code.
+  // Optimistic local toggles + realtime reconcile.
+  const [raidReactions, setRaidReactions] = useState(() =>
+    groupRaidReactions(raid.raid_reactions ?? [])
+  );
 
   // Messages live in client state — raid chat stays local-state-driven (the
   // realtime hook below appends INSERTs directly instead of refreshing the RSC).
@@ -155,6 +174,8 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
     setJoined(!!me);
     setExtra(me?.extra_count ?? 0);
     setAttendees(raid.raid_attendees);
+    setCompletedAt(raid.completed_at);
+    setRaidReactions(groupRaidReactions(raid.raid_reactions ?? []));
   }
 
   // Apply reaction overrides on top of the source messages.
@@ -229,6 +250,52 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
     messageIdSet,
     reactionCallbacks
   );
+
+  // Apply a single raid-level reaction delta into local grouped state.
+  const applyRaidReactionDelta = useCallback(
+    (reaction: string, userId: string, kind: 'add' | 'remove') => {
+      const code = reaction as ReactionCode;
+      if (!REACTION_CODES.includes(code)) return;
+      setRaidReactions((prev) => {
+        const list = prev[code];
+        if (kind === 'add') {
+          if (list.includes(userId)) return prev; // no-op
+          return { ...prev, [code]: [...list, userId] };
+        }
+        if (!list.includes(userId)) return prev;
+        return { ...prev, [code]: list.filter((id) => id !== userId) };
+      });
+    },
+    []
+  );
+
+  const raidReactionCallbacks = useMemo(
+    () => ({
+      onInsert: (row: RaidLevelReactionRow) =>
+        applyRaidReactionDelta(row.reaction, row.user_id, 'add'),
+      onDelete: (row: RaidLevelReactionRow) =>
+        applyRaidReactionDelta(row.reaction, row.user_id, 'remove'),
+    }),
+    [applyRaidReactionDelta]
+  );
+
+  useRaidReactionRealtime(raid.id, currentUserId, raidReactionCallbacks);
+
+  // Toggle a raid-level reaction: optimistic local flip, then DB write.
+  // Realtime echo reconciles. Available on all raids, incl. ended/completed.
+  function handleRaidReactionToggle(code: ReactionCode) {
+    const isOn = raidReactions[code].includes(currentUserId);
+    if (!isOn) track('reaction_added', { surface: 'raid' });
+    applyRaidReactionDelta(code, currentUserId, isOn ? 'remove' : 'add');
+    void toggleRaidReaction(raid.id, currentUserId, code, isOn);
+  }
+
+  // Poster-only: mark the raid completed / undo. Optimistic, then DB write.
+  async function handleToggleCompleted() {
+    const next = completedAt ? null : new Date().toISOString();
+    setCompletedAt(next);
+    await toggleRaidCompleted(raid.id, !!next);
+  }
 
   async function handleJoin() {
     setJoined(true);
@@ -335,6 +402,13 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
     const query = encodeURIComponent(`${raid.gym_name} Frederikssund Danmark`);
     window.open(`https://www.google.com/maps/search/${query}`);
   }
+
+  // Full labels for the tappable raid-reaction buttons (counts shown alongside).
+  const reactionButtons: { code: ReactionCode; label: string }[] = [
+    { code: 'tfr', label: t('reactionTfr') },
+    { code: 'shiny', label: t('reactionShiny') },
+    { code: 'hundo', label: t('reactionHundo') },
+  ];
 
   const headerTitle = [raid.boss_name, raid.gym_name].filter(Boolean).join(' · ') || 'Raid';
 
@@ -445,6 +519,12 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/55" />
           {/* Bottom-left: boss + gym */}
           <div className="absolute bottom-3 left-4">
+            {completedAt && (
+              <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[12px] font-bold text-primary-foreground">
+                <Check size={13} />
+                {t('completed')}
+              </span>
+            )}
             {raid.boss_name && (
               <p className="text-[22px] font-extrabold text-white leading-tight">{raid.boss_name}</p>
             )}
@@ -464,6 +544,50 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
             >
               <MapPin size={13} />
               {t('detail.showOnMap')}
+            </button>
+          )}
+        </div>
+
+        {/* Raid reactions + poster completion toggle */}
+        <div className="px-4 py-3.5 border-b border-border flex flex-col gap-3">
+          {/* Reaction buttons — anyone who can see the raid can react. Available
+              on all raids, including ended/completed (post-raid "TfR"). */}
+          <div className="flex flex-wrap gap-2">
+            {reactionButtons.map(({ code, label }) => {
+              const users = raidReactions[code];
+              const mine = users.includes(currentUserId);
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => handleRaidReactionToggle(code)}
+                  className={`h-9 rounded-full px-3 text-[13px] font-bold border transition-all flex items-center gap-1.5 ${
+                    mine
+                      ? 'bg-primary border-primary text-primary-foreground'
+                      : 'bg-background border-border text-card-foreground'
+                  }`}
+                  aria-pressed={mine}
+                >
+                  <span>{label}</span>
+                  {users.length > 0 && <span>{users.length}</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Poster-only: mark completed / undo */}
+          {isPoster && (
+            <button
+              type="button"
+              onClick={handleToggleCompleted}
+              className={`h-10 self-start rounded-lg px-4 text-[13px] font-bold border transition-all flex items-center gap-1.5 ${
+                completedAt
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'bg-background border-border text-card-foreground'
+              }`}
+            >
+              {completedAt && <Check size={15} />}
+              {completedAt ? t('completedMark') : t('markCompleted')}
             </button>
           )}
         </div>

@@ -5,6 +5,7 @@ export interface Raid extends RaidInput {
   id: string;
   user_id: string;
   created_at: string;
+  completed_at: string | null;
 }
 
 // Insert a new raid row. Returns { data, error } mirroring Supabase conventions.
@@ -35,6 +36,18 @@ export async function leaveRaid(raidId: string, userId: string) {
     .delete()
     .eq('raid_id', raidId)
     .eq('user_id', userId);
+  return { error };
+}
+
+// Mark a raid completed (or undo). Sets completed_at to now() when completing,
+// or null to undo so a mis-tap is recoverable. RLS enforces that only the
+// poster can update their own raid.
+export async function toggleRaidCompleted(raidId: string, completed: boolean) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('raids')
+    .update({ completed_at: completed ? new Date().toISOString() : null })
+    .eq('id', raidId);
   return { error };
 }
 
