@@ -99,17 +99,13 @@ export function RaidCard({
               alt="Raid screenshot"
               fill
               sizes="108px"
-              className={`object-cover${expired ? ' grayscale' : ''}`}
+              className={`object-contain${expired ? ' grayscale' : ''}`}
             />
           ) : (
             <div className="w-full h-full min-h-[80px] flex items-center justify-center bg-secondary">
               <span className="text-[28px]">⚔️</span>
             </div>
           )}
-          {/* Timer badge overlaid bottom-left */}
-          <span className="absolute bottom-1.5 left-1.5 bg-primary text-primary-foreground text-[11px] font-bold px-1.5 py-0.5 rounded-md leading-tight">
-            {timeLabel}
-          </span>
         </div>
 
         {/* Right content */}

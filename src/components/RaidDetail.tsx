@@ -46,16 +46,6 @@ function initials(name: string): string {
     .slice(0, 2);
 }
 
-// Human-readable relative time for a raid's start/creation time.
-function relativeLabel(raid: RaidWithDetails): string {
-  const reference = raid.starts_at ?? raid.created_at;
-  const diffMs = Date.now() - new Date(reference).getTime();
-  const diffMin = Math.round(diffMs / 60_000);
-  if (diffMin < -1) return `Om ${Math.abs(diffMin)} min`;
-  if (diffMin <= 1) return 'Starter nu';
-  return `Startede for ${diffMin} min siden`;
-}
-
 // Convert server `RaidMessage` (column name `message`) into the canonical
 // `ChatMessage` shape consumed by `MessageGroupView`. Reactions are
 // pre-grouped here so the renderer can stay synchronous.
@@ -116,8 +106,6 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
   const attendeesRef = useRef(attendees);
   // Must update via effect — React 19 react-hooks/refs forbids ref.current writes during render.
   useEffect(() => { attendeesRef.current = attendees; }, [attendees]);
-
-  const timeLabel = relativeLabel(raid);
 
   // Realtime: attendee changes trigger router.refresh (needs the profile join);
   // message INSERTs are handled locally — avoids a full RSC refetch per chat message.
@@ -427,15 +415,27 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
       {/* Scrollable body */}
       <div className="pt-14 pb-[140px] overflow-y-auto flex-1">
         {/* Hero image */}
-        <div className="relative h-[190px] bg-input">
+        <div className="relative h-[300px] bg-input overflow-hidden">
           {raid.image_url ? (
-            <Image
-              src={raid.image_url}
-              alt="Raid screenshot"
-              fill
-              sizes="100vw"
-              className="object-cover"
-            />
+            <>
+              {/* Blurred backdrop fills the letterbox space behind the full image */}
+              <Image
+                src={raid.image_url}
+                alt=""
+                aria-hidden
+                fill
+                sizes="100vw"
+                className="object-cover scale-110 blur-2xl"
+              />
+              {/* Full screenshot, scaled to fit — never cropped */}
+              <Image
+                src={raid.image_url}
+                alt="Raid screenshot"
+                fill
+                sizes="100vw"
+                className="object-contain"
+              />
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-secondary">
               <span className="text-[48px]">⚔️</span>
@@ -451,12 +451,6 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
             {raid.gym_name && (
               <p className="text-[13px] text-white/85">{raid.gym_name}</p>
             )}
-          </div>
-          {/* Bottom-right: timer badge */}
-          <div className="absolute bottom-3 right-4">
-            <span className="bg-primary text-primary-foreground text-[11px] font-bold px-2 py-1 rounded-full">
-              {timeLabel}
-            </span>
           </div>
         </div>
 
