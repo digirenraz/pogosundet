@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ArrowLeft, Camera, Minus, Plus, X } from 'lucide-react';
@@ -41,6 +41,36 @@ export default function NewRaidPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Web Share Target (Android): when a screenshot is shared into the app, the
+  // service worker stashes it in the `pogosundet-share` cache and redirects here.
+  // Read it back once on mount, pre-fill the image, then consume it. Cache name +
+  // key must match public/sw.js (SHARE_CACHE / SHARE_IMAGE_KEY). No-op on iOS /
+  // normal visits (cache miss). Runs client-side only.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSharedImage() {
+      if (!('caches' in window)) return;
+      try {
+        const cache = await caches.open('pogosundet-share');
+        const res = await cache.match('/__shared-raid-image');
+        if (!res) return;
+        const blob = await res.blob();
+        if (cancelled) return;
+        const filename = res.headers.get('x-share-filename') || 'screenshot.jpg';
+        const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+        await cache.delete('/__shared-raid-image');
+      } catch {
+        // Ignore — the user can still attach a screenshot manually.
+      }
+    }
+    loadSharedImage();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

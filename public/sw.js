@@ -10,8 +10,16 @@
 // before painting, which made the installed PWA feel as slow as a normal browser tab.
 // SWR serves the cached shell instantly while a fresh copy is fetched in the background.
 
-const SHELL_CACHE = 'pogosundet-shell-v12';
-const RUNTIME_CACHE = 'pogosundet-runtime-v12';
+const SHELL_CACHE = 'pogosundet-shell-v13';
+const RUNTIME_CACHE = 'pogosundet-runtime-v13';
+
+// Holds an image shared into the app via the Web Share Target (Android). It is
+// NOT versioned and is preserved across SW activations (see the activate
+// allowlist) so a share that arrives mid-update isn't wiped before the new-raid
+// form can read it. The form (src/app/[locale]/raids/new/page.tsx) reads the
+// same cache name + key, then deletes the entry once consumed.
+const SHARE_CACHE = 'pogosundet-share';
+const SHARE_IMAGE_KEY = '/__shared-raid-image';
 
 // URLs precached on install. /login is a safe entry point for cold reopens —
 // the server still re-checks auth on every navigation, so showing the cached
@@ -31,7 +39,7 @@ self.addEventListener('activate', event => {
     caches.keys()
       .then(keys => Promise.all(
         keys
-          .filter(k => k !== SHELL_CACHE && k !== RUNTIME_CACHE)
+          .filter(k => k !== SHELL_CACHE && k !== RUNTIME_CACHE && k !== SHARE_CACHE)
           .map(k => caches.delete(k))
       ))
       .then(() => clients.claim())
@@ -64,10 +72,43 @@ function staleWhileRevalidate(request) {
   });
 }
 
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+// Web Share Target (Android): the OS POSTs a shared image to /raids/share. We
+// stash it in SHARE_CACHE and 303-redirect to the new-raid form, which reads it
+// back and pre-fills the screenshot. iOS Safari doesn't support share targets,
+// so this path only ever fires on Android.
+function handleShareTarget(request) {
+  return request.formData()
+    .then(formData => {
+      const image = formData.get('image');
+      if (!image || typeof image === 'string') return;
+      return caches.open(SHARE_CACHE).then(cache =>
+        cache.put(
+          SHARE_IMAGE_KEY,
+          new Response(image, {
+            headers: {
+              'content-type': image.type || 'application/octet-stream',
+              // Preserve the original filename so the form can derive an extension.
+              'x-share-filename': image.name || 'screenshot.jpg',
+            },
+          })
+        )
+      );
+    })
+    .catch(() => {})
+    // Always land on the form, even if extracting the image failed.
+    .then(() => Response.redirect(new URL('/raids/new?shared=1', self.location.origin).href, 303));
+}
 
+self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+
+  // Share Target POST must be handled before the GET-only guard below.
+  if (event.request.method === 'POST' && url.pathname === '/raids/share') {
+    event.respondWith(handleShareTarget(event.request));
+    return;
+  }
+
+  if (event.request.method !== 'GET') return;
 
   // Only handle same-origin requests. Supabase / Google fonts / extensions pass through.
   if (url.origin !== self.location.origin) return;
