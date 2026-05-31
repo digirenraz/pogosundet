@@ -67,13 +67,43 @@ export function RaidCard({
       .filter(Boolean)
       .join('\n');
 
+    // Preferred: share the original Pokémon GO screenshot so it can be posted
+    // straight to Messenger exactly like players do today. The screenshot itself
+    // carries the raid details (boss, CP, gym); we attach the parsed details as
+    // text too (some share targets keep it, some drop it — the image still has it).
+    if (raid.image_url && typeof navigator !== 'undefined' && navigator.canShare) {
+      let file: File | null = null;
+      try {
+        const res = await fetch(raid.image_url);
+        const blob = await res.blob();
+        const ext = (blob.type.split('/')[1] || 'jpg').split('+')[0];
+        file = new File([blob], `raid.${ext}`, { type: blob.type || 'image/jpeg' });
+      } catch {
+        file = null; // fetch/CORS failed — fall through to the link share below
+      }
+      if (file && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], text: parts });
+        } catch {
+          // User dismissed the sheet, or the share failed — either way, don't
+          // open a second (link) share sheet on top of it.
+        }
+        return;
+      }
+    }
+
+    // Fallback: no screenshot, or the platform can't share files (e.g. desktop).
     const url =
       typeof window !== 'undefined'
         ? `${window.location.origin}/raids/${raid.id}`
         : `/raids/${raid.id}`;
 
     if (navigator.share) {
-      await navigator.share({ title: 'Raid på PoGoSundet', text: parts, url });
+      try {
+        await navigator.share({ title: 'Raid på PoGoSundet', text: parts, url });
+      } catch {
+        // Swallow AbortError (user dismissed the native share sheet).
+      }
     } else {
       await navigator.clipboard.writeText(`${parts}\n${url}`);
       setShared(true);
