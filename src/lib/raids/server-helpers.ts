@@ -11,6 +11,13 @@ export interface RaidAttendeeWithProfile {
   profiles: AttendeeProfile | null;
 }
 
+// Raw raid-level reaction row embedded under each raid via the PostgREST
+// select `raid_reactions(user_id, reaction)`. Grouped client-side for counts.
+export interface RaidReactionEmbed {
+  user_id: string;
+  reaction: string;
+}
+
 export interface RaidWithAttendees {
   id: string;
   user_id: string;
@@ -20,8 +27,10 @@ export interface RaidWithAttendees {
   starts_at: string | null;
   note: string | null;
   created_at: string;
+  completed_at: string | null;
   raid_attendees: RaidAttendeeWithProfile[];
   raid_messages: { id: string }[];
+  raid_reactions: RaidReactionEmbed[];
 }
 
 // Full raid with all message data — used by the detail screen.
@@ -36,11 +45,19 @@ export function getPosterName(raid: RaidWithAttendees): string | null {
   return poster?.profiles?.trainer_name ?? null;
 }
 
-// Shared select string for list queries — includes extra_count and message IDs.
-const LIST_SELECT = '*, raid_attendees(user_id, extra_count, profiles(trainer_name)), raid_messages(id)';
+// Shared select string for list queries — includes extra_count, message IDs,
+// the completion flag, and raid-level reactions (for the card count summary).
+const LIST_SELECT = '*, raid_attendees(user_id, extra_count, profiles(trainer_name)), raid_messages(id), raid_reactions(user_id, reaction)';
 
-// Shared 45-minute threshold helper.
-function isActive(raid: { starts_at: string | null; created_at: string }): boolean {
+// Shared 45-minute threshold helper. A raid is "active" when it's recent AND
+// not marked completed — the poster marking it completed forces it into the
+// greyed/expired bucket immediately, regardless of age.
+function isActive(raid: {
+  starts_at: string | null;
+  created_at: string;
+  completed_at?: string | null;
+}): boolean {
+  if (raid.completed_at) return false;
   const threshold = new Date(Date.now() - 45 * 60 * 1000);
   const ref = raid.starts_at ?? raid.created_at;
   return new Date(ref) > threshold;
@@ -68,8 +85,9 @@ export async function getActiveRaids() {
   return { data: active as RaidWithAttendees[], error: null };
 }
 
-// Like getActiveRaids but also returns recently-expired raids (the last 2h window),
-// split into active and expired buckets. Used by the raids list page.
+// Like getActiveRaids but also returns ended raids (kept for 14 days so the
+// community can still react "TfR!" after the raid), split into active and
+// expired buckets. Used by the raids list page.
 export async function getRecentRaids(): Promise<{
   active: RaidWithAttendees[];
   expired: RaidWithAttendees[];
@@ -77,12 +95,12 @@ export async function getRecentRaids(): Promise<{
 }> {
   const supabase = await createClient();
 
-  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
     .from('raids')
     .select(LIST_SELECT)
-    .gte('created_at', twoHoursAgo)
+    .gte('created_at', fourteenDaysAgo)
     .order('created_at', { ascending: false });
 
   if (error) return { active: [], expired: [], error };
@@ -104,7 +122,7 @@ export async function getRaidById(id: string): Promise<RaidWithDetails | null> {
   const { data, error } = await supabase
     .from('raids')
     .select(
-      '*, raid_attendees(user_id, extra_count, profiles(trainer_name)), raid_messages(id, raid_id, user_id, message, created_at, reply_to_id, profiles(trainer_name, avatar_url, team, level), reactions:raid_message_reactions(user_id, emoji))'
+      '*, raid_attendees(user_id, extra_count, profiles(trainer_name)), raid_messages(id, raid_id, user_id, message, created_at, reply_to_id, profiles(trainer_name, avatar_url, team, level), reactions:raid_message_reactions(user_id, emoji)), raid_reactions(user_id, reaction)'
     )
     .eq('id', id)
     .single();
