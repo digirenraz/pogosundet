@@ -30,6 +30,7 @@ The code is in place but Sentry stays completely inert until `NEXT_PUBLIC_SENTRY
 - [x] Test PWA install flow on Android Chrome — verified 2026-05-19, push notifications arriving
 - [x] Replace placeholder PWA icon (public/icon.svg) with real branded PNG icons (192×192, 512×512) — done 2026-05-19, glossy Pokéball on teal brand background (Claude Design handoff); manifest, layout.tsx apple-touch-icon, and sw.js precache + push notification icon all updated; SW cache bumped to v3
 - [ ] Seed the raid boss quick-pick list with current raid bosses before launch
+- [ ] **Verify the Android share target on a real installed PWA** (added 2026-05-31, `feat/android-share-target`). On an Android phone with PoGoSundet installed to the home screen: take/open a screenshot, tap Share, and confirm **PoGoSundet** appears in the share sheet; sharing into it should open the new-raid form with the screenshot already attached. iOS does **not** support this (expected — no need to test there). The in-app consuming half (cache → pre-filled form) is already verified locally; this checks only the OS-share-sheet → service-worker hand-off, which can't be tested off-device.
 
 ## Push notifications — runbook (keep for future regressions)
 
