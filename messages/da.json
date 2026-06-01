@@ -173,6 +173,7 @@
     "detail": {
       "back": "Tilbage",
       "rsvpTitle": "Er du med?",
+      "rsvpClosed": "Raidet er gennemført",
       "joinButton": "Jeg er med",
       "showOnMap": "Vis på kort",
       "extra": "+ekstra",
