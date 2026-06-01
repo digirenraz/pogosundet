@@ -101,7 +101,7 @@ Channel chat (`ChannelScreen`), raid chat (`RaidDetail`), and DMs (`DMScreen`) a
 ### Database migrations
 SQL migrations live in `supabase/migrations/` as reference files. No runner — paste the SQL into the Supabase SQL editor manually. The Supabase CLI is only used for deploying Edge Functions (`supabase functions deploy`).
 
-Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`, `010_chat_reactions_and_replies`, `011_friend_code_constraint`, `012_last_seen_at`, `013_raid_chat_reactions_and_replies`, `014_direct_messages`, `015_raid_completion_and_reactions`. Current Edge Functions: `notify-raid`, `notify-dm` (in `supabase/functions/`). All migrations applied.
+Current migrations: `001_create_profiles`, `002_create_raids`, `003_raid_chat`, `004_push_subscriptions`, `005_realtime`, `006_profile_team_level`, `007_perf_indexes`, `008_channel_messages`, `009_channel_reads`, `010_chat_reactions_and_replies`, `011_friend_code_constraint`, `012_last_seen_at`, `013_raid_chat_reactions_and_replies`, `014_direct_messages`, `015_raid_completion_and_reactions`, `016_block_join_completed_raid`. Current Edge Functions: `notify-raid`, `notify-dm` (in `supabase/functions/`). All migrations applied **except `016` — apply its SQL in the Supabase SQL editor before relying on the server-side join guard.**
 
 ---
 
