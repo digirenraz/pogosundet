@@ -594,45 +594,50 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
 
         {/* RSVP section */}
         <div className="px-4 py-3.5 border-b border-border">
-          <p className="text-[14px] font-bold mb-2.5">{t('detail.rsvpTitle')}</p>
+          <p className="text-[14px] font-bold mb-2.5">
+            {completedAt ? t('detail.rsvpClosed') : t('detail.rsvpTitle')}
+          </p>
 
-          {/* Button + stepper row */}
-          <div className="flex gap-2 items-center flex-wrap">
-            <button
-              onClick={joined ? handleLeave : handleJoin}
-              className={`flex-1 min-w-[120px] h-11 rounded-lg font-bold text-[14px] border transition-all flex items-center justify-center gap-1.5 ${
-                joined
-                  ? 'bg-primary border-primary text-primary-foreground'
-                  : 'bg-background border-border text-card-foreground'
-              }`}
-            >
-              {joined && <Check size={16} />}
-              {t('detail.joinButton')}
-            </button>
+          {/* Button + stepper row — hidden once the raid is completed; you can no
+              longer mark participation, the attendees list below becomes read-only. */}
+          {!completedAt && (
+            <div className="flex gap-2 items-center flex-wrap">
+              <button
+                onClick={joined ? handleLeave : handleJoin}
+                className={`flex-1 min-w-[120px] h-11 rounded-lg font-bold text-[14px] border transition-all flex items-center justify-center gap-1.5 ${
+                  joined
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : 'bg-background border-border text-card-foreground'
+                }`}
+              >
+                {joined && <Check size={16} />}
+                {t('detail.joinButton')}
+              </button>
 
-            {joined && (
-              <div className="bg-input rounded-lg px-3 h-11 flex items-center gap-2">
-                <span className="text-[13px] text-muted-foreground">{t('detail.extra')}</span>
-                <button
-                  type="button"
-                  disabled={extra === 0}
-                  onClick={() => handleExtraChange(-1)}
-                  className="w-7 h-7 flex items-center justify-center text-muted-foreground disabled:opacity-40"
-                >
-                  <Minus size={14} />
-                </button>
-                <span className="text-[15px] font-bold text-primary w-5 text-center">{extra}</span>
-                <button
-                  type="button"
-                  disabled={extra === 9}
-                  onClick={() => handleExtraChange(1)}
-                  className="w-7 h-7 flex items-center justify-center text-muted-foreground disabled:opacity-40"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-            )}
-          </div>
+              {joined && (
+                <div className="bg-input rounded-lg px-3 h-11 flex items-center gap-2">
+                  <span className="text-[13px] text-muted-foreground">{t('detail.extra')}</span>
+                  <button
+                    type="button"
+                    disabled={extra === 0}
+                    onClick={() => handleExtraChange(-1)}
+                    className="w-7 h-7 flex items-center justify-center text-muted-foreground disabled:opacity-40"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="text-[15px] font-bold text-primary w-5 text-center">{extra}</span>
+                  <button
+                    type="button"
+                    disabled={extra === 9}
+                    onClick={() => handleExtraChange(1)}
+                    className="w-7 h-7 flex items-center justify-center text-muted-foreground disabled:opacity-40"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Attendees list */}
           {attendees.length > 0 && (
