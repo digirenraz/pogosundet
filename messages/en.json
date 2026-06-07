@@ -123,6 +123,17 @@
     "countLabel": "{count} trainers · tap to see friend code",
     "onlineLabel": "online now"
   },
+  "DesktopPlayers": {
+    "scanTitle": "Scan session",
+    "scanSubtitle": "Work down the list — one code at a time.",
+    "addedCount": "{count} added",
+    "now": "NOW",
+    "onlineLabel": "Online",
+    "instruction": "Open Pokémon GO → Friends → Add friend → QR CODE and scan",
+    "skip": "Skip",
+    "addedNext": "Added → next",
+    "empty": "No other players yet. Once more trainers create a profile, you can scan their friend codes here."
+  },
   "PlayerDetail": {
     "back": "Back",
     "next": "Next",

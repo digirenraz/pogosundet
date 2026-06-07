@@ -121,6 +121,44 @@ export function Avatar({
   );
 }
 
+interface LevelPillProps {
+  level?: number | null;
+  small?: boolean;
+}
+
+// "Lvl N" pill — navy background with an instinct-yellow level chip.
+// Mirrors the desktop design system; returns null when level is unset.
+export function LevelPill({ level, small = false }: LevelPillProps) {
+  if (level == null) return null;
+  return (
+    <span
+      className="inline-flex items-center font-bold whitespace-nowrap"
+      style={{
+        gap: 5,
+        padding: small ? '2px 8px 2px 3px' : '3px 10px 3px 4px',
+        borderRadius: 9999,
+        background: '#1b3a52',
+        color: 'var(--color-team-instinct)',
+        fontSize: small ? 11 : 12,
+      }}
+    >
+      <span
+        className="inline-flex items-center justify-center font-extrabold rounded-full"
+        style={{
+          width: small ? 15 : 17,
+          height: small ? 15 : 17,
+          background: 'var(--color-team-instinct)',
+          color: '#1b3a52',
+          fontSize: small ? 9 : 10,
+        }}
+      >
+        {level}
+      </span>
+      Lvl {level}
+    </span>
+  );
+}
+
 interface TeamChipProps {
   team?: AvatarTeam | null;
   size?: 'sm' | 'md';
