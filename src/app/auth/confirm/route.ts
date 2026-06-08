@@ -17,6 +17,15 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
 
+  // Behind Vercel's proxy, `origin` is the internal deployment host, not the
+  // public domain the browser is on — redirecting there after setting the
+  // session drops the cookie and bounces to /login. Prefer the forwarded
+  // (public) host in production. Same fix as the OAuth callback route.
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+  const isLocalEnv = process.env.NODE_ENV === "development";
+  const base = !isLocalEnv && forwardedHost ? `${forwardedProto}://${forwardedHost}` : origin;
+
   if (tokenHash && type) {
     const supabase = await createClient();
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
@@ -24,12 +33,12 @@ export async function GET(request: NextRequest) {
     if (!error) {
       if (type === "recovery") {
         // Session is now set; user must choose a new password.
-        return NextResponse.redirect(`${origin}/reset/confirm`);
+        return NextResponse.redirect(`${base}/reset/confirm`);
       }
       // Email confirmed — user is now logged in.
-      return NextResponse.redirect(`${origin}/`);
+      return NextResponse.redirect(`${base}/`);
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=confirm-error`);
+  return NextResponse.redirect(`${base}/login?error=confirm-error`);
 }

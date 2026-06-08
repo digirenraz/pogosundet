@@ -50,7 +50,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="da" className={inter.variable}>
-      <body className="bg-background text-foreground antialiased">
+      {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla adds
+          cz-shortcut-listen) inject attributes on <body> before React hydrates,
+          which would otherwise trip a hydration-mismatch warning. This only
+          suppresses attribute/text diffs on <body> itself, not in children. */}
+      <body className="bg-background text-foreground antialiased" suppressHydrationWarning>
         <ServiceWorkerRegistration />
         {children}
         <InstallPrompt />
