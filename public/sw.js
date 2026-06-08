@@ -14,8 +14,8 @@
 // up). Network-first always serves a document matching the live chunks when
 // online, and falls back to the cached shell only when the network fails.
 
-const SHELL_CACHE = 'pogosundet-shell-v14';
-const RUNTIME_CACHE = 'pogosundet-runtime-v14';
+const SHELL_CACHE = 'pogosundet-shell-v15';
+const RUNTIME_CACHE = 'pogosundet-runtime-v15';
 
 // Holds an image shared into the app via the Web Share Target (Android). It is
 // NOT versioned and is preserved across SW activations (see the activate
@@ -203,15 +203,25 @@ self.addEventListener('push', event => {
       const appInForeground = visibleClients.length > 0;
 
       const targetPath = new URL(data.url ?? '/raids', self.location.origin).pathname;
+      // Require BOTH visible AND focused — mirrors src/lib/push/notification-
+      // suppression.ts (`isViewingPushTarget`, unit tested), keep both in sync.
+      // `visibilityState` alone is NOT a reliable "looking at it right now"
+      // signal on Android Chrome: backgrounding an installed PWA (locking the
+      // screen, switching apps, Home) can leave a stale `visible` WindowClient
+      // behind for a while, so a DM for the conversation the user had open
+      // right before backgrounding was wrongly treated as "already on screen"
+      // and silently swallowed (issue #107). `focused` mirrors
+      // document.hasFocus(), which the browser flips synchronously on blur.
       const viewingTarget = visibleClients.some(c => {
+        if (!c.focused) return false;
         try { return new URL(c.url).pathname === targetPath; } catch { return false; }
       });
 
       // Suppress the notification only when the user is already on the exact
       // screen this push points to — there's nothing to alert them about. Pushes
       // for any other screen still notify, even with the app open. Suppressing
-      // only a *visible* target also keeps us clear of the iOS/Chrome penalty for
-      // silent background pushes — that path is never silent.
+      // only a *visible and focused* target also keeps us clear of the
+      // iOS/Chrome penalty for silent background pushes — that path is never silent.
       if (viewingTarget) return;
 
       // DM pushes bump the home-screen icon badge, but ONLY when the app is not
