@@ -12,8 +12,11 @@ Last reviewed: 2026-05-30.
 
 The service worker (`public/sw.js`, `push` handler) suppresses a notification
 **only when the user is already looking at the exact screen the push points to**.
-It compares each visible window client's `url` pathname against the push's
-`data.url` (`/chat/dm/<sender>` for DMs, `/raids/<id>` for raids):
+It compares each window client's `url` pathname against the push's `data.url`
+(`/chat/dm/<sender>` for DMs, `/raids/<id>` for raids), and requires the client
+to be **both visible AND focused** (`isViewingPushTarget` in
+`src/lib/push/notification-suppression.ts`, mirrored in the SW since a classic
+service worker can't import ES modules):
 
 - **Viewing that exact conversation/raid** → return early, no notification (and
   no badge bump — the client has already marked it read).
@@ -21,14 +24,26 @@ It compares each visible window client's `url` pathname against the push's
   someone else while you read a channel still alerts you.
 - **App backgrounded or closed** → notification fires as normal.
 
+**Why both `visible` and `focused` (fixed 2026-06-08, issue #107):** the
+original check used `visibilityState === 'visible'` alone. On Android Chrome, a
+backgrounded installed PWA (screen lock, app switcher, Home) can leave a stale
+`visible` `WindowClient` behind for a while before `visibilitychange` catches
+up — so a DM arriving for the conversation the user had open right before
+backgrounding was wrongly treated as "already on screen" and silently
+swallowed. `focused` mirrors `document.hasFocus()`, which the browser flips
+synchronously on blur, so pairing it with `visible` is the conservative
+"definitely on screen right now" check a suppression decision needs — a
+swallowed notification can't be recovered, while one extra is harmless.
+
 The **app-icon badge** uses a coarser rule than the notification: the SW bumps it
 only when **no** window client is visible. Whenever the app is in the foreground
 — even on a different screen — the in-app realtime unread badges
 (`UnreadProvider`) own the count, so bumping in the SW too would double-count.
 
-Suppressing only against a *visible* target screen also keeps us clear of the
-iOS/Chrome penalty for repeated silent (notification-less) background pushes —
-the suppressed path is always foreground, never silent-in-background.
+Suppressing only against a *visible-and-focused* target screen also keeps us
+clear of the iOS/Chrome penalty for repeated silent (notification-less)
+background pushes — the suppressed path is always actively-foreground, never
+silent-in-background.
 
 ---
 
