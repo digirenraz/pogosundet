@@ -219,6 +219,7 @@
     "back": "Back",
     "successMessage": "Profile updated!",
     "errorGeneric": "Something went wrong. Please try again.",
+    "logoutButton": "Log out",
     "deleteSection": "Delete account",
     "deleteWarning": "This action is permanent. Your account and all your data will be deleted immediately and cannot be recovered.",
     "deleteButton": "Delete account permanently",
