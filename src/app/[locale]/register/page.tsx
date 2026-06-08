@@ -11,6 +11,7 @@ import { AuthInput } from "@/components/AuthInput";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { GoogleButton } from "@/components/GoogleButton";
 import { OrDivider } from "@/components/OrDivider";
+import { AuthRedirectOnSignIn } from "@/components/AuthRedirectOnSignIn";
 
 export default function RegisterPage() {
   const t = useTranslations("Register");
@@ -92,6 +93,8 @@ export default function RegisterPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      {/* Redirect into the app if a session appears (installed-PWA OAuth return). */}
+      <AuthRedirectOnSignIn />
       <Hero />
 
       <div className="flex-1 px-6 pb-6 flex flex-col gap-6 mt-4">
