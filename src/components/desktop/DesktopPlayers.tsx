@@ -15,7 +15,6 @@ import {
   Users,
 } from 'lucide-react';
 import type { Profile } from '@/lib/profile/helpers';
-import { usePresence } from '@/lib/profile/use-presence';
 import { Avatar, TeamChip, LevelPill, TEAMS, type AvatarTeam } from '@/components/Avatar';
 import { FriendCodeQR } from '@/components/FriendCodeQR';
 
@@ -23,6 +22,9 @@ interface DesktopPlayersProps {
   /** All profiles, including the logged-in user (filtered out of the queue). */
   profiles: Profile[];
   currentUserId: string;
+  // Online set from the parent's single `usePresence` subscription (see
+  // PlayersScreen) — avoids a second colliding `players-online` channel.
+  onlineUserIds: Set<string>;
 }
 
 type ScanStatus = 'added' | 'skipped';
@@ -32,11 +34,9 @@ type ScanStatus = 'added' | 'skipped';
 // "Tilføjet → næste" / "Spring over" buttons. Ported from the desktop design
 // mock (PageSpillere.jsx) onto real profile data + the real, scannable
 // FriendCodeQR.
-export function DesktopPlayers({ profiles, currentUserId }: DesktopPlayersProps) {
+export function DesktopPlayers({ profiles, currentUserId, onlineUserIds }: DesktopPlayersProps) {
   const t = useTranslations('DesktopPlayers');
   const tDir = useTranslations('PlayerDirectory');
-
-  const onlineUserIds = usePresence(currentUserId);
 
   const list = useMemo(
     () => profiles.filter((p) => p.user_id !== currentUserId),
