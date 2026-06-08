@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server';
 import type { Profile } from '@/lib/profile/helpers';
 import { Avatar, TeamChip, type AvatarTeam } from '@/components/Avatar';
 import { BottomNav } from '@/components/BottomNav';
+import { DesktopSidebar } from '@/components/desktop/DesktopSidebar';
+import { DesktopProfile } from '@/components/desktop/DesktopProfile';
 
 export const preferredRegion = 'dub1';
 
@@ -32,7 +34,17 @@ export default async function ProfileTabPage() {
   const team = (profile.team ?? 'none') as AvatarTeam;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <>
+    {/* Desktop (≥1024px): sidebar shell + bespoke two-column profile. */}
+    <div className="hidden lg:flex h-screen overflow-hidden bg-background">
+      <DesktopSidebar me={profile} />
+      <div className="flex-1 min-w-0 h-screen overflow-hidden">
+        <DesktopProfile profile={profile} />
+      </div>
+    </div>
+
+    {/* Mobile / tablet (<1024px): the existing single-column profile. */}
+    <div className="lg:hidden min-h-screen bg-background flex flex-col">
       {/* Header — matches /players visual chrome */}
       <header className="fixed top-0 left-0 right-0 h-[60px] bg-card border-b border-border flex items-center px-4 z-10">
         <span className="text-[18px] font-bold text-card-foreground">{t('headerTitle')}</span>
@@ -111,5 +123,6 @@ export default async function ProfileTabPage() {
 
       <BottomNav />
     </div>
+    </>
   );
 }

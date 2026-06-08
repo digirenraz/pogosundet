@@ -152,7 +152,10 @@
     "editButton": "Edit profile",
     "qrButton": "Show QR code",
     "levelChip": "Level {level}",
-    "bioLabel": "Mini bio"
+    "bioLabel": "Mini bio",
+    "desktopSubtitle": "This is how other local trainers see you.",
+    "onlineNow": "Online now",
+    "qrHint": "Others can scan this code in Pokémon GO to add you as a friend."
   },
   "Raids": {
     "completed": "Completed",
