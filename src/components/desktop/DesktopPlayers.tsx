@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ChevronLeft,
@@ -67,6 +67,30 @@ export function DesktopPlayers({ profiles, currentUserId, onlineUserIds }: Deskt
     setTimeout(() => setCopied(false), 2000);
   }
 
+  // Arrow Up/Down move through the queue (the list is vertical). Ignore the
+  // keys while focused in a text field, and prevent the default page scroll.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) {
+        return;
+      }
+      e.preventDefault();
+      setIdx((i) =>
+        e.key === 'ArrowUp' ? Math.max(0, i - 1) : Math.min(list.length - 1, i + 1)
+      );
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [list.length]);
+
+  // Keep the active queue row in view as the selection moves (keyboard/buttons).
+  const activeRowRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    activeRowRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [idx]);
+
   // No other players yet — nothing to scan.
   if (list.length === 0) {
     return (
@@ -114,6 +138,7 @@ export function DesktopPlayers({ profiles, currentUserId, onlineUserIds }: Deskt
             return (
               <button
                 key={p.id}
+                ref={isCur ? activeRowRef : undefined}
                 type="button"
                 onClick={() => setIdx(i)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left"

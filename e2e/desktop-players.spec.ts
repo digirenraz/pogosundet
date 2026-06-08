@@ -32,11 +32,17 @@ test.describe("Desktop player overview (scan-session)", () => {
     await expect(progress).toBeVisible();
     const total = Number((await progress.innerText()).split("/")[1].trim());
 
-    // With more than one other player, "Tilføjet → næste" advances the queue.
+    // With more than one other player, the queue can be navigated.
     if (total >= 2) {
+      // Arrow Down/Up move through the vertical queue.
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByText(/^2 \/ \d+$/)).toBeVisible();
+      await page.keyboard.press("ArrowUp");
+      await expect(page.getByText(/^1 \/ \d+$/)).toBeVisible();
+
+      // "Tilføjet → næste" advances the queue and marks the trainer added.
       await page.getByRole("button", { name: /Tilføjet → næste/ }).click();
       await expect(page.getByText(/^2 \/ \d+$/)).toBeVisible();
-      // One trainer is now marked added in the progress label.
       await expect(page.getByText(/^1 tilføjet$/)).toBeVisible();
     }
   });
