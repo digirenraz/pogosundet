@@ -17,6 +17,7 @@ vi.mock('@/lib/supabase/client', () => ({
 
 const mockClearChannel = vi.fn();
 const mockClearPartner = vi.fn();
+const mockClearRaid = vi.fn();
 
 vi.mock('@/lib/chat/use-channel-unread', () => ({
   useChannelUnread: () => ({
@@ -29,6 +30,10 @@ vi.mock('@/lib/chat/use-channel-unread', () => ({
 
 vi.mock('@/lib/dm/use-dm-unread', () => ({
   useDMUnread: () => ({ total: 0, clearPartner: mockClearPartner }),
+}));
+
+vi.mock('@/lib/raids/use-raid-unread', () => ({
+  useRaidUnread: () => ({ total: 0, clearRaid: mockClearRaid }),
 }));
 
 vi.mock('@/lib/hooks/use-mounted', () => ({
@@ -56,6 +61,11 @@ async function renderAt(route: string) {
 // counts. So `total` (which drives the BottomNav badge and the home-screen icon
 // badge) climbed forever and never reset after the user actually read a
 // conversation. These tests pin the navigation → clear wiring that fixes that.
+//
+// Extended for #104 (raid chat unread): clearRaid follows the exact same
+// markRaidRead-doesn't-reach-the-provider gap, with one extra wrinkle —
+// `/raids/new` (the post form) matches the same `/raids/<segment>` shape as a
+// raid id and must NOT be treated as one.
 describe('UnreadProvider — clears unread counts on navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -66,12 +76,14 @@ describe('UnreadProvider — clears unread counts on navigation', () => {
     await renderAt('/chat/generelt');
     expect(mockClearChannel).toHaveBeenCalledWith('generelt');
     expect(mockClearPartner).not.toHaveBeenCalled();
+    expect(mockClearRaid).not.toHaveBeenCalled();
   });
 
   it('clears the matching DM partner when navigating into a conversation', async () => {
     await renderAt('/chat/dm/partner-abc');
     expect(mockClearPartner).toHaveBeenCalledWith('partner-abc');
     expect(mockClearChannel).not.toHaveBeenCalled();
+    expect(mockClearRaid).not.toHaveBeenCalled();
   });
 
   it('clears nothing on the channel list page', async () => {
@@ -86,9 +98,29 @@ describe('UnreadProvider — clears unread counts on navigation', () => {
     expect(mockClearPartner).not.toHaveBeenCalled();
   });
 
-  it('clears nothing on unrelated routes', async () => {
+  it('clears the matching raid when navigating into its detail screen', async () => {
+    await renderAt('/raids/raid-123');
+    expect(mockClearRaid).toHaveBeenCalledWith('raid-123');
+    expect(mockClearChannel).not.toHaveBeenCalled();
+    expect(mockClearPartner).not.toHaveBeenCalled();
+  });
+
+  it('clears nothing on the raid list page', async () => {
     await renderAt('/raids');
     expect(mockClearChannel).not.toHaveBeenCalled();
     expect(mockClearPartner).not.toHaveBeenCalled();
+    expect(mockClearRaid).not.toHaveBeenCalled();
+  });
+
+  it('does not treat the new-raid form as a raid id', async () => {
+    await renderAt('/raids/new');
+    expect(mockClearRaid).not.toHaveBeenCalled();
+  });
+
+  it('clears nothing on unrelated routes', async () => {
+    await renderAt('/players');
+    expect(mockClearChannel).not.toHaveBeenCalled();
+    expect(mockClearPartner).not.toHaveBeenCalled();
+    expect(mockClearRaid).not.toHaveBeenCalled();
   });
 });

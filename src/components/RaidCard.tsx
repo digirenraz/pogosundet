@@ -53,6 +53,7 @@ export function RaidCard({
   // Total trainer count = 1 per attendee + their extras
   const totalTrainers = raid.raid_attendees.reduce((sum, a) => sum + 1 + (a.extra_count ?? 0), 0);
   const messageCount = raid.raid_messages?.length ?? 0;
+  const unreadCount = raid.unread_count ?? 0;
 
   // Poster's trainer name — the poster is auto-joined so they appear in attendees
   const posterName =
@@ -191,6 +192,14 @@ export function RaidCard({
             <span className="flex items-center gap-1">
               <MessageCircle size={12} />
               {messageCount}
+              {unreadCount > 0 && (
+                <span
+                  aria-label={t('detail.unreadCount', { count: unreadCount })}
+                  className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold inline-flex items-center justify-center"
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </span>
             <span className="flex items-center gap-1">
               <Users size={12} />

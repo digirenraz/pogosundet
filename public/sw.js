@@ -14,8 +14,8 @@
 // up). Network-first always serves a document matching the live chunks when
 // online, and falls back to the cached shell only when the network fails.
 
-const SHELL_CACHE = 'pogosundet-shell-v15';
-const RUNTIME_CACHE = 'pogosundet-runtime-v15';
+const SHELL_CACHE = 'pogosundet-shell-v16';
+const RUNTIME_CACHE = 'pogosundet-runtime-v16';
 
 // Holds an image shared into the app via the Web Share Target (Android). It is
 // NOT versioned and is preserved across SW activations (see the activate
@@ -224,12 +224,14 @@ self.addEventListener('push', event => {
       // iOS/Chrome penalty for silent background pushes — that path is never silent.
       if (viewingTarget) return;
 
-      // DM pushes bump the home-screen icon badge, but ONLY when the app is not
-      // in the foreground. When it is, the in-app realtime unread badges own the
-      // count, so bumping here would double-count it. Raids are transient — they
-      // never touch the badge. The client recomputes the true total on next open,
-      // so any drift self-corrects.
-      if (data.type === 'dm' && !appInForeground) {
+      // DM and raid-chat-message pushes bump the home-screen icon badge — both
+      // are genuinely-unread conversation messages — but ONLY when the app is
+      // not in the foreground. When it is, the in-app realtime unread badges
+      // (UnreadProvider) own the count, so bumping here too would double-count.
+      // "New raid posted" pushes (type: 'raid') are transient announcements,
+      // not unread messages, so they never touch the badge. The client
+      // recomputes the true total on next open, so any drift self-corrects.
+      if ((data.type === 'dm' || data.type === 'raid-message') && !appInForeground) {
         const count = (await readBadgeCount()) + 1;
         await writeBadgeCount(count);
         if (typeof self.navigator !== 'undefined' && typeof self.navigator.setAppBadge === 'function') {

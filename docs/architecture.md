@@ -21,9 +21,10 @@ This file documents the contents of `src/lib/` in detail. Update it when a new h
 ### `src/lib/raids/`
 - `validation.ts` (pure)
 - `helpers.ts` — client: `createRaid`, `joinRaid`, `leaveRaid`, `updateAttendeeExtra`
-- `server-helpers.ts` — `getActiveRaids`, `getRecentRaids` (returns `{ active, expired }`), `getRaidById`
+- `server-helpers.ts` — `getActiveRaids`, `getRecentRaids(userId)` (returns `{ active, expired }`; also computes each raid's `unread_count` — joined raids only — purely in JS from the embedded `raid_messages` + one batch `raid_reads` query, no per-raid round trips), `markRaidRead`, `getRaidById`
 - `message-helpers.ts` — client: `sendMessage`, `getMessagesForRaid`
 - `use-raids-realtime.ts` (client hook) — used by both `RaidList` and `RaidDetail`. Subscribes to Supabase Realtime on `raids` / `raid_attendees` / `raid_messages` and calls `router.refresh()` on changes, debounced 250ms — server stays the source of truth for embedded joins
+- `use-raid-unread.ts` (client hook, issue #104) — Raids-tab badge subscriber, mirrors `use-dm-unread.ts`. Mount-fetches the true total scoped to JOINED raids (`raid_attendees` + `raid_reads`), then increments live off a single global `raid_messages` INSERT subscription — Realtime can't filter "raid_id IN (raids I've joined)" server-side, so membership per `raid_id` is resolved lazily on first sighting and cached
 - `bosses.ts` — quick-pick boss list
 - `pokemon.ts` — ~600 Pokémon names for boss autocomplete
 
