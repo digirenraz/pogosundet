@@ -3,15 +3,19 @@
 // Strategy:
 //   - /_next/static/*  → cache-first (content-hashed, immutable)
 //   - manifest / icon / fonts → cache-first
-//   - HTML navigations → stale-while-revalidate (paint instantly, update in background)
+//   - HTML navigations → network-first (fresh document; cached shell only offline)
 //   - Everything else (Supabase, dynamic APIs) → network only
 //
-// Why: the previous network-first policy meant every reopen waited for the network
-// before painting, which made the installed PWA feel as slow as a normal browser tab.
-// SWR serves the cached shell instantly while a fresh copy is fetched in the background.
+// Why network-first for navigations: HTML references the current build's hashed
+// chunk filenames. Stale-while-revalidate served the PREVIOUS build's cached
+// HTML instantly after a deploy, whose chunk hashes the new deploy has already
+// purged (404) → ChunkLoadError → the global error boundary. Installed PWAs hit
+// this on every deploy ("works after a few reopens" as the SWR revalidate caught
+// up). Network-first always serves a document matching the live chunks when
+// online, and falls back to the cached shell only when the network fails.
 
-const SHELL_CACHE = 'pogosundet-shell-v13';
-const RUNTIME_CACHE = 'pogosundet-runtime-v13';
+const SHELL_CACHE = 'pogosundet-shell-v14';
+const RUNTIME_CACHE = 'pogosundet-runtime-v14';
 
 // Holds an image shared into the app via the Web Share Target (Android). It is
 // NOT versioned and is preserved across SW activations (see the activate
@@ -59,17 +63,21 @@ function cacheFirst(request) {
   });
 }
 
-function staleWhileRevalidate(request) {
-  return caches.match(request).then(cached => {
-    const networkPromise = fetch(request).then(response => {
-      if (response.ok) {
-        const clone = response.clone();
-        caches.open(RUNTIME_CACHE).then(c => c.put(request, clone));
-      }
-      return response;
-    }).catch(() => cached);
-    return cached || networkPromise;
-  });
+// Network-first: always try the network so the served document references the
+// CURRENT build's chunk hashes. Cache the fresh response for an offline fallback,
+// and fall back to the cached shell (then the precached /login) when the network
+// fails. The server re-checks auth on every navigation, so serving a cached shell
+// to a logged-out user is harmless.
+function networkFirst(request) {
+  return fetch(request).then(response => {
+    if (response.ok) {
+      const clone = response.clone();
+      caches.open(RUNTIME_CACHE).then(c => c.put(request, clone));
+    }
+    return response;
+  }).catch(() =>
+    caches.match(request).then(cached => cached || caches.match('/login'))
+  );
 }
 
 // Web Share Target (Android): the OS POSTs a shared image to /raids/share. We
@@ -125,9 +133,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // HTML navigations — SWR so reopens paint instantly.
+  // HTML navigations — network-first so the document always matches the live
+  // build's chunks (avoids post-deploy ChunkLoadError on installed PWAs).
   if (event.request.mode === 'navigate') {
-    event.respondWith(staleWhileRevalidate(event.request));
+    event.respondWith(networkFirst(event.request));
     return;
   }
 
