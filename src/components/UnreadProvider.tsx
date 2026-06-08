@@ -1,12 +1,13 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useChannelUnread } from '@/lib/chat/use-channel-unread';
 import { useDMUnread } from '@/lib/dm/use-dm-unread';
 import { useMounted } from '@/lib/hooks/use-mounted';
 import { setBadge, writeBadgeCount } from '@/lib/push/app-badge';
-import type { ChannelId } from '@/lib/chat/channels';
+import { getChannelById, type ChannelId } from '@/lib/chat/channels';
 
 // Shared unread state for the whole app.
 //
@@ -50,6 +51,28 @@ export function UnreadProvider({ children }: { children: React.ReactNode }) {
   const { total: channelUnread, clearChannel } = useChannelUnread({ userId });
   const { total: dmUnread, clearPartner } = useDMUnread({ userId });
   const total = channelUnread + dmUnread;
+
+  // Zero the in-memory count for whichever channel/DM the user navigates into.
+  // The server-side markChannelRead/markDMRead (run on page load) only bumps
+  // last_read_at in the DB — it doesn't reach back into this provider's live
+  // counts. Without this, a count incremented while the user was elsewhere
+  // (or the app was backgrounded) stayed stuck after being read, so `total`
+  // — and the BottomNav badge + home-screen icon badge it drives — never went
+  // back to zero. Mirrors the realtime hooks' own endsWith-based path checks.
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!pathname) return;
+    const dmMatch = pathname.match(/\/chat\/dm\/([^/]+)$/);
+    if (dmMatch) {
+      clearPartner(dmMatch[1]);
+      return;
+    }
+    const channelMatch = pathname.match(/\/chat\/([^/]+)$/);
+    const channelId = channelMatch?.[1];
+    if (channelId && getChannelById(channelId)) {
+      clearChannel(channelId as ChannelId);
+    }
+  }, [pathname, clearChannel, clearPartner]);
 
   // Reflect the true total onto the icon badge + the shared IndexedDB store.
   // Runs on mount, whenever the total changes, and when the app resumes from
