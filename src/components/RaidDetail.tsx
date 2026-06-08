@@ -9,6 +9,7 @@ import { joinRaid, leaveRaid, updateAttendeeExtra, toggleRaidCompleted } from '@
 import {
   REACTION_CODES,
   groupRaidReactions,
+  reactorName,
   toggleRaidReaction,
   type ReactionCode,
   type RaidReactionRow as RaidLevelReactionRow,
@@ -42,6 +43,9 @@ interface RaidDetailProps {
   raid: RaidWithDetails;
   currentUserId: string;
   currentUserName: string;
+  // user_id → trainer_name for everyone in the directory, so raid reactions can
+  // show who reacted (raid_reactions has no profile join — see the page).
+  profileNames: Record<string, string>;
 }
 
 // Derive initials from a trainer name (up to 2 chars).
@@ -82,7 +86,7 @@ function toChatMessage(row: RaidMessage): ChatMessage {
 }
 
 // Full-screen detail view for a single raid — includes RSVP, attendees, and chat.
-export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailProps) {
+export function RaidDetail({ raid, currentUserId, currentUserName, profileNames }: RaidDetailProps) {
   const t = useTranslations('Raids');
   const tChat = useTranslations('Chat');
   const router = useRouter();
@@ -574,6 +578,48 @@ export function RaidDetail({ raid, currentUserId, currentUserName }: RaidDetailP
               );
             })}
           </div>
+
+          {/* Who reacted — one row per non-empty reaction, naming each reactor.
+              Resolves names from profileNames; "Dig" for the current user.
+              Updates live via the same raidReactions state the buttons use. */}
+          {reactionButtons.some(({ code }) => raidReactions[code].length > 0) && (
+            <div className="flex flex-col gap-2">
+              {reactionButtons.map(({ code, label }) => {
+                const users = raidReactions[code];
+                if (users.length === 0) return null;
+                return (
+                  <div key={code} className="flex items-start gap-2">
+                    <span className="text-[12px] font-bold text-muted-foreground shrink-0 mt-1 min-w-[64px]">
+                      {label}
+                    </span>
+                    <div className="flex flex-wrap gap-x-2.5 gap-y-1">
+                      {users.map((uid) => {
+                        const name = reactorName(
+                          uid,
+                          currentUserId,
+                          profileNames,
+                          t('reactionYou'),
+                          t('reactionUnknownUser')
+                        );
+                        const initialsSource =
+                          uid === currentUserId
+                            ? currentUserName
+                            : profileNames[uid] ?? '';
+                        return (
+                          <div key={uid} className="flex items-center gap-1.5">
+                            <div className="w-[22px] h-[22px] rounded-full bg-secondary text-primary text-[10px] font-bold flex items-center justify-center shrink-0">
+                              {initialsSource ? initials(initialsSource) : '?'}
+                            </div>
+                            <span className="text-[12px] font-semibold">{name}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Poster-only: mark completed / undo */}
           {isPoster && (
