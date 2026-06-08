@@ -7,6 +7,8 @@ import { markChannelRead } from '@/lib/chat/read-helpers';
 import { ChannelScreen } from '@/components/chat/ChannelScreen';
 import type { OnlineStripProfile } from '@/components/chat/OnlineStrip';
 import type { Team } from '@/lib/profile/validation';
+import { DesktopShell } from '@/components/desktop/DesktopShell';
+import type { SidebarUser } from '@/components/desktop/DesktopSidebar';
 
 export const preferredRegion = 'dub1';
 
@@ -50,14 +52,27 @@ export default async function ChannelPage({ params }: PageProps) {
     level: p.level ?? null,
   }));
 
+  const meRow = profilesResult.data.find((p) => p.user_id === userId);
+  const me: SidebarUser | undefined = meRow
+    ? {
+        trainer_name: meRow.trainer_name,
+        first_name: meRow.first_name ?? null,
+        avatar_url: meRow.avatar_url ?? null,
+        team: (meRow.team as Team | undefined) ?? null,
+        level: meRow.level ?? null,
+      }
+    : undefined;
+
   return (
-    <ChannelScreen
-      channel={channel}
-      initialMessages={messages}
-      profiles={profiles}
-      memberCount={memberCount}
-      currentUserId={userId}
-      currentUserName={currentUserName}
-    />
+    <DesktopShell me={me}>
+      <ChannelScreen
+        channel={channel}
+        initialMessages={messages}
+        profiles={profiles}
+        memberCount={memberCount}
+        currentUserId={userId}
+        currentUserName={currentUserName}
+      />
+    </DesktopShell>
   );
 }

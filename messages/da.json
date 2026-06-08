@@ -154,7 +154,10 @@
     "editButton": "Rediger profil",
     "qrButton": "Vis QR kode",
     "levelChip": "Level {level}",
-    "bioLabel": "Mini bio"
+    "bioLabel": "Mini bio",
+    "desktopSubtitle": "Sådan ser andre lokale trænere dig.",
+    "onlineNow": "Online nu",
+    "qrHint": "Andre kan scanne denne kode i Pokémon GO for at tilføje dig som ven."
   },
   "Raids": {
     "headerTitle": "Aktive Raids",

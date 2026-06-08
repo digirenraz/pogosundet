@@ -5,13 +5,23 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Users, Swords, MessageCircle, User, MapPinned, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { Profile } from '@/lib/profile/helpers';
+import type { Team } from '@/lib/profile/validation';
 import { useUnread } from '@/components/UnreadProvider';
 import { Avatar, TEAMS, type AvatarTeam } from '@/components/Avatar';
 
+// Minimal shape for the bottom user chip — accepts a full Profile or the lighter
+// profile rows used elsewhere (e.g. chat's OnlineStripProfile).
+export interface SidebarUser {
+  trainer_name: string;
+  first_name?: string | null;
+  avatar_url?: string | null;
+  team?: Team | null;
+  level?: number | null;
+}
+
 interface DesktopSidebarProps {
   /** The logged-in user's own profile — drives the bottom user chip. */
-  me?: Profile;
+  me?: SidebarUser;
 }
 
 interface NavItem {
@@ -49,7 +59,7 @@ export function DesktopSidebar({ me }: DesktopSidebarProps) {
   const teamMeta = TEAMS[team];
 
   return (
-    <nav className="w-[244px] flex-shrink-0 bg-card border-r border-border flex flex-col px-3.5 py-5">
+    <nav className="w-[244px] h-full flex-shrink-0 bg-card border-r border-border flex flex-col px-3.5 py-5">
       {/* Brand */}
       <div className="flex items-center gap-3 px-2 pt-1 pb-[18px]">
         <div

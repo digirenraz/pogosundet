@@ -22,7 +22,7 @@ export function BottomNav() {
   const isProfileActive = /\/profile(\/.*)?$/.test(pathname);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border flex items-center justify-around px-2 z-10">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border flex items-center justify-around px-2 z-10">
       {/* Players */}
       <Link
         href="/players"
