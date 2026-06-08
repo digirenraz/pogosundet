@@ -181,6 +181,8 @@
     "reactionTfr": "TfR!",
     "reactionShiny": "I got a shiny!",
     "reactionHundo": "I got a hundo!",
+    "reactionYou": "Dig",
+    "reactionUnknownUser": "En træner",
     "detail": {
       "back": "Tilbage",
       "rsvpTitle": "Er du med?",

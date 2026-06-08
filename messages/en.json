@@ -160,7 +160,9 @@
     "completedMark": "Completed ✓",
     "reactionTfr": "TfR!",
     "reactionShiny": "I got a shiny!",
-    "reactionHundo": "I got a hundo!"
+    "reactionHundo": "I got a hundo!",
+    "reactionYou": "You",
+    "reactionUnknownUser": "A trainer"
   },
   "BottomNav": {
     "players": "Players",

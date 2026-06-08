@@ -35,6 +35,22 @@ export function groupRaidReactions(
   return result;
 }
 
+// Resolve a reactor's display name for the "who reacted" breakdown. The current
+// user is shown as `youLabel` ("Dig"); a user_id with no known profile falls
+// back to `unknownLabel`. Names are resolved from a user_id → trainer_name map
+// (built from the cached profile directory) because raid_reactions.user_id FKs
+// auth.users, not profiles, so the name can't be embedded in the query.
+export function reactorName(
+  userId: string,
+  currentUserId: string,
+  profileNames: Record<string, string>,
+  youLabel: string,
+  unknownLabel: string
+): string {
+  if (userId === currentUserId) return youLabel;
+  return profileNames[userId] ?? unknownLabel;
+}
+
 // Toggle a single reaction on a raid. The caller passes whether the reaction is
 // currently on (so we know which direction to go); RLS enforces owner of the
 // row. Returns whether the net effect was an "add" or a "remove".
