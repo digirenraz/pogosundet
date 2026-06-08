@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, LogOut } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getProfile, updateProfile } from '@/lib/profile/helpers';
 import type { ProfileInput } from '@/lib/profile/validation';
@@ -63,6 +63,13 @@ export default function ProfileEditPage() {
     setSuccessMessage(tEdit('successMessage'));
     // Return to the "Min profil" view so the user can verify the changes
     setTimeout(() => router.push('/profile'), 1200);
+  }
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
   }
 
   async function handleDeleteConfirm() {
@@ -147,6 +154,17 @@ export default function ProfileEditPage() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Log out */}
+        <div className="mt-6">
+          <button
+            onClick={handleLogout}
+            className="w-full bg-white border border-[#E5E7EB] text-[#111827] font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2"
+          >
+            <LogOut size={16} />
+            {tEdit('logoutButton')}
+          </button>
         </div>
       </div>
 

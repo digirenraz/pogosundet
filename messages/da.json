@@ -297,6 +297,7 @@
     "back": "Tilbage",
     "successMessage": "Profil opdateret!",
     "errorGeneric": "Noget gik galt. Prøv igen.",
+    "logoutButton": "Log ud",
     "deleteSection": "Slet konto",
     "deleteWarning": "Denne handling er permanent. Din konto og alle dine data slettes straks og kan ikke gendannes.",
     "deleteButton": "Slet konto permanent",

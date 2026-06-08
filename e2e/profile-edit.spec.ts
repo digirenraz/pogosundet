@@ -41,4 +41,13 @@ test.describe("Profile edit", () => {
     await expect(page.getByText(/Niveau 42/)).toBeVisible();
     await expect(page.getByText(/Team Valor/)).toBeVisible();
   });
+
+  test("logs out from the edit profile page", async ({ page }) => {
+    await page.goto("/profile/edit");
+    const logout = page.getByRole("button", { name: /^Log ud$/ });
+    await expect(logout).toBeVisible();
+    await logout.click();
+    // Lands on the logged-out home page, which shows the login CTA.
+    await expect(page.getByRole("link", { name: /Log ind/ })).toBeVisible();
+  });
 });
