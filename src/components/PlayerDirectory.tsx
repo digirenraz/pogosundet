@@ -6,12 +6,15 @@ import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
 import { track } from '@/lib/analytics/amplitude';
 import { filterProfiles, type DirectoryFilter } from '@/lib/profile/filters';
-import { usePresence } from '@/lib/profile/use-presence';
 import { PlayerCard } from './PlayerCard';
 
 interface PlayerDirectoryProps {
   profiles: Profile[];
   currentUserId: string;
+  // Online user IDs come from the parent's single `usePresence` subscription
+  // (see PlayersScreen) so the mobile + desktop layouts don't each open a
+  // colliding `players-online` channel.
+  onlineUserIds: Set<string>;
 }
 
 const TEAM_COLOR: Record<DirectoryFilter, string> = {
@@ -22,12 +25,10 @@ const TEAM_COLOR: Record<DirectoryFilter, string> = {
   instinct: 'var(--color-team-instinct)',
 };
 
-export function PlayerDirectory({ profiles, currentUserId }: PlayerDirectoryProps) {
+export function PlayerDirectory({ profiles, currentUserId, onlineUserIds }: PlayerDirectoryProps) {
   const t = useTranslations('PlayerDirectory');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<DirectoryFilter>('all');
-
-  const onlineUserIds = usePresence(currentUserId);
 
   // Analytics: fire one debounced player_search per typed query. The query
   // string is deliberately NOT sent (free-text → PII risk); we only record

@@ -125,6 +125,17 @@
     "countLabel": "{count} trænere · tryk for at se vennekode",
     "onlineLabel": "online nu"
   },
+  "DesktopPlayers": {
+    "scanTitle": "Scan-session",
+    "scanSubtitle": "Gå listen igennem — én kode ad gangen.",
+    "addedCount": "{count} tilføjet",
+    "now": "NU",
+    "onlineLabel": "Online",
+    "instruction": "Åbn Pokémon GO → Venner → Tilføj ven → QR CODE og scan",
+    "skip": "Spring over",
+    "addedNext": "Tilføjet → næste",
+    "empty": "Ingen andre spillere endnu. Når flere trænere opretter en profil, kan du scanne deres vennekoder her."
+  },
   "PlayerDetail": {
     "back": "Tilbage",
     "next": "Næste",
