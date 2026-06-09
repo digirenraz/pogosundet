@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useChannelUnread } from '@/lib/chat/use-channel-unread';
 import { useDMUnread } from '@/lib/dm/use-dm-unread';
+import { useRaidUnread } from '@/lib/raids/use-raid-unread';
 import { useMounted } from '@/lib/hooks/use-mounted';
 import { setBadge, writeBadgeCount } from '@/lib/push/app-badge';
 import { getChannelById, type ChannelId } from '@/lib/chat/channels';
@@ -20,10 +21,18 @@ import { getChannelById, type ChannelId } from '@/lib/chat/channels';
 // changes (or the app resumes from the background), it pushes that number to
 // the Badging API and persists it to IndexedDB so the service worker can keep
 // incrementing from truth while the app is closed.
+//
+// `total` is split into `chatUnread` (channels + DMs — drives the Chat tab
+// badge) and `raidUnread` (joined-raid chat messages — drives the Raids tab
+// badge, issue #104) so each nav item only reflects its own surface; `total`
+// (their sum) is the grand total that drives the app-icon badge.
 interface UnreadContextValue {
   total: number;
+  chatUnread: number;
+  raidUnread: number;
   clearChannel: (channel: ChannelId) => void;
   clearPartner: (partnerId: string) => void;
+  clearRaid: (raidId: string) => void;
 }
 
 const UnreadContext = createContext<UnreadContextValue | null>(null);
@@ -50,15 +59,18 @@ export function UnreadProvider({ children }: { children: React.ReactNode }) {
 
   const { total: channelUnread, clearChannel } = useChannelUnread({ userId });
   const { total: dmUnread, clearPartner } = useDMUnread({ userId });
-  const total = channelUnread + dmUnread;
+  const { total: raidUnread, clearRaid } = useRaidUnread({ userId });
+  const chatUnread = channelUnread + dmUnread;
+  const total = chatUnread + raidUnread;
 
-  // Zero the in-memory count for whichever channel/DM the user navigates into.
-  // The server-side markChannelRead/markDMRead (run on page load) only bumps
-  // last_read_at in the DB — it doesn't reach back into this provider's live
-  // counts. Without this, a count incremented while the user was elsewhere
-  // (or the app was backgrounded) stayed stuck after being read, so `total`
-  // — and the BottomNav badge + home-screen icon badge it drives — never went
-  // back to zero. Mirrors the realtime hooks' own endsWith-based path checks.
+  // Zero the in-memory count for whichever channel/DM/raid the user navigates
+  // into. The server-side markChannelRead/markDMRead/markRaidRead (run on page
+  // load) only bump last_read_at in the DB — they don't reach back into this
+  // provider's live counts. Without this, a count incremented while the user
+  // was elsewhere (or the app was backgrounded) stayed stuck after being read,
+  // so `total` — and the BottomNav badges + home-screen icon badge it drives —
+  // never went back to zero. Mirrors the realtime hooks' own endsWith-based
+  // path checks. `/raids/new` is excluded — it's the post form, not a raid id.
   const pathname = usePathname();
   useEffect(() => {
     if (!pathname) return;
@@ -71,8 +83,14 @@ export function UnreadProvider({ children }: { children: React.ReactNode }) {
     const channelId = channelMatch?.[1];
     if (channelId && getChannelById(channelId)) {
       clearChannel(channelId as ChannelId);
+      return;
     }
-  }, [pathname, clearChannel, clearPartner]);
+    const raidMatch = pathname.match(/\/raids\/([^/]+)$/);
+    const raidId = raidMatch?.[1];
+    if (raidId && raidId !== 'new') {
+      clearRaid(raidId);
+    }
+  }, [pathname, clearChannel, clearPartner, clearRaid]);
 
   // Reflect the true total onto the icon badge + the shared IndexedDB store.
   // Runs on mount, whenever the total changes, and when the app resumes from
@@ -97,18 +115,28 @@ export function UnreadProvider({ children }: { children: React.ReactNode }) {
   }, [mounted, total]);
 
   return (
-    <UnreadContext.Provider value={{ total, clearChannel, clearPartner }}>
+    <UnreadContext.Provider
+      value={{ total, chatUnread, raidUnread, clearChannel, clearPartner, clearRaid }}
+    >
       {children}
     </UnreadContext.Provider>
   );
 }
 
-// Consumed by BottomNav (and any future surface needing the live unread total).
-// Returns a safe zero-state when used outside the provider so it never throws.
+// Consumed by BottomNav/DesktopSidebar (and any future surface needing the
+// live unread totals). Returns a safe zero-state when used outside the
+// provider so it never throws.
 export function useUnread(): UnreadContextValue {
   const ctx = useContext(UnreadContext);
   if (!ctx) {
-    return { total: 0, clearChannel: () => {}, clearPartner: () => {} };
+    return {
+      total: 0,
+      chatUnread: 0,
+      raidUnread: 0,
+      clearChannel: () => {},
+      clearPartner: () => {},
+      clearRaid: () => {},
+    };
   }
   return ctx;
 }

@@ -7,15 +7,15 @@ import { Users, Swords, MessageCircle, User } from 'lucide-react';
 import { useUnread } from '@/components/UnreadProvider';
 
 // Bottom navigation bar. Shown on all authenticated "app" pages.
-// The Chat tab carries a live unread badge. The unread total comes from the
-// shared UnreadProvider (mounted once in the [locale] layout) rather than
-// running the unread hooks per-instance — this avoids the badge flicker that
-// occurred when BottomNav remounted on every navigation.
+// The Chat and Raids tabs each carry their own live unread badge. Both totals
+// come from the shared UnreadProvider (mounted once in the [locale] layout)
+// rather than running the unread hooks per-instance — this avoids the badge
+// flicker that occurred when BottomNav remounted on every navigation.
 export function BottomNav() {
   const pathname = usePathname();
   const t = useTranslations('BottomNav');
 
-  const { total: unreadTotal } = useUnread();
+  const { chatUnread, raidUnread } = useUnread();
 
   const isActive = (path: string) => pathname.endsWith(path);
   // Profile tab is active for /profile and /profile/edit alike.
@@ -32,12 +32,22 @@ export function BottomNav() {
         <span className="text-[11px] font-semibold">{t('players')}</span>
       </Link>
 
-      {/* Raids */}
+      {/* Raids — live unread badge (joined raids' chat messages) */}
       <Link
         href="/raids"
-        className={`flex flex-col items-center justify-center gap-1 w-16 ${isActive('/raids') ? 'text-primary' : 'text-muted-foreground'}`}
+        className={`relative flex flex-col items-center justify-center gap-1 w-16 ${isActive('/raids') ? 'text-primary' : 'text-muted-foreground'}`}
       >
-        <Swords size={24} />
+        <span className="relative">
+          <Swords size={24} />
+          {raidUnread > 0 && (
+            <span
+              aria-label={`${raidUnread} ulæste raid-beskeder`}
+              className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold inline-flex items-center justify-center"
+            >
+              {raidUnread > 99 ? '99+' : raidUnread}
+            </span>
+          )}
+        </span>
         <span className="text-[11px] font-semibold">{t('raids')}</span>
       </Link>
 
@@ -48,12 +58,12 @@ export function BottomNav() {
       >
         <span className="relative">
           <MessageCircle size={24} />
-          {unreadTotal > 0 && (
+          {chatUnread > 0 && (
             <span
-              aria-label={`${unreadTotal} ulæste beskeder`}
+              aria-label={`${chatUnread} ulæste beskeder`}
               className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold inline-flex items-center justify-center"
             >
-              {unreadTotal > 99 ? '99+' : unreadTotal}
+              {chatUnread > 99 ? '99+' : chatUnread}
             </span>
           )}
         </span>

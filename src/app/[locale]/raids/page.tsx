@@ -22,7 +22,7 @@ export default async function RaidsPage() {
   // once we have userId — run them in parallel. The profile-existence guard is
   // enforced by the middleware.
   const [{ active, expired }, { data: pushSub }, t, { data: me }] = await Promise.all([
-    getRecentRaids(),
+    getRecentRaids(userId),
     supabase.from('push_subscriptions').select('id').eq('user_id', userId).maybeSingle(),
     getTranslations('Raids'),
     supabase

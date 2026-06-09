@@ -39,12 +39,13 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 // Labeled left navigation for the desktop layout. Mirrors BottomNav's routes
-// and live Chat unread badge, but in the desktop sidebar form from the design.
-// Rendered only at lg+ (the caller gates visibility); mobile keeps BottomNav.
+// and live Chat + Raids unread badges, but in the desktop sidebar form from
+// the design. Rendered only at lg+ (the caller gates visibility); mobile
+// keeps BottomNav.
 export function DesktopSidebar({ me }: DesktopSidebarProps) {
   const pathname = usePathname();
   const t = useTranslations('BottomNav');
-  const { total: unreadTotal } = useUnread();
+  const { chatUnread, raidUnread } = useUnread();
 
   // Active item: match the route suffix (locale prefix is as-needed, so paths
   // are /players, /raids, etc.). Chat stays active inside /chat/* sub-routes.
@@ -79,6 +80,11 @@ export function DesktopSidebar({ me }: DesktopSidebarProps) {
         {NAV_ITEMS.map((it) => {
           const on = activeKey === it.key;
           const Icon = it.icon;
+          // Each nav item shows its own surface's unread total — Raids gets
+          // joined-raid chat messages, Chat gets channels + DMs (issue #104
+          // split a single combined `total` into per-surface counts so the
+          // Raids badge doesn't double-count chat unread, and vice versa).
+          const badgeCount = it.key === 'chat' ? chatUnread : it.key === 'raids' ? raidUnread : 0;
           return (
             <Link
               key={it.key}
@@ -92,12 +98,12 @@ export function DesktopSidebar({ me }: DesktopSidebarProps) {
             >
               <Icon size={20} />
               <span className="flex-1 text-[14px]">{t(it.labelKey)}</span>
-              {it.key === 'chat' && unreadTotal > 0 && (
+              {badgeCount > 0 && (
                 <span
                   className="text-white text-[10px] font-extrabold px-[7px] py-[2px] rounded-full"
                   style={{ background: 'var(--color-team-valor)' }}
                 >
-                  {unreadTotal > 99 ? '99+' : unreadTotal}
+                  {badgeCount > 99 ? '99+' : badgeCount}
                 </span>
               )}
             </Link>

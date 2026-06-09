@@ -4,7 +4,7 @@ Authoritative list of every push / system notification PoGoSundet sends.
 **Keep this in sync with the code whenever notification triggers change** (there
 is a Claude memory rule enforcing this).
 
-Last reviewed: 2026-05-30.
+Last reviewed: 2026-06-08.
 
 ---
 
@@ -71,6 +71,17 @@ silent-in-background.
 | **Tap action** | Opens `/chat/dm/<sender_id>` (the conversation with the sender). |
 | **Delivery** | Self-hosted web-push (VAPID) via the `web-push` library. Subscriptions returning HTTP 410 (Gone) are deleted. Also drives the home-screen app-icon badge (`type: 'dm'`). |
 
+### 3. New raid chat message
+
+| | |
+|---|---|
+| **Trigger** | Supabase Database Webhook on `INSERT` into `public.raid_messages` → Edge Function `notify-raid-message` (`supabase/functions/notify-raid-message/index.ts`). |
+| **Recipients** | Every OTHER attendee of the raid (`raid_attendees` rows for the raid, excluding the message's author — the poster is auto-joined, so they're notified about replies like anyone else). |
+| **Title** | The sender's `trainer_name` (fallback `Ny besked` if missing). |
+| **Body** | `Ny besked i raidet: <boss_name or gym_name>` when the raid has either, else generic `Ny besked i raid-chatten` — **no message content** is ever included (GDPR-minimising, mirrors `notify-dm`; boss/gym names are already-public raid metadata, not personal data of the sender). |
+| **Tap action** | Opens `/raids/<raid_id>`. |
+| **Delivery** | Self-hosted web-push (VAPID) via the `web-push` library. Subscriptions returning HTTP 410 (Gone) are deleted. Also drives the home-screen app-icon badge (`type: 'raid-message'`) and the Raids-tab unread badge / per-raid unread counts on `/raids` (`raid_reads`, mirrors `channel_reads`/`dm_reads`). |
+
 That is the complete list. No other event sends a notification.
 
 ---
@@ -132,9 +143,11 @@ respect the **cross-cutting behaviours** further down. None are built yet.
   a channel that isn't set to "notify on every message".
 
 ### Priority 2 — expected, but tune for noise
-- **New message in a raid chat you've joined → notify the other attendees.**
-  Coordination is the point of the app. Suppress for the sender and anyone
-  currently viewing that raid.
+- ~~**New message in a raid chat you've joined → notify the other attendees.**~~
+  **Shipped** (issue #104) — see "Currently sent" entry #3 (`notify-raid-message`).
+  Suppressed for the sender (excluded from the recipient query) and for anyone
+  currently viewing that raid (foreground suppression, below). Also added: a
+  Raids-tab unread badge + per-card unread counts on `/raids` (`raid_reads`).
 - **Reaction to your message → notify the message author** (DM / channel / raid).
   Messenger and iMessage do this. Lower urgency — good candidate for a per-user
   toggle defaulted *off*, or batched.

@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getRaidById } from '@/lib/raids/server-helpers';
+import { getRaidById, markRaidRead } from '@/lib/raids/server-helpers';
 import { getAllProfiles } from '@/lib/profile/server-helpers';
 import { RaidDetail } from '@/components/RaidDetail';
 
@@ -22,10 +22,13 @@ export default async function RaidDetailPage({ params }: RaidDetailPageProps) {
   // with the raid data. The profile-existence guard is handled by middleware.
   // getAllProfiles (cached) gives us names for every reactor — raid_reactions
   // FKs auth.users, not profiles, so names can't be embedded in the raid query.
+  // markRaidRead bumps last_read_at = NOW() so this raid renders with 0 unread
+  // (mirrors markChannelRead/markDMRead — issue #104).
   const [{ data: ownProfile }, raid, { data: profiles }] = await Promise.all([
     supabase.from('profiles').select('trainer_name').eq('user_id', userId).single(),
     getRaidById(id),
     getAllProfiles(),
+    markRaidRead(userId, id),
   ]);
 
   if (!raid) notFound();
