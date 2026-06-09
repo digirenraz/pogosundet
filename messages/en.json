@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: 2026-06-08",
+    "lastUpdated": "Last updated: 2026-06-09",
     "backLink": "Back",
     "s1Title": "1. Data Controller",
     "s1Body": "René Rasmussen is the data controller for PoGoSundet. Contact: renraz@gmail.com",
@@ -97,7 +97,7 @@
     "s10Title": "10. Contact",
     "s10Body": "Questions about this privacy policy can be sent to renraz@gmail.com",
     "s11Title": "11. Push notifications",
-    "s11Body": "If you choose to receive push notifications, we store your browser's push subscription (endpoint and encryption keys) in our database. This data is used solely to notify you of new raids, of new messages in raid chats you've joined, and of new direct messages sent to you. A direct-message or raid-chat-message notification contains only the sender's name (and, for raid chats, the raid's boss or gym — already visible in the app) — never the message content itself. You can unsubscribe at any time via your browser or device settings — the subscription is deleted automatically.",
+    "s11Body": "If you choose to receive push notifications, we store your browser's push subscription (endpoint and encryption keys) in our database. This data is used solely to notify you of new raids, of new messages in raid chats you've joined, of new direct messages sent to you, and when a new player joins a raid you're attending. A direct-message or raid-chat-message notification contains only the sender's name (and, for raid chats, the raid's boss or gym — already visible in the app) — never the message content itself. A new-participant notification contains only the player's trainer name, which is already visible in the app. You can unsubscribe at any time via your browser or device settings — the subscription is deleted automatically.",
     "s12Title": "12. Community chat",
     "s12Body": "When you post in the shared channels (#generelt and #app-feedback), we store your message together with your user id and timestamp. Messages are visible to all signed-in users of PoGoSundet and are kept indefinitely. When you delete your account, all your chat messages are deleted automatically along with your profile."
   },
