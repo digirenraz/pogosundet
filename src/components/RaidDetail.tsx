@@ -299,6 +299,10 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames 
     const next = completedAt ? null : new Date().toISOString();
     setCompletedAt(next);
     await toggleRaidCompleted(raid.id, !!next);
+    // Bust the client Router Cache so the raids overview reflects the new
+    // completion state no matter how the user navigates away (back button,
+    // BottomNav, or sidebar) — not just via the back button (issue #116).
+    router.refresh();
   }
 
   async function handleJoin() {
@@ -485,7 +489,14 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames 
           // raid is opened from a push notification the SW opens a fresh window
           // with no in-app history, so router.back() is a no-op and the user is
           // stuck on the page (issue #114). Mirrors DMHeader's push to /chat.
-          onClick={() => router.push('/raids')}
+          // router.refresh() first invalidates the client Router Cache so the
+          // overview refetches fresh on arrival instead of serving this raid's
+          // pre-visit RSC payload — otherwise the card shows stale completion
+          // status / unread badge (markRaidRead ran server-side on load) (#116).
+          onClick={() => {
+            router.refresh();
+            router.push('/raids');
+          }}
           className="text-muted-foreground"
           aria-label={t('detail.back')}
         >
