@@ -481,7 +481,11 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames 
       {/* Fixed header */}
       <div className="fixed top-0 left-0 right-0 z-10 bg-card border-b border-border h-14 flex items-center gap-3 px-4">
         <button
-          onClick={() => router.back()}
+          // Push to /raids (this page's parent), not router.back(): when the
+          // raid is opened from a push notification the SW opens a fresh window
+          // with no in-app history, so router.back() is a no-op and the user is
+          // stuck on the page (issue #114). Mirrors DMHeader's push to /chat.
+          onClick={() => router.push('/raids')}
           className="text-muted-foreground"
           aria-label={t('detail.back')}
         >
