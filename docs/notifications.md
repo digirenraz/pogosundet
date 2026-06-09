@@ -4,7 +4,7 @@ Authoritative list of every push / system notification PoGoSundet sends.
 **Keep this in sync with the code whenever notification triggers change** (there
 is a Claude memory rule enforcing this).
 
-Last reviewed: 2026-06-08.
+Last reviewed: 2026-06-09.
 
 ---
 
@@ -82,6 +82,17 @@ silent-in-background.
 | **Tap action** | Opens `/raids/<raid_id>`. |
 | **Delivery** | Self-hosted web-push (VAPID) via the `web-push` library. Subscriptions returning HTTP 410 (Gone) are deleted. Also drives the home-screen app-icon badge (`type: 'raid-message'`) and the Raids-tab unread badge / per-raid unread counts on `/raids` (`raid_reads`, mirrors `channel_reads`/`dm_reads`). |
 
+### 4. New raid participant (someone joins a raid)
+
+| | |
+|---|---|
+| **Trigger** | Supabase Database Webhook on `INSERT` into `public.raid_attendees` → Edge Function `notify-raid-join` (`supabase/functions/notify-raid-join/index.ts`). |
+| **Recipients** | Every OTHER attendee of the raid (`raid_attendees` rows for the raid, excluding the player who just joined). The host is an attendee (auto-joined at post time), so this covers "host + other participants" with no special-casing. |
+| **Title** | `Ny deltager` + `: <boss_name or gym_name>` when the raid has either. |
+| **Body** | `<trainer_name> er med i raidet` (fallback `En ny spiller er med i raidet` if the name is missing). The joining player's trainer name is already public throughout the app, so this leaks no new personal data. |
+| **Tap action** | Opens `/raids/<raid_id>`. |
+| **Delivery** | Self-hosted web-push (VAPID) via the `web-push` library. Subscriptions returning HTTP 410 (Gone) are deleted. **Does not** touch the home-screen app-icon badge or the Raids-tab unread count — a join is a transient announcement (`type: 'raid-join'`, like `'raid'`), not an unread message. The poster's own auto-join on raid creation produces zero recipients (they're the only attendee), so it never fires. |
+
 That is the complete list. No other event sends a notification.
 
 ---
@@ -90,7 +101,7 @@ That is the complete list. No other event sends a notification.
 
 - Channel chat messages (`#generelt`, `#app-feedback`)
 - Replies or reactions (raid chat **or** channel chat)
-- Someone joining or leaving a raid you posted/attend
+- Someone **leaving** a raid you posted/attend (joining now notifies — see "Currently sent" entry #4)
 - Account / profile events
 
 These are tracked under the "Define push notification triggers" item — the open
@@ -157,7 +168,9 @@ respect the **cross-cutting behaviours** further down. None are built yet.
   we also add per-channel mute and default busy channels to replies-only.
   Notifying on every channel message by default is the classic fatigue trap;
   prefer the Priority-1 reply notification instead.
-- **Someone joins a raid you posted → notify the host.** Useful, low volume.
+- ~~**Someone joins a raid you posted → notify the host.**~~ **Shipped** (issue
+  #103) — see "Currently sent" entry #4 (`notify-raid-join`). Extended beyond the
+  host: every other attendee is notified too. Transient announcement, no badge.
 
 ### Cross-cutting behaviours users expect (apply to all of the above)
 - **Suppress when actively viewing** the conversation/channel/raid — don't notify
