@@ -125,21 +125,25 @@ export async function getDMConversations(
 
   const partnerIds = Array.from(byPartner.keys());
 
-  // 2. Partner profiles in one query.
-  const { data: partnerRows } = await supabase
-    .from('profiles')
-    .select('user_id, trainer_name, avatar_url, team, level, last_seen_at')
-    .in('user_id', partnerIds);
+  // 2+3. Partner profiles and dm_reads (for unread maths) in parallel — the
+  // two queries are independent, so there's no reason to pay for them
+  // sequentially.
+  const [{ data: partnerRows }, { data: readsRows }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('user_id, trainer_name, avatar_url, team, level, last_seen_at')
+      .in('user_id', partnerIds),
+    supabase
+      .from('dm_reads')
+      .select('partner_id, last_read_at')
+      .eq('user_id', userId),
+  ]);
+
   const profileById = new Map<string, DMProfile>();
   for (const p of (partnerRows ?? []) as DMProfile[]) {
     profileById.set(p.user_id, p);
   }
 
-  // 3. dm_reads for unread maths.
-  const { data: readsRows } = await supabase
-    .from('dm_reads')
-    .select('partner_id, last_read_at')
-    .eq('user_id', userId);
   const readsByPartner = new Map<string, string>();
   for (const r of (readsRows ?? []) as Array<{
     partner_id: string;
