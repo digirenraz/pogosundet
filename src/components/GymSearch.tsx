@@ -1,7 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { MapPin, X } from 'lucide-react';
+import { fetchGymNames } from '@/lib/gyms/helpers';
+
+// Gym names come from our own `gyms` table (migration 018, issue #93).
+// The previous OpenStreetMap source (Overpass leisure=pokemon_gym) is dead —
+// the tag has 0 uses globally — so the list is now community-maintained:
+// PM-seeded (docs/gyms-seeding.md) plus auto-learned from posted raids.
 
 interface GymSearchProps {
   value: string;
@@ -9,43 +16,28 @@ interface GymSearchProps {
   placeholder?: string;
 }
 
-// Module-level cache so OSM is fetched at most once per page load.
+// Module-level cache so the gyms table is fetched at most once per page load.
 let cachedGyms: string[] | null = null;
 let fetchPromise: Promise<string[]> | null = null;
 
-// Fetch Pokémon GO gyms from OpenStreetMap within 25 km of Frederikssund.
-async function fetchOsmGyms(): Promise<string[]> {
+async function loadGyms(): Promise<string[]> {
   if (cachedGyms !== null) return cachedGyms;
   if (fetchPromise) return fetchPromise;
 
-  fetchPromise = (async () => {
-    try {
-      const query = '[out:json][timeout:15];node["leisure"="pokemon_gym"](around:25000,55.8406,12.0654);out body;';
-      const response = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `data=${encodeURIComponent(query)}`,
-      });
-      if (!response.ok) return [];
-      const json = await response.json();
-      const names: string[] = (json.elements ?? [])
-        .map((el: { tags?: { name?: string } }) => el.tags?.name)
-        .filter((n: string | undefined): n is string => typeof n === 'string' && n.length > 0);
-      cachedGyms = names;
-      return names;
-    } catch {
-      // Graceful fallback: OSM unavailable — user can still type manually
-      cachedGyms = [];
-      return [];
-    }
-  })();
+  fetchPromise = fetchGymNames().then(names => {
+    // fetchGymNames already returns [] on error, so the free-text fallback
+    // keeps working even when the table is empty or unreachable.
+    cachedGyms = names;
+    return names;
+  });
 
   return fetchPromise;
 }
 
-// Autocomplete for Pokémon GO gym names using OpenStreetMap data.
-// Falls back to free-text entry if OSM is unavailable or the gym isn't listed.
-export function GymSearch({ value, onChange, placeholder = 'Søg gym...' }: GymSearchProps) {
+// Autocomplete for Pokémon GO gym names backed by the community `gyms` table.
+// Falls back to free-text entry if the list is empty or the gym isn't listed.
+export function GymSearch({ value, onChange, placeholder }: GymSearchProps) {
+  const t = useTranslations('GymSearch');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(value);
   const [gyms, setGyms] = useState<string[]>([]);
@@ -56,9 +48,9 @@ export function GymSearch({ value, onChange, placeholder = 'Søg gym...' }: GymS
     setQuery(value);
   }, [value]);
 
-  // Load OSM gyms on mount
+  // Load gym names on mount
   useEffect(() => {
-    fetchOsmGyms().then(setGyms);
+    loadGyms().then(setGyms);
   }, []);
 
   // Close dropdown when clicking outside
@@ -77,7 +69,7 @@ export function GymSearch({ value, onChange, placeholder = 'Søg gym...' }: GymS
       ? gyms.filter(g => g.toLowerCase().includes(query.toLowerCase()))
       : [];
 
-  const showNoOsm = query.length >= 2 && gyms.length === 0;
+  const showNoGyms = query.length >= 2 && gyms.length === 0;
   const showEmpty = query.length >= 2 && gyms.length > 0 && suggestions.length === 0;
 
   function handleSelect(name: string) {
@@ -98,7 +90,7 @@ export function GymSearch({ value, onChange, placeholder = 'Søg gym...' }: GymS
         <input
           type="text"
           value={query}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t('placeholder')}
           onFocus={() => setOpen(true)}
           onChange={e => {
             setQuery(e.target.value);
@@ -112,7 +104,7 @@ export function GymSearch({ value, onChange, placeholder = 'Søg gym...' }: GymS
             type="button"
             onClick={handleClear}
             className="absolute right-3 text-muted-foreground"
-            aria-label="Ryd"
+            aria-label={t('clear')}
           >
             <X size={16} />
           </button>
@@ -121,14 +113,14 @@ export function GymSearch({ value, onChange, placeholder = 'Søg gym...' }: GymS
 
       {open && query.length >= 2 && (
         <div className="absolute z-20 left-0 right-0 bg-white border border-border rounded-b-lg shadow-sm max-h-64 overflow-y-auto">
-          {showNoOsm && (
+          {showNoGyms && (
             <p className="px-4 py-2.5 text-[13px] text-muted-foreground">
-              Ingen gyms fundet i OSM — skriv navnet manuelt
+              {t('emptyList')}
             </p>
           )}
           {showEmpty && (
             <p className="px-4 py-2.5 text-[13px] text-muted-foreground">
-              Ingen gyms fundet — skriv navnet manuelt
+              {t('noMatch')}
             </p>
           )}
           {suggestions.map(name => (

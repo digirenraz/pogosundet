@@ -236,6 +236,12 @@
       "errorGeneric": "Noget gik galt. Prøv igen."
     }
   },
+  "GymSearch": {
+    "placeholder": "Søg gym...",
+    "clear": "Ryd",
+    "emptyList": "Ingen gyms i listen endnu — skriv navnet manuelt",
+    "noMatch": "Ingen gyms fundet — skriv navnet manuelt"
+  },
   "BottomNav": {
     "players": "Spillere",
     "raids": "Raids",
