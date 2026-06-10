@@ -6,7 +6,9 @@ import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   validateBugReport,
+  BUG_REPORT_TITLE_MIN,
   BUG_REPORT_TITLE_MAX,
+  BUG_REPORT_DESCRIPTION_MIN,
   BUG_REPORT_DESCRIPTION_MAX,
 } from '@/lib/bug-report/validation';
 
@@ -57,6 +59,13 @@ export function BugReportSheet({ open, onClose }: BugReportSheetProps) {
 
   const validation = validateBugReport({ title, description });
   const canSend = validation.ok && status !== 'sending';
+
+  // Live "why is Send disabled?" hints — a disabled button that silently
+  // ignores taps reads as "broken" on a phone (prod report 2026-06-10), so
+  // each too-short field explains itself as soon as the user starts typing.
+  const titleTooShort = title.trim().length > 0 && title.trim().length < BUG_REPORT_TITLE_MIN;
+  const descriptionTooShort =
+    description.trim().length > 0 && description.trim().length < BUG_REPORT_DESCRIPTION_MIN;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -136,6 +145,11 @@ export function BugReportSheet({ open, onClose }: BugReportSheetProps) {
                 maxLength={BUG_REPORT_TITLE_MAX}
                 className="min-h-[52px] bg-input rounded-md px-4 text-[15px] text-foreground placeholder:text-muted-foreground outline-none w-full"
               />
+              {titleTooShort && (
+                <p className="text-[13px] text-destructive">
+                  {t('titleTooShort', { min: BUG_REPORT_TITLE_MIN })}
+                </p>
+              )}
             </div>
 
             {/* Description */}
@@ -155,6 +169,11 @@ export function BugReportSheet({ open, onClose }: BugReportSheetProps) {
                 maxLength={BUG_REPORT_DESCRIPTION_MAX}
                 className="bg-input rounded-md px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground outline-none resize-none leading-relaxed w-full"
               />
+              {descriptionTooShort && (
+                <p className="text-[13px] text-destructive">
+                  {t('descriptionTooShort', { min: BUG_REPORT_DESCRIPTION_MIN })}
+                </p>
+              )}
             </div>
 
             {/* GDPR disclaimer — the report goes to our private GitHub tracker */}

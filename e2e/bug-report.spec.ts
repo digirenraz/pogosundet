@@ -43,6 +43,13 @@ test.describe("Bug report (Rapportér en fejl)", () => {
 
     await page.getByLabel("Titel").fill("E2E-testrapport");
     await expect(send).toBeDisabled(); // description still missing
+
+    // A too-short description explains itself instead of silently keeping
+    // the button disabled (prod confusion, 2026-06-10).
+    await page.getByLabel("Beskrivelse").fill("kort");
+    await expect(
+      page.getByText("Beskrivelsen skal være på mindst 10 tegn — skriv lidt mere.")
+    ).toBeVisible();
     await page.getByLabel("Beskrivelse").fill("Dette er en automatisk testrapport fra e2e-suiten.");
     await expect(send).toBeEnabled();
 

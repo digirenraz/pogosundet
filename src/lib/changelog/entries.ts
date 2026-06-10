@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-06-10',
+    text: 'Fejlrapport-formularen fortæller nu tydeligt, hvis titlen eller beskrivelsen er for kort til at kunne sendes.',
+  },
+  {
+    date: '2026-06-10',
     text: 'Rettet: Send-knappen i fejlrapport-formularen var skjult bag bundmenuen på mobil.',
   },
   {
