@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: 2026-06-09",
+    "lastUpdated": "Last updated: 2026-06-10",
     "backLink": "Back",
     "s1Title": "1. Data Controller",
     "s1Body": "René Rasmussen is the data controller for PoGoSundet. Contact: renraz@gmail.com",
@@ -89,7 +89,7 @@
     "s6Title": "6. Sharing",
     "s6Body": "We do not sell, rent, or share your personal data with third parties. Your profile information (trainer name, friend code, first name, bio) is visible to other registered users of PoGoSundet.",
     "s7Title": "7. Data processors",
-    "s7Body": "We use Supabase (EU/Ireland) for data storage and authentication. Supabase acts as a data processor on our behalf and is contractually obligated to comply with GDPR. For error logging we use Sentry (EU region) to detect and fix technical faults in the app. Sentry only receives technical error information; we do not deliberately collect your IP address or other personal data via the error log. If you consent to analytics (see section 9), we also use Amplitude (EU region) for anonymous usage statistics. All processors handle data solely on our behalf and in compliance with GDPR.",
+    "s7Body": "We use Supabase (EU/Ireland) for data storage and authentication. Supabase acts as a data processor on our behalf and is contractually obligated to comply with GDPR. For error logging we use Sentry (EU region) to detect and fix technical faults in the app. Sentry only receives technical error information; we do not deliberately collect your IP address or other personal data via the error log. If you consent to analytics (see section 9), we also use Amplitude (EU region) for anonymous usage statistics. If you report a bug via the app, your report is stored in our private issue tracker on GitHub, which thereby acts as a data processor for the report text and your trainer name — the report contains only what you write yourself, plus your trainer name. All processors handle data solely on our behalf and in compliance with GDPR.",
     "s8Title": "8. Your rights",
     "s8Body": "You have the right to access your data, rectification of inaccurate data, erasure (\"right to be forgotten\"), data portability, and the right to lodge a complaint with your supervisory authority. Contact us at renraz@gmail.com to exercise these rights.",
     "s9Title": "9. Cookies and tracking",
@@ -179,6 +179,21 @@
     "changelogTitle": "News",
     "close": "Close",
     "empty": "No news yet."
+  },
+  "BugReport": {
+    "menuItem": "Report a bug",
+    "sheetTitle": "Report a bug",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Short headline for the bug",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What happened? What did you expect instead?",
+    "disclaimer": "Your report (incl. your trainer name) is sent privately to the developers via GitHub. Do not include personal information in the report.",
+    "send": "Send",
+    "sending": "Sending…",
+    "successTitle": "Thanks!",
+    "successBody": "We have received your report and will look at it as soon as possible.",
+    "errorGeneric": "The report could not be sent. Please try again later.",
+    "close": "Close"
   },
   "BottomNav": {
     "players": "Players",

@@ -29,6 +29,14 @@ describe('AppMenu', () => {
     expect(screen.getByText('Nyheder')).toBeInTheDocument();
   });
 
+  it('shows the "Rapportér en fejl" menu item when the hamburger is clicked', () => {
+    renderAppMenu();
+
+    expect(screen.queryByText('Rapportér en fejl')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    expect(screen.getByText('Rapportér en fejl')).toBeInTheDocument();
+  });
+
   it('opens the changelog sheet from the menu and lazy-loads the entries', async () => {
     renderAppMenu();
 

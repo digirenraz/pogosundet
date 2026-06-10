@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-06-10',
+    text: 'Du kan nu rapportere fejl direkte fra appen: Tryk på menuen øverst til venstre og vælg "Rapportér en fejl".',
+  },
+  {
+    date: '2026-06-10',
     text: 'Appen har fået denne nyhedslog! Tryk på menuen øverst til venstre og vælg "Nyheder" for at se, hvad der er nyt.',
   },
   {

@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Menu, Newspaper, X } from 'lucide-react';
+import { Bug, Menu, Newspaper, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ChangelogEntry } from '@/lib/changelog/entries';
+import { BugReportSheet } from '@/components/BugReportSheet';
 
 // ---------------------------------------------------------------------------
 // ChangelogSheet — bottom sheet listing the user-facing changelog ("Nyheder").
@@ -100,13 +101,16 @@ export function ChangelogSheet({ open, onClose }: ChangelogSheetProps) {
 
 // ---------------------------------------------------------------------------
 // AppMenu — hamburger button at the left edge of the main 60px headers.
-// Opens a small anchored dropdown with one item ("Nyheder") → ChangelogSheet.
+// Opens a small anchored dropdown with two items: "Nyheder" → ChangelogSheet
+// and "Rapportér en fejl" → BugReportSheet.
 // ---------------------------------------------------------------------------
 
 export function AppMenu() {
   const t = useTranslations('AppMenu');
+  const tBug = useTranslations('BugReport');
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [bugSheetOpen, setBugSheetOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   // Outside-click + Escape close the dropdown.
@@ -154,10 +158,22 @@ export function AppMenu() {
             <Newspaper size={18} className="text-muted-foreground" />
             {t('changelog')}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              setBugSheetOpen(true);
+            }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[14px] font-semibold text-card-foreground text-left"
+          >
+            <Bug size={18} className="text-muted-foreground" />
+            {tBug('menuItem')}
+          </button>
         </div>
       )}
 
       <ChangelogSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      <BugReportSheet open={bugSheetOpen} onClose={() => setBugSheetOpen(false)} />
     </div>
   );
 }
