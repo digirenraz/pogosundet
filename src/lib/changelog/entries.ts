@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-06-10',
+    text: 'Rettet: Send-knappen i fejlrapport-formularen var skjult bag bundmenuen på mobil.',
+  },
+  {
+    date: '2026-06-10',
     text: 'Du kan nu rapportere fejl direkte fra appen: Tryk på menuen øverst til venstre og vælg "Rapportér en fejl".',
   },
   {

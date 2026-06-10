@@ -7,6 +7,12 @@ const PASSWORD = process.env.E2E_TEST_PASSWORD;
 test.describe("Bug report (Rapportér en fejl)", () => {
   test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
 
+  // The hamburger menu is mobile-only (lg:hidden), and the bug this spec
+  // guards against (send button painted over by the fixed BottomNav — found
+  // on prod 2026-06-10) only reproduces with the BottomNav visible, i.e.
+  // below the lg breakpoint.
+  test.use({ viewport: { width: 390, height: 844 } });
+
   test.beforeEach(async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel(/E-mail/i).fill(EMAIL!);
@@ -39,6 +45,10 @@ test.describe("Bug report (Rapportér en fejl)", () => {
     await expect(send).toBeDisabled(); // description still missing
     await page.getByLabel("Beskrivelse").fill("Dette er en automatisk testrapport fra e2e-suiten.");
     await expect(send).toBeEnabled();
+
+    // Regression guard: the sheet renders in a body-level portal so the
+    // BottomNav can't paint over the send button — it must be fully visible.
+    await expect(send).toBeInViewport({ ratio: 1 });
 
     await send.click();
 

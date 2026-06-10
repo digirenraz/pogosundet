@@ -7,6 +7,9 @@ const PASSWORD = process.env.E2E_TEST_PASSWORD;
 test.describe("Changelog (Nyheder)", () => {
   test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
 
+  // The hamburger menu is mobile-only (lg:hidden) — run at a phone viewport.
+  test.use({ viewport: { width: 390, height: 844 } });
+
   test.beforeEach(async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel(/E-mail/i).fill(EMAIL!);

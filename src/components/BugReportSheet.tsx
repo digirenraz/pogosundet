@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
@@ -76,7 +77,11 @@ export function BugReportSheet({ open, onClose }: BugReportSheetProps) {
     }
   }
 
-  return (
+  // Portal to document.body — the AppMenu callers live inside fixed z-10
+  // headers whose stacking context would cap the sheet's z-50, letting the
+  // BottomNav (also z-10, later in the DOM) paint over the send button.
+  // See ChangelogSheet in AppMenu.tsx for the same fix.
+  return createPortal(
     /* Backdrop — click outside the sheet closes it */
     <div
       className="fixed inset-0 bg-black/40 z-50 flex items-end"
@@ -170,6 +175,7 @@ export function BugReportSheet({ open, onClose }: BugReportSheetProps) {
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
