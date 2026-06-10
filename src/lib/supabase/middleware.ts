@@ -16,6 +16,15 @@ const PROFILE_GUARD_SKIPLIST = new Set<string>([
   "/onboarding/ios",
 ]);
 
+// Cookie that caches a positive profile-existence check so we skip the
+// `profiles` query (one DB round trip) on every subsequent navigation. Safe to
+// cache because profile existence only changes at setup completion (first nav
+// after setup re-queries once, then sets the cookie) and at account deletion
+// (which signs the user out, so the guard is skipped entirely). The cookie
+// VALUE is the user id — switching accounts changes the id, so a stale cookie
+// from a previous account never matches and the guard re-checks.
+const PROFILE_GUARD_COOKIE = "pogo-profile-ok";
+
 // Strip a leading `/<locale>` segment if present, so the skiplist check works
 // regardless of whether next-intl prefixed the URL.
 function stripLocale(pathname: string): string {
@@ -64,7 +73,11 @@ export async function updateSession(request: NextRequest) {
 
   if (user) {
     const path = stripLocale(request.nextUrl.pathname);
-    if (!PROFILE_GUARD_SKIPLIST.has(path)) {
+    // Skip the profiles query when the guard cookie already proves this exact
+    // user has a profile — saves a DB round trip on every navigation.
+    const guardProven =
+      request.cookies.get(PROFILE_GUARD_COOKIE)?.value === user.id;
+    if (!PROFILE_GUARD_SKIPLIST.has(path) && !guardProven) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("id")
@@ -82,6 +95,18 @@ export async function updateSession(request: NextRequest) {
         );
         return redirectResponse;
       }
+
+      // Profile exists — remember that for 30 days. Set the cookie only HERE
+      // (after the query, on whatever `supabaseResponse` currently is):
+      // getUser() above may have REASSIGNED supabaseResponse inside the
+      // cookies.setAll callback, so setting the cookie any earlier risks it
+      // being lost to that reassignment.
+      supabaseResponse.cookies.set(PROFILE_GUARD_COOKIE, user.id, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+      });
     }
   }
 

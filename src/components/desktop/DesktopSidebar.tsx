@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Users, Swords, MessageCircle, User, MapPinned, Settings } from 'lucide-react';
@@ -37,6 +37,43 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'chat', icon: MessageCircle, labelKey: 'chat', href: '/chat' },
   { key: 'profil', icon: User, labelKey: 'profile', href: '/profile' },
 ];
+
+interface SidebarNavContentProps {
+  /** Whether this item is the current route — active styling always wins. */
+  active: boolean;
+  icon: LucideIcon;
+  label: string;
+  /** Unread count for this surface; 0 hides the badge. */
+  badgeCount: number;
+}
+
+// Nav-item content rendered INSIDE each <Link> — useLinkStatus reads the
+// pending state of the closest ancestor Link, so it can't live in the sidebar
+// component itself. While a navigation is in flight (slow RSC fetch, cold
+// Router Cache) the item tints primary and the icon pulses, so a click
+// responds instantly instead of appearing dead until the route streams in.
+// Pure perceived-performance feedback; mirrors BottomNav's NavTabContent.
+function SidebarNavContent({ active, icon: Icon, label, badgeCount }: SidebarNavContentProps) {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      className={`flex items-center gap-3 w-full ${
+        pending && !active ? 'text-primary' : ''
+      }`}
+    >
+      <Icon size={20} className={pending ? 'animate-pulse' : undefined} />
+      <span className="flex-1 text-[14px]">{label}</span>
+      {badgeCount > 0 && (
+        <span
+          className="text-white text-[10px] font-extrabold px-[7px] py-[2px] rounded-full"
+          style={{ background: 'var(--color-team-valor)' }}
+        >
+          {badgeCount > 99 ? '99+' : badgeCount}
+        </span>
+      )}
+    </span>
+  );
+}
 
 // Labeled left navigation for the desktop layout. Mirrors BottomNav's routes
 // and live Chat + Raids unread badges, but in the desktop sidebar form from
@@ -96,16 +133,12 @@ export function DesktopSidebar({ me }: DesktopSidebarProps) {
                 fontWeight: on ? 700 : 600,
               }}
             >
-              <Icon size={20} />
-              <span className="flex-1 text-[14px]">{t(it.labelKey)}</span>
-              {badgeCount > 0 && (
-                <span
-                  className="text-white text-[10px] font-extrabold px-[7px] py-[2px] rounded-full"
-                  style={{ background: 'var(--color-team-valor)' }}
-                >
-                  {badgeCount > 99 ? '99+' : badgeCount}
-                </span>
-              )}
+              <SidebarNavContent
+                active={on}
+                icon={Icon}
+                label={t(it.labelKey)}
+                badgeCount={badgeCount}
+              />
             </Link>
           );
         })}
