@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getRecentRaids } from '@/lib/raids/server-helpers';
 import { RaidList } from '@/components/RaidList';
+import { AppMenu } from '@/components/AppMenu';
 import { BottomNav } from '@/components/BottomNav';
 import { PushSubscribePrompt } from '@/components/PushSubscribePrompt';
 import { DesktopShell } from '@/components/desktop/DesktopShell';
@@ -40,7 +41,13 @@ export default async function RaidsPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-10 bg-card border-b border-border px-4 h-[60px] flex items-center justify-between">
-        <h1 className="text-[18px] font-bold text-card-foreground">{t('headerTitle')}</h1>
+        <div className="flex items-center min-w-0">
+          {/* Hamburger only on mobile — desktop gets the sidebar's "Nyheder" entry */}
+          <span className="lg:hidden flex items-center">
+            <AppMenu />
+          </span>
+          <h1 className="text-[18px] font-bold text-card-foreground">{t('headerTitle')}</h1>
+        </div>
         <Link
           href="/raids/new"
           className="bg-primary text-primary-foreground rounded-full w-9 h-9 flex items-center justify-center"
