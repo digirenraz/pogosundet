@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { ArrowLeft, Camera, Minus, Plus, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { createRaid, joinRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
+import { learnGym } from '@/lib/gyms/helpers';
 import { track } from '@/lib/analytics/amplitude';
 import { validateRaid } from '@/lib/raids/validation';
 import { BossSearch } from '@/components/BossSearch';
@@ -159,6 +160,13 @@ export default function NewRaidPage() {
         console.error('Raid insert error:', insertError);
         setError(t('form.errorGeneric'));
         return;
+      }
+
+      // Auto-learn the gym name for future autocompletes. Fire-and-forget:
+      // learnGym swallows all errors (incl. duplicates), so it can never
+      // block or fail the raid posting flow.
+      if (gymName.trim()) {
+        void learnGym(gymName);
       }
 
       // Analytics: raid posted. Flags only — no gym/boss name or any PII.

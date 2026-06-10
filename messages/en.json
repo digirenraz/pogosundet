@@ -167,6 +167,12 @@
     "reactionYou": "You",
     "reactionUnknownUser": "A trainer"
   },
+  "GymSearch": {
+    "placeholder": "Search gym...",
+    "clear": "Clear",
+    "emptyList": "No gyms in the list yet — type the name manually",
+    "noMatch": "No gyms found — type the name manually"
+  },
   "BottomNav": {
     "players": "Players",
     "raids": "Raids",
