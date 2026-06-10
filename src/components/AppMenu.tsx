@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Bug, Menu, Newspaper, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ChangelogEntry } from '@/lib/changelog/entries';
@@ -48,7 +49,12 @@ export function ChangelogSheet({ open, onClose }: ChangelogSheetProps) {
 
   if (!open) return null;
 
-  return (
+  // Rendered in a portal at document.body: the sheet's callers sit inside
+  // fixed z-10 headers, whose stacking context would otherwise cap the
+  // sheet's z-50 — letting the later-in-DOM BottomNav (also z-10) paint OVER
+  // the sheet and hide its bottom. Only rendered when open (user-triggered),
+  // so document is always defined.
+  return createPortal(
     /* Backdrop — click outside the sheet closes it */
     <div
       className="fixed inset-0 bg-black/40 z-50 flex items-end"
@@ -95,7 +101,8 @@ export function ChangelogSheet({ open, onClose }: ChangelogSheetProps) {
             </ul>
           ))}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
