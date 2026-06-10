@@ -9,6 +9,7 @@ import { useChannelUnread, type UnreadCounts } from '@/lib/chat/use-channel-unre
 import { useChannelListTyping } from '@/lib/chat/use-channel-list-typing';
 import { useDMListRealtime } from '@/lib/dm/use-dm-list-realtime';
 import { useDMListTyping } from '@/lib/dm/use-dm-list-typing';
+import { AppMenu } from '@/components/AppMenu';
 import { OnlineStrip, type OnlineStripProfile } from './OnlineStrip';
 import { TypingDots } from './TypingDots';
 import { DMRow, type DMRowEntry } from './DMRow';
@@ -125,6 +126,10 @@ export function ChannelListScreen({
   return (
     <div className="min-h-screen bg-background">
       <div className="fixed top-0 left-0 right-0 z-10 bg-card border-b border-border px-4 h-[60px] flex items-center">
+        {/* Hamburger only on mobile — desktop gets the sidebar's "Nyheder" entry */}
+        <span className="lg:hidden flex items-center">
+          <AppMenu />
+        </span>
         <h1 className="text-[18px] font-bold text-card-foreground">{t('listTitle')}</h1>
       </div>
 

@@ -173,6 +173,13 @@
     "emptyList": "No gyms in the list yet — type the name manually",
     "noMatch": "No gyms found — type the name manually"
   },
+  "AppMenu": {
+    "menuLabel": "Menu",
+    "changelog": "News",
+    "changelogTitle": "News",
+    "close": "Close",
+    "empty": "No news yet."
+  },
   "BottomNav": {
     "players": "Players",
     "raids": "Raids",

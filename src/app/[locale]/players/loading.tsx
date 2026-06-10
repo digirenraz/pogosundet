@@ -1,3 +1,4 @@
+import { Menu } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 
 // Skeleton shown while /players resolves. Mirrors the page chrome (fixed header
@@ -6,6 +7,10 @@ export default function PlayersLoading() {
   return (
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 h-[60px] bg-card border-b border-border flex items-center px-4 z-10">
+        {/* Hamburger placeholder — mirrors AppMenu so the title doesn't shift */}
+        <span className="w-10 h-10 -ml-2 mr-1 flex items-center justify-center text-muted-foreground">
+          <Menu size={22} />
+        </span>
         <div className="h-5 w-32 bg-muted rounded animate-pulse" />
       </header>
 

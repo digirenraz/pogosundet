@@ -242,6 +242,13 @@
     "emptyList": "Ingen gyms i listen endnu — skriv navnet manuelt",
     "noMatch": "Ingen gyms fundet — skriv navnet manuelt"
   },
+  "AppMenu": {
+    "menuLabel": "Menu",
+    "changelog": "Nyheder",
+    "changelogTitle": "Nyheder",
+    "close": "Luk",
+    "empty": "Ingen nyheder endnu."
+  },
   "BottomNav": {
     "players": "Spillere",
     "raids": "Raids",

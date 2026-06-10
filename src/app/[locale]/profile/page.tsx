@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { Profile } from '@/lib/profile/helpers';
 import { Avatar, TeamChip, type AvatarTeam } from '@/components/Avatar';
 import { BottomNav } from '@/components/BottomNav';
+import { AppMenu } from '@/components/AppMenu';
 import { DesktopSidebar } from '@/components/desktop/DesktopSidebar';
 import { DesktopProfile } from '@/components/desktop/DesktopProfile';
 
@@ -47,6 +48,7 @@ export default async function ProfileTabPage() {
     <div className="lg:hidden min-h-screen bg-background flex flex-col">
       {/* Header — matches /players visual chrome */}
       <header className="fixed top-0 left-0 right-0 h-[60px] bg-card border-b border-border flex items-center px-4 z-10">
+        <AppMenu />
         <span className="text-[18px] font-bold text-card-foreground">{t('headerTitle')}</span>
       </header>
 

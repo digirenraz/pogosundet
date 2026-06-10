@@ -1,13 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Users, Swords, MessageCircle, User, MapPinned, Settings } from 'lucide-react';
+import { Users, Swords, MessageCircle, User, MapPinned, Newspaper, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Team } from '@/lib/profile/validation';
 import { useUnread } from '@/components/UnreadProvider';
 import { Avatar, TEAMS, type AvatarTeam } from '@/components/Avatar';
+import { ChangelogSheet } from '@/components/AppMenu';
 
 // Minimal shape for the bottom user chip — accepts a full Profile or the lighter
 // profile rows used elsewhere (e.g. chat's OnlineStripProfile).
@@ -82,7 +84,11 @@ function SidebarNavContent({ active, icon: Icon, label, badgeCount }: SidebarNav
 export function DesktopSidebar({ me }: DesktopSidebarProps) {
   const pathname = usePathname();
   const t = useTranslations('BottomNav');
+  const tMenu = useTranslations('AppMenu');
   const { chatUnread, raidUnread } = useUnread();
+  // Desktop entry point for the changelog — the in-header hamburger is
+  // lg:hidden, so the sidebar opens the sheet directly (no dropdown).
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   // Active item: match the route suffix (locale prefix is as-needed, so paths
   // are /players, /raids, etc.). Chat stays active inside /chat/* sub-routes.
@@ -145,6 +151,17 @@ export function DesktopSidebar({ me }: DesktopSidebarProps) {
       </div>
 
       <div className="flex-1" />
+
+      {/* Changelog ("Nyheder") — opens the same sheet as the mobile hamburger */}
+      <button
+        type="button"
+        onClick={() => setChangelogOpen(true)}
+        className="flex items-center gap-3 px-3 py-[11px] mb-2 rounded-[10px] text-muted-foreground font-semibold text-left"
+      >
+        <Newspaper size={20} />
+        <span className="flex-1 text-[14px]">{tMenu('changelog')}</span>
+      </button>
+      <ChangelogSheet open={changelogOpen} onClose={() => setChangelogOpen(false)} />
 
       {/* User chip */}
       {me && (
