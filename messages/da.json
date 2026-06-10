@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-06-09",
+    "lastUpdated": "Sidst opdateret: 2026-06-10",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
@@ -89,7 +89,7 @@
     "s6Title": "6. Videregivelse",
     "s6Body": "Vi sælger, udlejer eller deler ikke dine personoplysninger med tredjepart. Dine profiloplysninger (trænernavn, vennekode, fornavn, bio) er synlige for andre registrerede brugere af PoGoSundet.",
     "s7Title": "7. Databehandlere",
-    "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase fungerer som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR. Til fejllogning anvender vi Sentry (EU-region), så vi kan opdage og rette tekniske fejl i appen. Sentry modtager kun tekniske fejloplysninger, og vi indsamler bevidst ikke din IP-adresse eller andre personoplysninger via fejlloggen. Hvis du giver samtykke til statistik (se afsnit 9), anvender vi desuden Amplitude (EU-region) til anonym brugsstatistik. Alle databehandlere behandler udelukkende data på vores vegne og i overensstemmelse med GDPR.",
+    "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase fungerer som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR. Til fejllogning anvender vi Sentry (EU-region), så vi kan opdage og rette tekniske fejl i appen. Sentry modtager kun tekniske fejloplysninger, og vi indsamler bevidst ikke din IP-adresse eller andre personoplysninger via fejlloggen. Hvis du giver samtykke til statistik (se afsnit 9), anvender vi desuden Amplitude (EU-region) til anonym brugsstatistik. Hvis du rapporterer en fejl via appen, gemmes din rapport i vores private fejlsporingssystem hos GitHub, som dermed fungerer som databehandler for rapportens tekst og dit trænernavn — rapporten indeholder kun det, du selv skriver, samt dit trænernavn. Alle databehandlere behandler udelukkende data på vores vegne og i overensstemmelse med GDPR.",
     "s8Title": "8. Dine rettigheder",
     "s8Body": "Du har ret til indsigt i dine data, berigtigelse af forkerte oplysninger, sletning (\"retten til at blive glemt\"), dataportabilitet samt retten til at klage til Datatilsynet (datatilsynet.dk). Kontakt os på renraz@gmail.com for at udøve disse rettigheder.",
     "s9Title": "9. Cookies og sporing",
@@ -248,6 +248,21 @@
     "changelogTitle": "Nyheder",
     "close": "Luk",
     "empty": "Ingen nyheder endnu."
+  },
+  "BugReport": {
+    "menuItem": "Rapportér en fejl",
+    "sheetTitle": "Rapportér en fejl",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Kort overskrift for fejlen",
+    "descriptionLabel": "Beskrivelse",
+    "descriptionPlaceholder": "Hvad skete der? Hvad havde du forventet i stedet?",
+    "disclaimer": "Din rapport (inkl. dit trænernavn) sendes privat til udviklerne via GitHub. Skriv ikke personlige oplysninger i rapporten.",
+    "send": "Send",
+    "sending": "Sender…",
+    "successTitle": "Tak!",
+    "successBody": "Vi har modtaget din rapport og kigger på den hurtigst muligt.",
+    "errorGeneric": "Rapporten kunne ikke sendes. Prøv igen senere.",
+    "close": "Luk"
   },
   "BottomNav": {
     "players": "Spillere",
