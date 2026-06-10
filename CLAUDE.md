@@ -141,7 +141,7 @@ The product owner is a non-technical product manager. Claude Code is the primary
 - **Direct messages** (Slice 17, 2026-05-23): 1:1 DMs between any two profiles. New route `/chat/dm/[partnerId]`, DM section on `/chat`, entry points from the `OnlineStrip` avatars + `MembersSheet` rows, reuse of the channel-chat reactions + replies stack. Migration 014. Verified + follow-up fixes 2026-05-25 (typing indicator, unread-badge accuracy + persistence — PRs #53–#55).
 - **App-icon unread badge + DM push** (2026-05-26): home-screen icon badge via the Badging API, driven (closed-app) by a new `notify-dm` Edge Function that web-pushes the DM recipient. `UnreadProvider` lifts the unread hooks into the `[locale]` layout (also fixed the BottomNav badge flicker). Content-free DM payload (sender name only) for GDPR. No migration.
 
-Nothing currently in flight as of 2026-05-31. Next slice not yet picked.
+Recent shipped work (see the Decisions log for detail): raid chat notifications + unread badges (#109, migration 017, SW v16), raid-join notifications (#111, `notify-raid-join`), desktop layouts for Raids/Chat/Profil (#99), and a series of PWA/OAuth/raid-navigation fixes (#91, #96–#98, #100, #115, #117). Nothing currently in flight as of 2026-06-09. Next slice not yet picked.
 
 ### Do NOT build (in Raid MVP)
 - Remote raid lobby code sharing
