@@ -56,6 +56,27 @@ describe('BugReportSheet', () => {
     expect(send).toBeEnabled();
   });
 
+  it('explains a too-short field with a live hint (why Send is disabled)', () => {
+    renderSheet();
+
+    // No hints on the pristine form.
+    expect(screen.queryByText(/mindst 10 tegn — skriv lidt mere/)).not.toBeInTheDocument();
+
+    // Too-short description → hint appears while typing.
+    fireEvent.change(screen.getByLabelText('Beskrivelse'), { target: { value: 'kort' } });
+    expect(
+      screen.getByText('Beskrivelsen skal være på mindst 10 tegn — skriv lidt mere.')
+    ).toBeInTheDocument();
+
+    // Too-short title → its own hint.
+    fireEvent.change(screen.getByLabelText('Titel'), { target: { value: 'ab' } });
+    expect(screen.getByText('Titlen skal være på mindst 3 tegn.')).toBeInTheDocument();
+
+    // Valid values → both hints disappear.
+    fillForm();
+    expect(screen.queryByText(/skal være på mindst/)).not.toBeInTheDocument();
+  });
+
   it('shows the thank-you state after a successful send', async () => {
     fetchMock.mockResolvedValue({ ok: true, status: 201 });
     renderSheet();
