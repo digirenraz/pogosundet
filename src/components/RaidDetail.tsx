@@ -33,6 +33,7 @@ import {
   groupMessages,
   type MessageGroup as MessageGroupType,
 } from '@/lib/chat/time';
+import { buildMapsUrl, type GymLocation } from '@/lib/gyms/maps';
 import type { ChatMessage } from '@/lib/chat/types';
 import type { RaidWithDetails } from '@/lib/raids/server-helpers';
 import { Composer } from '@/components/chat/Composer';
@@ -46,6 +47,10 @@ interface RaidDetailProps {
   // user_id → trainer_name for everyone in the directory, so raid reactions can
   // show who reacted (raid_reactions has no profile join — see the page).
   profileNames: Record<string, string>;
+  // The gym's exact coordinates from the `gyms` table, or null when unknown
+  // (auto-learned name-only rows / gym not in the table) — "Vis på kort" then
+  // falls back to a name search. Resolved server-side by the page.
+  gymLocation: GymLocation | null;
 }
 
 // Derive initials from a trainer name (up to 2 chars).
@@ -86,7 +91,7 @@ function toChatMessage(row: RaidMessage): ChatMessage {
 }
 
 // Full-screen detail view for a single raid — includes RSVP, attendees, and chat.
-export function RaidDetail({ raid, currentUserId, currentUserName, profileNames }: RaidDetailProps) {
+export function RaidDetail({ raid, currentUserId, currentUserName, profileNames, gymLocation }: RaidDetailProps) {
   const t = useTranslations('Raids');
   const tChat = useTranslations('Chat');
   const router = useRouter();
@@ -405,10 +410,11 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames 
     setActionMsgId(null);
   }
 
+  // Open the gym in Google Maps — exact pin when the gym has coordinates in
+  // the `gyms` table, name search as the fallback (see buildMapsUrl).
   function handleOpenMap() {
     if (!raid.gym_name) return;
-    const query = encodeURIComponent(`${raid.gym_name} Frederikssund Danmark`);
-    window.open(`https://www.google.com/maps/search/${query}`);
+    window.open(buildMapsUrl(raid.gym_name, gymLocation));
   }
 
   // Full labels for the tappable raid-reaction buttons (counts shown alongside).
