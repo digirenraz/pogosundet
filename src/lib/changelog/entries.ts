@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-06-11',
+    text: '"Vis på kort"-knappen på et raid åbner nu gym\'ens præcise placering — før søgte den kun efter navnet.',
+  },
+  {
+    date: '2026-06-11',
     text: 'Gym-forslagene i raid-formularen kender nu over 150 gyms i hele Frederikssund kommune — fra Jægerspris til Slangerup. Tak til collect.dk for data!',
   },
   {

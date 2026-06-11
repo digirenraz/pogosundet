@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getRaidById, markRaidRead } from '@/lib/raids/server-helpers';
+import { getGymLocation } from '@/lib/gyms/server-helpers';
 import { getAllProfiles } from '@/lib/profile/server-helpers';
 import { RaidDetail } from '@/components/RaidDetail';
 
@@ -33,6 +34,11 @@ export default async function RaidDetailPage({ params }: RaidDetailPageProps) {
 
   if (!raid) notFound();
 
+  // Sequential by necessity — needs raid.gym_name from the query above. One
+  // indexed lookup; null when the gym has no coordinates (the "Vis på kort"
+  // button then falls back to a name search).
+  const gymLocation = raid.gym_name ? await getGymLocation(raid.gym_name) : null;
+
   const profileNames = Object.fromEntries(
     profiles.map((p) => [p.user_id, p.trainer_name])
   );
@@ -43,6 +49,7 @@ export default async function RaidDetailPage({ params }: RaidDetailPageProps) {
       currentUserId={userId}
       currentUserName={ownProfile?.trainer_name ?? ''}
       profileNames={profileNames}
+      gymLocation={gymLocation}
     />
   );
 }
