@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: 2026-06-10",
+    "lastUpdated": "Last updated: 2026-06-11",
     "backLink": "Back",
     "s1Title": "1. Data Controller",
     "s1Body": "René Rasmussen is the data controller for PoGoSundet. Contact: renraz@gmail.com",
@@ -93,7 +93,7 @@
     "s8Title": "8. Your rights",
     "s8Body": "You have the right to access your data, rectification of inaccurate data, erasure (\"right to be forgotten\"), data portability, and the right to lodge a complaint with your supervisory authority. Contact us at renraz@gmail.com to exercise these rights.",
     "s9Title": "9. Cookies and tracking",
-    "s9Body": "PoGoSundet uses technically necessary cookies to keep you logged in. We do not use marketing cookies. With your explicit consent, we use Amplitude (EU region) for anonymous usage statistics so we can see which features are used and improve the app. The statistics are fully anonymous: we do not send your name, email, user ID, IP address, search terms, or the content of your messages. Statistics are only collected if you actively tap \"Accept\" in the consent banner — if you tap \"Decline\", Amplitude is never loaded. You can withdraw your consent at any time by clearing the app's data (cookies/storage) in your browser, after which you will be asked again.",
+    "s9Body": "PoGoSundet uses technically necessary cookies to keep you logged in. We do not use marketing cookies. With your explicit consent, we use Amplitude (EU region) for anonymous usage statistics so we can see which features are used and improve the app. The statistics are fully anonymous: we do not send your name, email, user ID, IP address, search terms, or the content of your messages. Statistics are only collected if you actively tap \"Accept\" in the consent banner — if you tap \"Decline\", Amplitude is never loaded. You can withdraw your consent at any time by clearing the app's data (cookies/storage) in your browser, after which you will be asked again. If you choose to see nearby gyms when posting a raid, the app asks for permission to use your device's location. The location is used only in your browser to sort the gym suggestions by distance — it is never stored and never sent to our servers.",
     "s10Title": "10. Contact",
     "s10Body": "Questions about this privacy policy can be sent to renraz@gmail.com",
     "s11Title": "11. Push notifications",
@@ -171,7 +171,10 @@
     "placeholder": "Search gym...",
     "clear": "Clear",
     "emptyList": "No gyms in the list yet — type the name manually",
-    "noMatch": "No gyms found — type the name manually"
+    "noMatch": "No gyms found — type the name manually",
+    "recentHeader": "Your recent gyms",
+    "nearbyHeader": "Nearby",
+    "useLocation": "Show nearby gyms"
   },
   "AppMenu": {
     "menuLabel": "Menu",

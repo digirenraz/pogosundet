@@ -39,6 +39,39 @@ export async function leaveRaid(raidId: string, userId: string) {
   return { error };
 }
 
+// The user's most recently used gym names, newest first, for the raid form's
+// "Dine seneste gyms" suggestions. Fetches a small window of recent raids and
+// dedupes case-insensitively in JS (a raid can repeat the same gym), keeping
+// the first (= newest) casing. Returns [] on any error — the suggestion group
+// simply doesn't render.
+export async function fetchRecentGymNames(
+  userId: string,
+  limit = 3
+): Promise<string[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('raids')
+    .select('gym_name')
+    .eq('user_id', userId)
+    .not('gym_name', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(25);
+  if (error || !data) return [];
+
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const row of data) {
+    const name = row.gym_name as string | null;
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    names.push(name);
+    if (names.length >= limit) break;
+  }
+  return names;
+}
+
 // Mark a raid completed (or undo). Sets completed_at to now() when completing,
 // or null to undo so a mis-tap is recoverable. RLS enforces that only the
 // poster can update their own raid.

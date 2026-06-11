@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ArrowLeft, Camera, Minus, Plus, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { createRaid, joinRaid, updateAttendeeExtra } from '@/lib/raids/helpers';
+import {
+  createRaid,
+  fetchRecentGymNames,
+  joinRaid,
+  updateAttendeeExtra,
+} from '@/lib/raids/helpers';
 import { learnGym } from '@/lib/gyms/helpers';
 import { track } from '@/lib/analytics/amplitude';
 import { validateRaid } from '@/lib/raids/validation';
@@ -41,7 +46,28 @@ export default function NewRaidPage() {
   const [extra, setExtra] = useState(0); // how many extra people the poster is bringing
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recentGyms, setRecentGyms] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // The user's last few gym names feed GymSearch's "Dine seneste gyms"
+  // suggestion group. Same client auth pattern as the submit flow
+  // (getClaims → user id). Best-effort: on any failure the group just
+  // doesn't render.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadRecentGyms() {
+      const supabase = createClient();
+      const { data: claimsData } = await supabase.auth.getClaims();
+      const userId = claimsData?.claims?.sub;
+      if (!userId || cancelled) return;
+      const names = await fetchRecentGymNames(userId);
+      if (!cancelled) setRecentGyms(names);
+    }
+    loadRecentGyms();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Web Share Target (Android): when a screenshot is shared into the app, the
   // service worker stashes it in the `pogosundet-share` cache and redirects here.
@@ -294,6 +320,7 @@ export default function NewRaidPage() {
               value={gymName}
               onChange={setGymName}
               placeholder={t('form.gymSearch')}
+              recentGyms={recentGyms}
             />
           </div>
 

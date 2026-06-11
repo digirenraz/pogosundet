@@ -2,33 +2,46 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { MapPin, X } from 'lucide-react';
-import { fetchGymNames } from '@/lib/gyms/helpers';
+import { History, LocateFixed, MapPin, X } from 'lucide-react';
+import { fetchGyms } from '@/lib/gyms/helpers';
+import {
+  buildGymSuggestions,
+  type Gym,
+} from '@/lib/gyms/suggestions';
+import { useGeolocation } from '@/lib/hooks/use-geolocation';
 
 // Gym names come from our own `gyms` table (migration 018, issue #93).
 // The previous OpenStreetMap source (Overpass leisure=pokemon_gym) is dead —
 // the tag has 0 uses globally — so the list is now community-maintained:
 // PM-seeded (docs/gyms-seeding.md) plus auto-learned from posted raids.
+//
+// Before the user types (empty/short query) the dropdown suggests the user's
+// recent gyms and — with the user's permission — the nearest gyms by distance
+// (browser geolocation + the seeded coordinates; the position never leaves
+// the browser). While typing, matches are distance-sorted when the position
+// is known. All ranking logic lives in `buildGymSuggestions` (pure, tested).
 
 interface GymSearchProps {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  /** The user's last few gym names (newest first) for the recent group. */
+  recentGyms?: string[];
 }
 
 // Module-level cache so the gyms table is fetched at most once per page load.
-let cachedGyms: string[] | null = null;
-let fetchPromise: Promise<string[]> | null = null;
+let cachedGyms: Gym[] | null = null;
+let fetchPromise: Promise<Gym[]> | null = null;
 
-async function loadGyms(): Promise<string[]> {
+async function loadGyms(): Promise<Gym[]> {
   if (cachedGyms !== null) return cachedGyms;
   if (fetchPromise) return fetchPromise;
 
-  fetchPromise = fetchGymNames().then(names => {
-    // fetchGymNames already returns [] on error, so the free-text fallback
+  fetchPromise = fetchGyms().then(rows => {
+    // fetchGyms already returns [] on error, so the free-text fallback
     // keeps working even when the table is empty or unreachable.
-    cachedGyms = names;
-    return names;
+    cachedGyms = rows;
+    return rows;
   });
 
   return fetchPromise;
@@ -36,19 +49,25 @@ async function loadGyms(): Promise<string[]> {
 
 // Autocomplete for Pokémon GO gym names backed by the community `gyms` table.
 // Falls back to free-text entry if the list is empty or the gym isn't listed.
-export function GymSearch({ value, onChange, placeholder }: GymSearchProps) {
+export function GymSearch({
+  value,
+  onChange,
+  placeholder,
+  recentGyms = [],
+}: GymSearchProps) {
   const t = useTranslations('GymSearch');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(value);
-  const [gyms, setGyms] = useState<string[]>([]);
+  const [gyms, setGyms] = useState<Gym[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { status: geoStatus, position, request: requestLocation } = useGeolocation();
 
   // Keep local query in sync if parent value changes externally
   useEffect(() => {
     setQuery(value);
   }, [value]);
 
-  // Load gym names on mount
+  // Load gyms on mount
   useEffect(() => {
     loadGyms().then(setGyms);
   }, []);
@@ -64,13 +83,27 @@ export function GymSearch({ value, onChange, placeholder }: GymSearchProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const suggestions =
-    query.length >= 2
-      ? gyms.filter(g => g.toLowerCase().includes(query.toLowerCase()))
-      : [];
+  const suggestions = buildGymSuggestions({
+    gyms,
+    recentNames: recentGyms,
+    position,
+    query,
+  });
 
-  const showNoGyms = query.length >= 2 && gyms.length === 0;
-  const showEmpty = query.length >= 2 && gyms.length > 0 && suggestions.length === 0;
+  const showNoGyms = suggestions.mode === 'search' && gyms.length === 0;
+  const showEmpty =
+    suggestions.mode === 'search' &&
+    gyms.length > 0 &&
+    suggestions.matches.length === 0;
+
+  // Browse mode renders when there is anything to show: a recent group, a
+  // nearby group, or the location-request button ('idle'). With nothing to
+  // show (e.g. permission denied and no recent gyms) there is no dropdown.
+  const showBrowse =
+    suggestions.mode === 'browse' &&
+    (suggestions.recent.length > 0 ||
+      suggestions.nearby.length > 0 ||
+      geoStatus === 'idle');
 
   function handleSelect(name: string) {
     setQuery(name);
@@ -82,6 +115,11 @@ export function GymSearch({ value, onChange, placeholder }: GymSearchProps) {
     setQuery('');
     onChange('');
   }
+
+  const groupHeaderClass =
+    'flex items-center gap-1.5 px-4 pt-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground';
+  const rowClass =
+    'w-full flex items-center gap-2 text-left px-4 py-2.5 text-[14px] text-card-foreground hover:bg-input cursor-pointer';
 
   return (
     <div ref={containerRef} className="relative">
@@ -111,28 +149,103 @@ export function GymSearch({ value, onChange, placeholder }: GymSearchProps) {
         )}
       </div>
 
-      {open && query.length >= 2 && (
-        <div className="absolute z-20 left-0 right-0 bg-white border border-border rounded-b-lg shadow-sm max-h-64 overflow-y-auto">
-          {showNoGyms && (
-            <p className="px-4 py-2.5 text-[13px] text-muted-foreground">
-              {t('emptyList')}
-            </p>
+      {open && (suggestions.mode === 'search' || showBrowse) && (
+        <div
+          data-testid="gym-suggestions"
+          className="absolute z-20 left-0 right-0 bg-white border border-border rounded-b-lg shadow-sm max-h-64 overflow-y-auto"
+        >
+          {suggestions.mode === 'search' ? (
+            <>
+              {showNoGyms && (
+                <p className="px-4 py-2.5 text-[13px] text-muted-foreground">
+                  {t('emptyList')}
+                </p>
+              )}
+              {showEmpty && (
+                <p className="px-4 py-2.5 text-[13px] text-muted-foreground">
+                  {t('noMatch')}
+                </p>
+              )}
+              {suggestions.matches.map(match => (
+                <button
+                  key={match.name}
+                  type="button"
+                  onMouseDown={() => handleSelect(match.name)}
+                  className={rowClass}
+                >
+                  <span className="flex-1 truncate">{match.name}</span>
+                  {match.distanceLabel && (
+                    <span className="shrink-0 text-[12px] text-muted-foreground">
+                      {match.distanceLabel}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </>
+          ) : (
+            <>
+              {/* Recent gyms — the user's own last posted gym names */}
+              {suggestions.recent.length > 0 && (
+                <>
+                  <p className={groupHeaderClass}>
+                    <History size={12} />
+                    {t('recentHeader')}
+                  </p>
+                  {suggestions.recent.map(name => (
+                    <button
+                      key={name}
+                      type="button"
+                      onMouseDown={() => handleSelect(name)}
+                      className={rowClass}
+                    >
+                      <span className="flex-1 truncate">{name}</span>
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {/* Nearby gyms — only with a located position */}
+              {suggestions.nearby.length > 0 && (
+                <>
+                  <p className={groupHeaderClass}>
+                    <MapPin size={12} />
+                    {t('nearbyHeader')}
+                  </p>
+                  {suggestions.nearby.map(gym => (
+                    <button
+                      key={gym.name}
+                      type="button"
+                      onMouseDown={() => handleSelect(gym.name)}
+                      className={rowClass}
+                    >
+                      <span className="flex-1 truncate">{gym.name}</span>
+                      <span className="shrink-0 text-[12px] text-muted-foreground">
+                        {gym.distanceLabel}
+                      </span>
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {/* Permission not granted yet — explicit user action triggers
+                  the browser's geolocation prompt (GDPR: never silent). */}
+              {geoStatus === 'idle' && (
+                <button
+                  type="button"
+                  onMouseDown={e => {
+                    // Keep the input focused (and the dropdown open) while
+                    // the permission prompt / position lookup runs.
+                    e.preventDefault();
+                    requestLocation();
+                  }}
+                  className="w-full flex items-center gap-2 text-left px-4 py-2.5 text-[14px] font-semibold text-primary hover:bg-input cursor-pointer"
+                >
+                  <LocateFixed size={16} />
+                  {t('useLocation')}
+                </button>
+              )}
+            </>
           )}
-          {showEmpty && (
-            <p className="px-4 py-2.5 text-[13px] text-muted-foreground">
-              {t('noMatch')}
-            </p>
-          )}
-          {suggestions.map(name => (
-            <button
-              key={name}
-              type="button"
-              onMouseDown={() => handleSelect(name)}
-              className="w-full text-left px-4 py-2.5 text-[14px] text-card-foreground hover:bg-input cursor-pointer"
-            >
-              {name}
-            </button>
-          ))}
         </div>
       )}
     </div>

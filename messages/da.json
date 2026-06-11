@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-06-10",
+    "lastUpdated": "Sidst opdateret: 2026-06-11",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
@@ -93,7 +93,7 @@
     "s8Title": "8. Dine rettigheder",
     "s8Body": "Du har ret til indsigt i dine data, berigtigelse af forkerte oplysninger, sletning (\"retten til at blive glemt\"), dataportabilitet samt retten til at klage til Datatilsynet (datatilsynet.dk). Kontakt os på renraz@gmail.com for at udøve disse rettigheder.",
     "s9Title": "9. Cookies og sporing",
-    "s9Body": "PoGoSundet bruger teknisk nødvendige cookies til at holde dig logget ind. Vi anvender ingen markedsføringscookies. Med dit udtrykkelige samtykke bruger vi Amplitude (EU-region) til anonym brugsstatistik, så vi kan se, hvilke funktioner der bruges, og forbedre appen. Statistikken er fuldstændig anonym: vi sender ikke dit navn, din e-mail, dit bruger-id, din IP-adresse, dine søgeord eller indholdet af dine beskeder. Statistik indsamles kun, hvis du aktivt trykker \"Acceptér\" i samtykkebanneret — vælger du \"Afvis\", indlæses Amplitude aldrig. Du kan til enhver tid trække dit samtykke tilbage ved at rydde appens data (cookies/lagring) i din browser, hvorefter du bliver spurgt igen.",
+    "s9Body": "PoGoSundet bruger teknisk nødvendige cookies til at holde dig logget ind. Vi anvender ingen markedsføringscookies. Med dit udtrykkelige samtykke bruger vi Amplitude (EU-region) til anonym brugsstatistik, så vi kan se, hvilke funktioner der bruges, og forbedre appen. Statistikken er fuldstændig anonym: vi sender ikke dit navn, din e-mail, dit bruger-id, din IP-adresse, dine søgeord eller indholdet af dine beskeder. Statistik indsamles kun, hvis du aktivt trykker \"Acceptér\" i samtykkebanneret — vælger du \"Afvis\", indlæses Amplitude aldrig. Du kan til enhver tid trække dit samtykke tilbage ved at rydde appens data (cookies/lagring) i din browser, hvorefter du bliver spurgt igen. Hvis du vælger at få vist gyms i nærheden, når du opretter et raid, beder appen om lov til at bruge din enheds placering. Placeringen bruges kun i din browser til at sortere gym-forslagene efter afstand — den gemmes aldrig og sendes aldrig til vores servere.",
     "s10Title": "10. Kontakt",
     "s10Body": "Spørgsmål til denne privatlivspolitik kan sendes til renraz@gmail.com",
     "s11Title": "11. Push-notifikationer",
@@ -240,7 +240,10 @@
     "placeholder": "Søg gym...",
     "clear": "Ryd",
     "emptyList": "Ingen gyms i listen endnu — skriv navnet manuelt",
-    "noMatch": "Ingen gyms fundet — skriv navnet manuelt"
+    "noMatch": "Ingen gyms fundet — skriv navnet manuelt",
+    "recentHeader": "Dine seneste gyms",
+    "nearbyHeader": "I nærheden",
+    "useLocation": "Vis gyms i nærheden"
   },
   "AppMenu": {
     "menuLabel": "Menu",

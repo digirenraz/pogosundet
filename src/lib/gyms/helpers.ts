@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import type { Gym } from './suggestions';
 
 // Helpers for the community-maintained `gyms` table (migration 018).
 // Gym names come from PM seeding (docs/gyms-seeding.md) plus auto-learning:
@@ -18,18 +19,23 @@ export function isKnownGym(gyms: string[], name: string): boolean {
   return gyms.some(g => g.toLowerCase() === needle);
 }
 
-// Fetch all known gym names, alphabetically. Returns [] on any error so the
-// form's free-text fallback keeps working — including during the window
-// before migration 018 is applied to the shared DB (the query just errors
-// and the user types the gym name manually).
-export async function fetchGymNames(): Promise<string[]> {
+// Fetch all known gyms (name + optional coordinates), alphabetically.
+// lat/lng are null for auto-learned gyms that haven't been seeded with
+// coordinates yet. Returns [] on any error so the form's free-text fallback
+// keeps working — the query just errors and the user types the gym name
+// manually.
+export async function fetchGyms(): Promise<Gym[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('gyms')
-    .select('name')
+    .select('name, lat, lng')
     .order('name');
   if (error || !data) return [];
-  return data.map(row => row.name as string);
+  return data.map(row => ({
+    name: row.name as string,
+    lat: row.lat as number | null,
+    lng: row.lng as number | null,
+  }));
 }
 
 // Auto-learn a gym name after a raid is posted. Best-effort by design:
