@@ -4,6 +4,17 @@ How to fill the `gyms` table (migration 018) with local gym names and exact
 coordinates. Written for the PM — no coding required, just the Supabase SQL
 editor and Google Maps.
 
+## ⚡ Ready-made seed: 152 gyms from collect.dk (2026-06-11)
+
+[`supabase/seeds/001_gyms_frederikssund_collect_dk.sql`](../supabase/seeds/001_gyms_frederikssund_collect_dk.sql)
+contains **152 gyms across Frederikssund municipality** (Frederikssund town,
+Slangerup, Jægerspris, Skibby + villages) with in-game names and exact
+coordinates, copied from [collect.dk](https://collect.dk) **with the operators'
+permission** (granted via their Discord, 2026-06-11). To apply: open the file,
+copy everything, paste into the Supabase SQL editor, Run. It's re-runnable and
+never overwrites existing rows. After applying, the manual workflow below is
+only needed for gyms collect.dk doesn't cover (new gyms, or gaps you notice).
+
 ## Why coordinates matter
 
 The raid form's gym autocomplete only needs names, but two planned features

@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-06-11',
+    text: 'Gym-forslagene i raid-formularen kender nu over 150 gyms i hele Frederikssund kommune — fra Jægerspris til Slangerup. Tak til collect.dk for data!',
+  },
+  {
     date: '2026-06-10',
     text: 'Fejlrapport-formularen fortæller nu tydeligt, hvis titlen eller beskrivelsen er for kort til at kunne sendes.',
   },
