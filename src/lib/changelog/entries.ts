@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-06-11',
+    text: 'Raid-formularen foreslår nu gyms i nærheden (hvis du deler din placering) og dine senest brugte gyms, før du overhovedet begynder at skrive.',
+  },
+  {
+    date: '2026-06-11',
     text: '"Vis på kort"-knappen på et raid åbner nu gym\'ens præcise placering — før søgte den kun efter navnet.',
   },
   {
