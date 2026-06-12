@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Pencil, Copy, Check } from 'lucide-react';
+import { Pencil, Copy, Check, EyeOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
 import { Avatar, TeamChip, LevelPill, TEAMS, type AvatarTeam } from '@/components/Avatar';
@@ -19,6 +19,7 @@ export function DesktopProfile({ profile }: DesktopProfileProps) {
   const t = useTranslations('ProfileTab');
   const tDir = useTranslations('PlayerDirectory');
   const tDetail = useTranslations('PlayerDetail');
+  const tFc = useTranslations('FriendCode');
   const [copied, setCopied] = useState(false);
 
   const team = (profile.team ?? 'none') as AvatarTeam;
@@ -135,6 +136,12 @@ export function DesktopProfile({ profile }: DesktopProfileProps) {
           <div className="text-[12px] text-muted-foreground text-center leading-snug">
             {t('qrHint')}
           </div>
+          {profile.hide_friend_code && (
+            <div className="flex items-center gap-1.5 text-[12px] font-semibold text-primary">
+              <EyeOff size={13} />
+              {tFc('ownerNote')}
+            </div>
+          )}
         </div>
       </div>
     </div>

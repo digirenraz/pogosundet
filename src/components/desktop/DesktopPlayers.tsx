@@ -17,6 +17,7 @@ import {
 import type { Profile } from '@/lib/profile/helpers';
 import { Avatar, TeamChip, LevelPill, TEAMS, type AvatarTeam } from '@/components/Avatar';
 import { FriendCodeQR } from '@/components/FriendCodeQR';
+import { FriendCodeHidden } from '@/components/FriendCodeHidden';
 
 interface DesktopPlayersProps {
   /** All profiles, including the logged-in user (filtered out of the queue). */
@@ -242,32 +243,38 @@ export function DesktopPlayers({ profiles, currentUserId, onlineUserIds }: Deskt
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center gap-5 px-8 pb-2 min-h-0">
-          <div
-            className="bg-background rounded-3xl"
-            style={{ padding: 20, boxShadow: '0 24px 60px rgba(0,0,0,0.12), 0 0 0 1px #eee' }}
-          >
-            <FriendCodeQR value={cur.friend_code} size={288} />
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span
-              className="text-[25px] font-extrabold tabular-nums"
-              style={{ letterSpacing: '0.10em', color: '#1b3a52' }}
-            >
-              {cur.friend_code}
-            </span>
-            <button
-              type="button"
-              onClick={copyCode}
-              aria-label={copied ? tDir('copiedButton') : tDir('copyButton')}
-              className="w-[38px] h-[38px] rounded-[10px] border border-border bg-card text-primary inline-flex items-center justify-center"
-            >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-            </button>
-          </div>
-          <div className="text-[13px] text-muted-foreground flex items-center gap-1.5">
-            <Smartphone size={15} />
-            {t('instruction')}
-          </div>
+          {cur.hide_friend_code ? (
+            <FriendCodeHidden size={288} />
+          ) : (
+            <>
+              <div
+                className="bg-background rounded-3xl"
+                style={{ padding: 20, boxShadow: '0 24px 60px rgba(0,0,0,0.12), 0 0 0 1px #eee' }}
+              >
+                <FriendCodeQR value={cur.friend_code} size={288} />
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="text-[25px] font-extrabold tabular-nums"
+                  style={{ letterSpacing: '0.10em', color: '#1b3a52' }}
+                >
+                  {cur.friend_code}
+                </span>
+                <button
+                  type="button"
+                  onClick={copyCode}
+                  aria-label={copied ? tDir('copiedButton') : tDir('copyButton')}
+                  className="w-[38px] h-[38px] rounded-[10px] border border-border bg-card text-primary inline-flex items-center justify-center"
+                >
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                </button>
+              </div>
+              <div className="text-[13px] text-muted-foreground flex items-center gap-1.5">
+                <Smartphone size={15} />
+                {t('instruction')}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="px-8 pt-3 pb-6 flex gap-3 justify-center">

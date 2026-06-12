@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: 2026-06-11",
+    "lastUpdated": "Last updated: 2026-06-12",
     "backLink": "Back",
     "s1Title": "1. Data Controller",
     "s1Body": "René Rasmussen is the data controller for PoGoSundet. Contact: renraz@gmail.com",
@@ -87,7 +87,7 @@
     "s5Title": "5. Retention and deletion",
     "s5Body": "Your data is stored for as long as your account is active. You can delete your account at any time via \"Edit profile\" in the app — all your data is deleted immediately and permanently.",
     "s6Title": "6. Sharing",
-    "s6Body": "We do not sell, rent, or share your personal data with third parties. Your profile information (trainer name, friend code, first name, bio) is visible to other registered users of PoGoSundet.",
+    "s6Body": "We do not sell, rent, or share your personal data with third parties. Your profile information (trainer name, friend code, first name, bio) is visible to other registered users of PoGoSundet. You can hide your friend code under \"Edit profile\" — it is then neither shown to nor shared with other users.",
     "s7Title": "7. Data processors",
     "s7Body": "We use Supabase (EU/Ireland) for data storage and authentication. Supabase acts as a data processor on our behalf and is contractually obligated to comply with GDPR. For error logging we use Sentry (EU region) to detect and fix technical faults in the app. Sentry only receives technical error information; we do not deliberately collect your IP address or other personal data via the error log. If you consent to analytics (see section 9), we also use Amplitude (EU region) for anonymous usage statistics. If you report a bug via the app, your report is stored in our private issue tracker on GitHub, which thereby acts as a data processor for the report text and your trainer name — the report contains only what you write yourself, plus your trainer name. All processors handle data solely on our behalf and in compliance with GDPR.",
     "s8Title": "8. Your rights",
@@ -289,7 +289,13 @@
     "uploadConfirm": "Use photo",
     "uploadError": "Something went wrong. Please try again.",
     "uploadPositionTitle": "Position your avatar",
-    "uploadPositionHint": "Drag to move · pinch to zoom"
+    "uploadPositionHint": "Drag to move · pinch to zoom",
+    "hideFriendCodeLabel": "Hide my friend code",
+    "hideFriendCodeHint": "Others see \"Not looking for new friends right now\" instead of your code, and can't copy it."
+  },
+  "FriendCode": {
+    "hiddenLabel": "Not looking for new friends right now",
+    "ownerNote": "Hidden from others"
   },
   "ProfileSetup": {
     "subtitle": "Create your local trainer profile",

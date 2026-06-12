@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, EyeOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
 import { lastSeenRelative } from '@/lib/profile/time';
@@ -15,6 +15,7 @@ interface PlayerCardProps {
 
 export function PlayerCard({ profile, online = false }: PlayerCardProps) {
   const t = useTranslations('PlayerDirectory');
+  const tFc = useTranslations('FriendCode');
   const [copied, setCopied] = useState(false);
 
   async function handleCopy(e: React.MouseEvent) {
@@ -85,19 +86,26 @@ export function PlayerCard({ profile, online = false }: PlayerCardProps) {
         <p className="text-[14px] text-card-foreground leading-snug line-clamp-2">{profile.bio}</p>
       )}
 
-      <div className="bg-muted rounded-md px-3 py-2 flex items-center justify-between">
-        <span className="text-[15px] font-semibold tracking-wider text-muted-foreground tabular-nums">
-          {profile.friend_code}
-        </span>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-[13px] font-semibold flex items-center gap-1.5"
-        >
-          {copied ? <Check size={14} /> : <Copy size={14} />}
-          {copied ? t('copiedButton') : t('copyButton')}
-        </button>
-      </div>
+      {profile.hide_friend_code ? (
+        <div className="bg-muted rounded-md px-3 py-2 flex items-center gap-2 justify-center text-muted-foreground">
+          <EyeOff size={14} className="flex-shrink-0" />
+          <span className="text-[13px] font-medium">{tFc('hiddenLabel')}</span>
+        </div>
+      ) : (
+        <div className="bg-muted rounded-md px-3 py-2 flex items-center justify-between">
+          <span className="text-[15px] font-semibold tracking-wider text-muted-foreground tabular-nums">
+            {profile.friend_code}
+          </span>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-[13px] font-semibold flex items-center gap-1.5"
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copied ? t('copiedButton') : t('copyButton')}
+          </button>
+        </div>
+      )}
     </Link>
   );
 }

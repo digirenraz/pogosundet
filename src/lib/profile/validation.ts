@@ -8,6 +8,9 @@ export interface ProfileInput {
   team?: Team;
   level?: number;
   avatar_url?: string | null;
+  // When true, other users see a blurred placeholder instead of the friend
+  // code/QR and the value is withheld from the data they receive (issue #101).
+  hide_friend_code?: boolean;
 }
 
 export interface ValidationResult {
