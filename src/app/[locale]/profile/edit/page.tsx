@@ -61,6 +61,10 @@ export default function ProfileEditPage() {
       setGeneralError(tEdit('errorGeneric'));
       return;
     }
+    // Bust the cached player directory so edits that change what OTHER users see
+    // (e.g. the hide-friend-code toggle) take effect immediately instead of
+    // waiting out the 60s cache TTL. Best-effort — never blocks the success path.
+    void fetch('/api/profile/revalidate', { method: 'POST' });
     setSuccessMessage(tEdit('successMessage'));
     // Return to the "Min profil" view so the user can verify the changes
     setTimeout(() => router.push('/profile'), 1200);

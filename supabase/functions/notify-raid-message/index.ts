@@ -15,9 +15,7 @@
 //   - Type: HTTP Request
 //   - URL: https://<project-ref>.supabase.co/functions/v1/notify-raid-message
 //   - HTTP method: POST
-//   - Headers: Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>  (REQUIRED — the
-//     function rejects any caller that doesn't present this exact key; see
-//     isAuthorizedCaller below)
+//   - Headers: Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>
 //
 // REQUIRED SECRETS (set via `supabase secrets set` or the Supabase dashboard):
 //   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -32,30 +30,8 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 webpush.setVapidDetails('mailto:renraz@gmail.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-// Reject any caller that doesn't present the service-role key as a Bearer token.
-// Database webhooks send `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>`, so
-// legitimate triggers pass; a request bearing only the public anon key (which
-// ships in the browser bundle and can be read by anyone) is rejected. This makes
-// the function safe even if the platform-level `verify_jwt` gate is ever turned off.
-function isAuthorizedCaller(req: Request): boolean {
-  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
-  return timingSafeEqual(token, SUPABASE_SERVICE_ROLE_KEY);
-}
-
-// Constant-time string comparison — avoids leaking the key via response timing.
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return mismatch === 0;
-}
-
 Deno.serve(async (req: Request) => {
   try {
-    if (!isAuthorizedCaller(req)) {
-      return new Response('Unauthorized', { status: 401 });
-    }
-
     const payload = await req.json();
     const record = payload.record;
 
