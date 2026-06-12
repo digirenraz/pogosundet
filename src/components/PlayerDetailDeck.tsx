@@ -8,6 +8,7 @@ import type { Profile } from '@/lib/profile/helpers';
 import { lastSeenRelative } from '@/lib/profile/time';
 import dynamic from 'next/dynamic';
 import { Avatar, TeamChip, TEAMS, type AvatarTeam } from './Avatar';
+import { FriendCodeHidden } from './FriendCodeHidden';
 
 // Lazy-load the QR so the `qrcode` lib (~31 KB) is fetched on demand instead of
 // shipping in the player-detail route's initial bundle. `ssr: false` also keeps
@@ -265,25 +266,31 @@ function PlayerDetailCard({ profile, online, copied, onCopy }: PlayerDetailCardP
         <div className="text-[11px] tracking-widest font-bold text-muted-foreground uppercase">
           {t('qrSectionLabel')}
         </div>
-        <span
-          className="text-[20px] font-bold tracking-widest tabular-nums"
-          style={{ color: '#1b3a52' }}
-        >
-          {profile.friend_code}
-        </span>
-        <FriendCodeQR value={profile.friend_code} size={224} />
-        <p className="text-[12px] text-muted-foreground text-center max-w-[240px] leading-snug">
-          {t('qrInstructions')}
-        </p>
-        <button
-          type="button"
-          onClick={onCopy}
-          className="w-full h-11 rounded-md text-primary-foreground font-semibold inline-flex items-center justify-center gap-1.5 text-[14px] transition-colors"
-          style={{ background: copied ? 'var(--color-success)' : 'var(--color-primary)' }}
-        >
-          {copied ? <Check size={16} /> : <Copy size={16} />}
-          {copied ? t('copiedButton') : t('copyButton')}
-        </button>
+        {profile.hide_friend_code ? (
+          <FriendCodeHidden size={224} />
+        ) : (
+          <>
+            <span
+              className="text-[20px] font-bold tracking-widest tabular-nums"
+              style={{ color: '#1b3a52' }}
+            >
+              {profile.friend_code}
+            </span>
+            <FriendCodeQR value={profile.friend_code} size={224} />
+            <p className="text-[12px] text-muted-foreground text-center max-w-[240px] leading-snug">
+              {t('qrInstructions')}
+            </p>
+            <button
+              type="button"
+              onClick={onCopy}
+              className="w-full h-11 rounded-md text-primary-foreground font-semibold inline-flex items-center justify-center gap-1.5 text-[14px] transition-colors"
+              style={{ background: copied ? 'var(--color-success)' : 'var(--color-primary)' }}
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+              {copied ? t('copiedButton') : t('copyButton')}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Bio */}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { UserRound, Hash, User, AlignLeft, Camera } from 'lucide-react';
+import { UserRound, Hash, User, AlignLeft, Camera, EyeOff } from 'lucide-react';
 import { validateProfile, type ProfileInput, type Team } from '@/lib/profile/validation';
 import { AuthInput } from '@/components/AuthInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -45,6 +45,9 @@ export function ProfileForm({
 
   const [trainerName, setTrainerName] = useState(initialValues?.trainer_name ?? '');
   const [friendCode, setFriendCode] = useState(initialValues?.friend_code ?? '');
+  const [hideFriendCode, setHideFriendCode] = useState<boolean>(
+    initialValues?.hide_friend_code ?? false
+  );
   const [firstName, setFirstName] = useState(initialValues?.first_name ?? '');
   const [bio, setBio] = useState(initialValues?.bio ?? '');
   const [team, setTeam] = useState<Team | null>(initialValues?.team ?? null);
@@ -90,6 +93,7 @@ export function ProfileForm({
       team: team ?? undefined,
       level: levelSet ? level : undefined,
       avatar_url: avatar ?? undefined,
+      hide_friend_code: hideFriendCode,
     });
   }
 
@@ -177,6 +181,35 @@ export function ProfileForm({
           error={errors.friend_code}
           autoComplete="off"
         />
+
+        {/* Hide friend code — opt out of showing the code to other users (#101) */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={hideFriendCode}
+          onClick={() => setHideFriendCode((v) => !v)}
+          className="flex items-center gap-3 text-left bg-input rounded-md px-4 py-3"
+        >
+          <EyeOff size={18} className="text-muted-foreground flex-shrink-0" />
+          <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+            <span className="text-[14px] font-semibold text-foreground">
+              {tForm('hideFriendCodeLabel')}
+            </span>
+            <span className="text-[12px] leading-snug text-muted-foreground">
+              {tForm('hideFriendCodeHint')}
+            </span>
+          </span>
+          <span
+            aria-hidden="true"
+            className="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors"
+            style={{ background: hideFriendCode ? 'var(--color-primary)' : 'var(--color-border)' }}
+          >
+            <span
+              className="absolute top-0.5 w-5 h-5 rounded-full bg-card transition-all"
+              style={{ left: hideFriendCode ? 22 : 2 }}
+            />
+          </span>
+        </button>
 
         {/* Team picker — optional */}
         <div className="flex flex-col gap-2">

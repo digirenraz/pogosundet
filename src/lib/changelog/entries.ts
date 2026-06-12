@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-06-12',
+    text: 'Du kan nu skjule din vennekode under "Rediger profil", hvis du ikke leder efter nye venner lige nu. Andre ser så "Ønsker ikke nye venner lige nu" i stedet for din kode.',
+  },
+  {
     date: '2026-06-11',
     text: 'Raid-formularen foreslår nu gyms i nærheden (hvis du deler din placering) og dine senest brugte gyms, før du overhovedet begynder at skrive.',
   },

@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getAllProfiles } from '@/lib/profile/server-helpers';
+import { getAllProfiles, redactHiddenFriendCodes } from '@/lib/profile/server-helpers';
 import { PlayerDetailDeckWithPresence } from '@/components/PlayerDetailDeckWithPresence';
 
 export const preferredRegion = 'dub1';
@@ -34,12 +34,14 @@ export default async function PlayerDetailPage({ params }: PlayerDetailPageProps
     ...p,
     last_seen_at: (lastSeenMap[p.user_id] as string | null) ?? p.last_seen_at ?? null,
   }));
-  const startIndex = freshProfiles.findIndex((p) => p.id === id);
+  // Withhold hidden friend codes from everyone but their owner (issue #101).
+  const visibleProfiles = redactHiddenFriendCodes(freshProfiles, userId);
+  const startIndex = visibleProfiles.findIndex((p) => p.id === id);
   if (startIndex === -1) notFound();
 
   return (
     <PlayerDetailDeckWithPresence
-      profiles={freshProfiles}
+      profiles={visibleProfiles}
       startIndex={startIndex}
       currentUserId={userId}
     />

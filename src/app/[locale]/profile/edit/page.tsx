@@ -44,6 +44,7 @@ export default function ProfileEditPage() {
           team: data.team ?? undefined,
           level: data.level ?? undefined,
           avatar_url: data.avatar_url ?? undefined,
+          hide_friend_code: data.hide_friend_code ?? false,
         });
       }
     }

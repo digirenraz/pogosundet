@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getAllProfiles } from '@/lib/profile/server-helpers';
+import { getAllProfiles, redactHiddenFriendCodes } from '@/lib/profile/server-helpers';
 import { PlayersScreen } from '@/components/PlayersScreen';
 
 // Player Directory — the main authenticated screen.
@@ -26,7 +26,10 @@ export default async function PlayersPage() {
     last_seen_at: (lastSeenMap[p.user_id] as string | null) ?? p.last_seen_at ?? null,
   }));
 
+  // Withhold hidden friend codes from everyone but their owner (issue #101).
+  const visibleProfiles = redactHiddenFriendCodes(freshProfiles, userId);
+
   // PlayersScreen (client) owns the single presence subscription and renders
   // both the mobile directory and the desktop scan-session responsively.
-  return <PlayersScreen profiles={freshProfiles} currentUserId={userId} />;
+  return <PlayersScreen profiles={visibleProfiles} currentUserId={userId} />;
 }

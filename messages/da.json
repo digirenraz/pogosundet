@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-06-11",
+    "lastUpdated": "Sidst opdateret: 2026-06-12",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
@@ -87,7 +87,7 @@
     "s5Title": "5. Opbevaring og sletning",
     "s5Body": "Dine oplysninger opbevares, så længe din konto er aktiv. Du kan til enhver tid slette din konto via \"Rediger profil\" i appen — alle dine data slettes straks og permanent.",
     "s6Title": "6. Videregivelse",
-    "s6Body": "Vi sælger, udlejer eller deler ikke dine personoplysninger med tredjepart. Dine profiloplysninger (trænernavn, vennekode, fornavn, bio) er synlige for andre registrerede brugere af PoGoSundet.",
+    "s6Body": "Vi sælger, udlejer eller deler ikke dine personoplysninger med tredjepart. Dine profiloplysninger (trænernavn, vennekode, fornavn, bio) er synlige for andre registrerede brugere af PoGoSundet. Du kan skjule din vennekode under \"Rediger profil\" — så bliver den ikke vist til eller delt med andre brugere.",
     "s7Title": "7. Databehandlere",
     "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase fungerer som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR. Til fejllogning anvender vi Sentry (EU-region), så vi kan opdage og rette tekniske fejl i appen. Sentry modtager kun tekniske fejloplysninger, og vi indsamler bevidst ikke din IP-adresse eller andre personoplysninger via fejlloggen. Hvis du giver samtykke til statistik (se afsnit 9), anvender vi desuden Amplitude (EU-region) til anonym brugsstatistik. Hvis du rapporterer en fejl via appen, gemmes din rapport i vores private fejlsporingssystem hos GitHub, som dermed fungerer som databehandler for rapportens tekst og dit trænernavn — rapporten indeholder kun det, du selv skriver, samt dit trænernavn. Alle databehandlere behandler udelukkende data på vores vegne og i overensstemmelse med GDPR.",
     "s8Title": "8. Dine rettigheder",
@@ -399,7 +399,13 @@
     "uploadConfirm": "Brug billede",
     "uploadError": "Noget gik galt. Prøv igen.",
     "uploadPositionTitle": "Placer dit avatar",
-    "uploadPositionHint": "Træk for at flytte · knib for at zoome"
+    "uploadPositionHint": "Træk for at flytte · knib for at zoome",
+    "hideFriendCodeLabel": "Skjul min vennekode",
+    "hideFriendCodeHint": "Andre ser \"Ønsker ikke nye venner lige nu\" i stedet for din kode, og kan ikke kopiere den."
+  },
+  "FriendCode": {
+    "hiddenLabel": "Ønsker ikke nye venner lige nu",
+    "ownerNote": "Skjult for andre"
   },
   "ProfileSetup": {
     "subtitle": "Opret din lokale trænerprofil",
