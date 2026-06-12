@@ -15,10 +15,17 @@
 //   - Type: HTTP Request
 //   - URL: https://<project-ref>.supabase.co/functions/v1/notify-raid-message
 //   - HTTP method: POST
-//   - Headers: Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>
+//   - Headers:
+//       Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>
+//       x-webhook-secret: <WEBHOOK_SECRET>   (enables the caller-auth gate below)
 //
 // REQUIRED SECRETS (set via `supabase secrets set` or the Supabase dashboard):
 //   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+// OPTIONAL SECRET:
+//   WEBHOOK_SECRET — when set, the function rejects any call whose
+//   `x-webhook-secret` header doesn't match. Unset = fail-open (no enforcement),
+//   so deploying never breaks delivery. Set it ONLY AFTER the header is added to
+//   every webhook, then redeploy, to avoid a rejection window.
 
 import webpush from 'npm:web-push@3.6.7';
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -30,8 +37,33 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 webpush.setVapidDetails('mailto:renraz@gmail.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
+// Caller-auth gate (security review Finding 1). FAIL-OPEN until configured: if
+// WEBHOOK_SECRET is unset the check is skipped, so deploying this code can never
+// break push delivery. Once the secret is set (and the function redeployed), any
+// caller that doesn't present a matching `x-webhook-secret` header is rejected —
+// closing the hole where the public anon key alone could trigger forged pushes.
+const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET');
+
+function isAuthorizedCaller(req: Request): boolean {
+  if (!WEBHOOK_SECRET) return true; // not configured yet → allow
+  const provided = req.headers.get('x-webhook-secret') ?? '';
+  return timingSafeEqual(provided, WEBHOOK_SECRET);
+}
+
+// Constant-time comparison — avoids leaking the secret via response timing.
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return mismatch === 0;
+}
+
 Deno.serve(async (req: Request) => {
   try {
+    if (!isAuthorizedCaller(req)) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
     const payload = await req.json();
     const record = payload.record;
 
