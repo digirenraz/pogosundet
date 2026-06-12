@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { Reply, SendHorizontal, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { ChatMessage } from '@/lib/chat/types';
+import { CHAT_MESSAGE_MAX_LENGTH, type ChatMessage } from '@/lib/chat/types';
 import { LongPressHint } from './LongPressHint';
 
 interface ComposerProps {
@@ -99,6 +99,7 @@ export function Composer({
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            maxLength={CHAT_MESSAGE_MAX_LENGTH}
             rows={1}
             placeholder={placeholder}
             className="flex-1 bg-transparent border-0 outline-none resize-none text-[15px] text-card-foreground placeholder:text-muted-foreground py-1.5 max-h-[120px]"

@@ -1,3 +1,9 @@
+// Max length for a single chat message (channel, raid, and DM all share the
+// `Composer`). Enforced as a `maxLength` on the composer textarea and mirrored
+// by DB CHECK constraints (migration 019) so the cap holds even if a client
+// inserts a message directly via the Supabase API.
+export const CHAT_MESSAGE_MAX_LENGTH = 2000;
+
 // Shared chat-message shape consumed by `MessageGroupView`, `Composer`,
 // `MessageActionSheet`, and `ReplyQuote`. Lives outside the channel-specific
 // directory so both channel chat (`ChannelScreen`) and raid chat

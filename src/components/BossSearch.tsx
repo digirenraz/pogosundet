@@ -9,12 +9,14 @@ interface BossSearchProps {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  /** Max characters accepted in the free-text input. */
+  maxLength?: number;
 }
 
 // Autocomplete for raid boss names.
 // When the input is focused and empty it shows current raid bosses as quick picks.
 // When 2+ characters are typed it searches all Pokémon names.
-export function BossSearch({ value, onChange, placeholder = 'Søg raid boss...' }: BossSearchProps) {
+export function BossSearch({ value, onChange, placeholder = 'Søg raid boss...', maxLength }: BossSearchProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(value);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,6 +63,7 @@ export function BossSearch({ value, onChange, placeholder = 'Søg raid boss...' 
         <input
           type="text"
           value={query}
+          maxLength={maxLength}
           placeholder={placeholder}
           onFocus={() => setOpen(true)}
           onChange={e => {

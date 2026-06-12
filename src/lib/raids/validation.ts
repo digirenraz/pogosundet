@@ -1,3 +1,12 @@
+// Max lengths for the free-text raid fields. Single source of truth, shared by
+// the form's `maxLength` attributes (src/app/[locale]/raids/new/page.tsx) and
+// mirrored by DB CHECK constraints (migration 019) so the cap holds even if a
+// client bypasses the form. RAID_GYM_NAME_MAX matches the gyms.name cap
+// (migration 018) since a posted gym name can be auto-learned into that table.
+export const RAID_GYM_NAME_MAX = 120;
+export const RAID_BOSS_NAME_MAX = 60;
+export const RAID_NOTE_MAX = 500;
+
 export interface RaidInput {
   image_url?: string | null;
   gym_name?: string | null;

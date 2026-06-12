@@ -27,6 +27,8 @@ interface GymSearchProps {
   placeholder?: string;
   /** The user's last few gym names (newest first) for the recent group. */
   recentGyms?: string[];
+  /** Max characters accepted in the free-text input. */
+  maxLength?: number;
 }
 
 // Module-level cache so the gyms table is fetched at most once per page load.
@@ -54,6 +56,7 @@ export function GymSearch({
   onChange,
   placeholder,
   recentGyms = [],
+  maxLength,
 }: GymSearchProps) {
   const t = useTranslations('GymSearch');
   const [open, setOpen] = useState(false);
@@ -128,6 +131,7 @@ export function GymSearch({
         <input
           type="text"
           value={query}
+          maxLength={maxLength}
           placeholder={placeholder ?? t('placeholder')}
           onFocus={() => setOpen(true)}
           onChange={e => {
