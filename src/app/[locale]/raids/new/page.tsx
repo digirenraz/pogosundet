@@ -13,7 +13,12 @@ import {
 } from '@/lib/raids/helpers';
 import { learnGym } from '@/lib/gyms/helpers';
 import { track } from '@/lib/analytics/amplitude';
-import { validateRaid } from '@/lib/raids/validation';
+import {
+  RAID_BOSS_NAME_MAX,
+  RAID_GYM_NAME_MAX,
+  RAID_NOTE_MAX,
+  validateRaid,
+} from '@/lib/raids/validation';
 import { BossSearch } from '@/components/BossSearch';
 import { GymSearch } from '@/components/GymSearch';
 
@@ -321,6 +326,7 @@ export default function NewRaidPage() {
               onChange={setGymName}
               placeholder={t('form.gymSearch')}
               recentGyms={recentGyms}
+              maxLength={RAID_GYM_NAME_MAX}
             />
           </div>
 
@@ -336,6 +342,7 @@ export default function NewRaidPage() {
               value={bossName}
               onChange={setBossName}
               placeholder={t('form.bossSearch')}
+              maxLength={RAID_BOSS_NAME_MAX}
             />
           </div>
 
@@ -381,6 +388,7 @@ export default function NewRaidPage() {
               value={note}
               onChange={e => setNote(e.target.value)}
               placeholder={t('form.notePlaceholder')}
+              maxLength={RAID_NOTE_MAX}
               rows={3}
               className="border border-border rounded-lg px-3 py-2.5 text-[15px] bg-background text-card-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary resize-none"
             />
