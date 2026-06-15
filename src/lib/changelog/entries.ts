@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-06-15',
+    text: 'Nyt app-ikon og ny indlæsningsskærm: broen over Sundet som et lille medaljon-mærke i stedet for den gamle Poké Ball. Har du appen på hjemmeskærmen, opdateres ikonet næste gang du åbner den.',
+  },
+  {
     date: '2026-06-12',
     text: 'Du kan nu skjule din vennekode under "Rediger profil", hvis du ikke leder efter nye venner lige nu. Andre ser så "Ønsker ikke nye venner lige nu" i stedet for din kode.',
   },

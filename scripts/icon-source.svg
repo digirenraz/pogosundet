@@ -1,0 +1,62 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PoGoSundet">
+  <!--
+    PoGoSundet app icon — "Direction B / Sundet" (Claude Design handoff, 2026-06-15).
+    The bridge across the Sound framed as a wood-rimmed collectible medallion on the
+    brand teal field. Deliberately moved off the literal Poké Ball (IP) while keeping
+    the round, collectible, location-game feel.
+
+    NOTE: this is the FULL-BLEED variant (no rounded-corner clip) so it is safe for
+    the "maskable" manifest purpose — the platform applies its own mask/rounding.
+    The rounded-tile presentation lives in the loading screen (CSS border-radius).
+  -->
+  <defs>
+    <radialGradient id="field" cx="0.5" cy="0.42" r="0.75">
+      <stop offset="0" stop-color="#15545f"/><stop offset="1" stop-color="#0a2c34"/>
+    </radialGradient>
+    <clipPath id="med"><circle cx="256" cy="256" r="184"/></clipPath>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dff2ea"/><stop offset="1" stop-color="#69c2b4"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f93a6"/><stop offset="1" stop-color="#103d51"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eccc9b"/><stop offset="1" stop-color="#9c6c3c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#field)"/>
+  <g fill="none" stroke="#cfeef0" stroke-opacity="0.06" stroke-width="3">
+    <circle cx="256" cy="256" r="214"/><circle cx="256" cy="256" r="238"/>
+  </g>
+
+  <!-- scene inside medallion -->
+  <g clip-path="url(#med)">
+    <rect x="72" y="72" width="368" height="186" fill="url(#sky)"/>
+    <circle cx="350" cy="150" r="46" fill="#fff" opacity="0.30"/>
+    <!-- far land -->
+    <rect x="72" y="246" width="368" height="20" fill="#6f9a4a"/>
+    <path d="M72 248 q40 -12 80 0 t90 -2 t100 4 t96 -2 v22 h-466 z" fill="#5d8a3e" opacity="0.7"/>
+    <!-- sea -->
+    <rect x="72" y="258" width="368" height="200" fill="url(#sea)"/>
+    <!-- current swirls -->
+    <path d="M120 360 q60 -20 130 -6 t150 2" fill="none" stroke="#bfe6da" stroke-opacity="0.14" stroke-width="10"/>
+    <path d="M120 408 q70 -16 150 0 t150 -4" fill="none" stroke="#bfe6da" stroke-opacity="0.10" stroke-width="9"/>
+    <!-- bridge piers -->
+    <g stroke="#9fb4ba" stroke-width="5" stroke-linecap="round">
+      <line x1="140" y1="318" x2="140" y2="344"/>
+      <line x1="200" y1="306" x2="200" y2="334"/>
+      <line x1="262" y1="297" x2="262" y2="326"/>
+      <line x1="324" y1="291" x2="324" y2="320"/>
+      <line x1="386" y1="288" x2="386" y2="316"/>
+    </g>
+    <!-- bridge deck -->
+    <path d="M70 330 Q256 286 444 282" fill="none" stroke="#aeb9bd" stroke-width="11" stroke-linecap="round"/>
+    <path d="M70 336 Q256 292 444 288" fill="none" stroke="#eef3f4" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- medallion rim -->
+  <circle cx="256" cy="256" r="184" fill="none" stroke="url(#rim)" stroke-width="16"/>
+  <circle cx="256" cy="256" r="192.5" fill="none" stroke="#5f3d1f" stroke-opacity="0.45" stroke-width="3"/>
+  <circle cx="256" cy="256" r="176" fill="none" stroke="#000" stroke-opacity="0.18" stroke-width="2.5"/>
+</svg>

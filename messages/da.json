@@ -277,8 +277,7 @@
   },
   "LoadingScreen": {
     "ariaLabel": "Indlæser",
-    "status": "Finder lokale trænere",
-    "subtitle": "Frederikssund og omegn"
+    "status": "Leder efter lokale trænere…"
   },
   "Chat": {
     "listTitle": "Chat",
