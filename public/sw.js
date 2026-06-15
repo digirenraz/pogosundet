@@ -14,8 +14,8 @@
 // up). Network-first always serves a document matching the live chunks when
 // online, and falls back to the cached shell only when the network fails.
 
-const SHELL_CACHE = 'pogosundet-shell-v16';
-const RUNTIME_CACHE = 'pogosundet-runtime-v16';
+const SHELL_CACHE = 'pogosundet-shell-v17';
+const RUNTIME_CACHE = 'pogosundet-runtime-v17';
 
 // Holds an image shared into the app via the Web Share Target (Android). It is
 // NOT versioned and is preserved across SW activations (see the activate

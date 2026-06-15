@@ -208,8 +208,7 @@
   },
   "LoadingScreen": {
     "ariaLabel": "Loading",
-    "status": "Finding local trainers",
-    "subtitle": "Frederikssund and surroundings"
+    "status": "Looking for local trainers…"
   },
   "Chat": {
     "listTitle": "Chat",
