@@ -3,28 +3,50 @@
 // Banner shown on the raids page prompting PWA users to enable push notifications.
 // Only visible when running as an installed standalone PWA and the user hasn't
 // yet subscribed or dismissed the prompt.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bell, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { subscribeToPush } from '@/lib/push/subscription-helpers';
+import { subscribeToPush, getPushStatus } from '@/lib/push/subscription-helpers';
 import { useMounted } from '@/lib/hooks/use-mounted';
 
 const DISMISSED_KEY = 'push-prompt-dismissed';
 
+type PushStatus = 'subscribed' | 'unsubscribed' | 'denied' | 'unsupported';
+
 interface Props {
   userId: string;
-  initialStatus: 'subscribed' | 'unsubscribed' | 'denied' | 'unsupported';
 }
 
-export function PushSubscribePrompt({ userId, initialStatus }: Props) {
+export function PushSubscribePrompt({ userId }: Props) {
   const mounted = useMounted();
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Live push state read from the browser's PushManager on the device — NOT the
+  // server's `push_subscriptions` DB row. The DB row survives a PWA uninstall,
+  // so after the user reinstalls (e.g. to pick up a new icon) it falsely reads
+  // "subscribed": the prompt would never show, iOS is never asked for
+  // permission, and no notifications arrive. Re-checking the real subscription
+  // here means a reinstalled PWA correctly re-offers the prompt. Re-subscribing
+  // upserts (onConflict user_id), replacing the now-dead endpoint.
+  const [status, setStatus] = useState<PushStatus | null>(null);
   const t = useTranslations('Raids');
+
+  useEffect(() => {
+    if (!mounted) return;
+    let cancelled = false;
+    getPushStatus().then((s) => {
+      if (!cancelled) setStatus(s);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mounted]);
 
   // Gate all browser-only checks behind `mounted` to avoid SSR mismatch.
   if (!mounted || dismissed) return null;
-  if (initialStatus !== 'unsubscribed') return null;
+  // `null` = still checking; only offer when the device genuinely has no live
+  // subscription (subscribed/denied/unsupported all hide the prompt).
+  if (status !== 'unsubscribed') return null;
   if (localStorage.getItem(DISMISSED_KEY) === '1') return null;
   if (!window.matchMedia('(display-mode: standalone)').matches) return null;
 

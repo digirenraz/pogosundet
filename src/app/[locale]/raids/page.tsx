@@ -19,12 +19,14 @@ export default async function RaidsPage() {
 
   if (!userId) redirect('/login');
 
-  // Raid list, push subscription status, and translations are all independent
-  // once we have userId — run them in parallel. The profile-existence guard is
-  // enforced by the middleware.
-  const [{ active, expired }, { data: pushSub }, t, { data: me }] = await Promise.all([
+  // Raid list, translations, and the viewer's profile are independent once we
+  // have userId — run them in parallel. The profile-existence guard is enforced
+  // by the middleware. Push-subscription state is intentionally NOT read here:
+  // the `PushSubscribePrompt` checks the live browser subscription on the
+  // device, since the DB row survives a PWA uninstall and would otherwise
+  // suppress the prompt after a reinstall (see the component).
+  const [{ active, expired }, t, { data: me }] = await Promise.all([
     getRecentRaids(userId),
-    supabase.from('push_subscriptions').select('id').eq('user_id', userId).maybeSingle(),
     getTranslations('Raids'),
     supabase
       .from('profiles')
@@ -34,7 +36,6 @@ export default async function RaidsPage() {
   ]);
 
   const hasAny = active.length > 0 || expired.length > 0;
-  const pushStatus = pushSub ? 'subscribed' : 'unsubscribed';
 
   return (
     <DesktopShell me={(me as SidebarUser | null) ?? undefined}>
@@ -59,7 +60,7 @@ export default async function RaidsPage() {
 
       {/* Content padded for fixed header (60px) and fixed bottom nav (64px) */}
       <main className="pt-[76px] pb-[80px] px-4 flex flex-col gap-4">
-        <PushSubscribePrompt userId={userId} initialStatus={pushStatus} />
+        <PushSubscribePrompt userId={userId} />
         {!hasAny ? (
           <p className="text-center text-muted-foreground text-[14px] mt-8">{t('emptyState')}</p>
         ) : (
