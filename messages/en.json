@@ -165,7 +165,27 @@
     "reactionShiny": "I got a shiny!",
     "reactionHundo": "I got a hundo!",
     "reactionYou": "You",
-    "reactionUnknownUser": "A trainer"
+    "reactionUnknownUser": "A trainer",
+    "reactionsTitle": "Reactions",
+    "host": {
+      "activeLabel": "You're the host",
+      "activeTitle": "Is the raid over?",
+      "doneLabel": "Ended · {time}",
+      "doneTitle": "Raid completed",
+      "finishButton": "End raid",
+      "undoButton": "Undo"
+    },
+    "detail": {
+      "participantsTitle": "Participants",
+      "hostBadge": "HOST",
+      "you": "You",
+      "extraSuffix": "+{count} extra",
+      "signupsClosed": "Sign-ups closed",
+      "copyNames": "Copy player names",
+      "copyNamesDone": "Player names copied",
+      "copyNamesHelper": "Find them in Pokémon GO and invite to the raid lobby",
+      "newMessages": "{count, plural, one {# new message} other {# new messages}}"
+    }
   },
   "GymSearch": {
     "placeholder": "Search gym...",
