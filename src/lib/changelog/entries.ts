@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-06-15',
+    text: 'Når du har oprettet et raid, er der nu et tydeligt "Afslut"-kort til at markere raidet som gennemført — det lukker for nye tilmeldinger, men folk kan stadig reagere. Du kan også kopiere alle deltageres spillernavne på én gang og inviter dem i Pokémon GO, og en lille boble nudger dig ned til chatten, hvis der kommer nye beskeder, mens du er scrollet op.',
+  },
+  {
+    date: '2026-06-15',
     text: 'Nyt app-ikon og ny indlæsningsskærm: broen over Sundet som et lille medaljon-mærke i stedet for den gamle Poké Ball. Har du appen på hjemmeskærmen, opdateres ikonet næste gang du åbner den.',
   },
   {

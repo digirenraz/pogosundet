@@ -3,9 +3,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, Check, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, MapPin, Check, Minus, Plus, Copy, Users, ArrowDown, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { joinRaid, leaveRaid, updateAttendeeExtra, toggleRaidCompleted } from '@/lib/raids/helpers';
+import { buildPlayerNamesText } from '@/lib/raids/participants';
 import {
   REACTION_CODES,
   groupRaidReactions,
@@ -61,6 +62,23 @@ function initials(name: string): string {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+}
+
+// Drawn checkmark for the owner completion card. The stroke "draws in" when
+// `on` flips (dashoffset 0), paired with the tickPop scale on its container.
+function TickMark({ on, size = 28, color = '#00b09f' }: { on: boolean; size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden className="block">
+      <path
+        d="M5 12.5 L10 17.5 L19 7"
+        stroke={color}
+        strokeWidth={3.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ strokeDasharray: 26, strokeDashoffset: on ? 0 : 26, transition: 'stroke-dashoffset 0.32s ease 0.06s' }}
+      />
+    </svg>
+  );
 }
 
 // Convert server `RaidMessage` (column name `message`) into the canonical
@@ -134,6 +152,57 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
   const attendeesRef = useRef(attendees);
   // Must update via effect — React 19 react-hooks/refs forbids ref.current writes during render.
   useEffect(() => { attendeesRef.current = attendees; }, [attendees]);
+
+  // Unread-chat nudge — a floating pill appears when a new message lands while
+  // the chat is scrolled out of view, so the user doesn't miss it. The page
+  // scrolls at the document level (fixed header + composer), so this works off
+  // window scroll and the chat anchor's viewport position. `unseen` counts
+  // messages that arrived below the fold (own sent messages never count).
+  const chatAnchorRef = useRef<HTMLDivElement>(null);
+  const [unseen, setUnseen] = useState(0);
+  const prevMsgCountRef = useRef(messages.length);
+
+  // The chat heading is on screen (above the fixed composer at the bottom).
+  const isChatInView = useCallback(() => {
+    const ch = chatAnchorRef.current;
+    if (!ch || typeof window === 'undefined') return true;
+    return ch.getBoundingClientRect().top < window.innerHeight - 130;
+  }, []);
+
+  // Clear the nudge once the user scrolls the chat into view.
+  useEffect(() => {
+    const onScroll = () => { if (isChatInView()) setUnseen(0); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isChatInView]);
+
+  // Count newly-arrived messages from other users while the chat is off-screen.
+  useEffect(() => {
+    const added = messages.length - prevMsgCountRef.current;
+    prevMsgCountRef.current = messages.length;
+    if (added <= 0) return;
+    const fromOthers = messages
+      .slice(messages.length - added)
+      .filter((m) => m.author_id !== currentUserId).length;
+    if (fromOthers > 0 && !isChatInView()) setUnseen((u) => u + fromOthers);
+  }, [messages, currentUserId, isChatInView]);
+
+  const scrollToChat = () => {
+    chatAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setUnseen(0);
+  };
+
+  // "Kopiér spillernavne" — copy every attendee trainer name (one per line) so
+  // the host can paste them into Pokémon GO to invite the raid lobby.
+  const [namesCopied, setNamesCopied] = useState(false);
+  function handleCopyNames() {
+    const text = buildPlayerNamesText(attendees);
+    if (text && typeof navigator !== 'undefined' && navigator.clipboard) {
+      void navigator.clipboard.writeText(text);
+    }
+    setNamesCopied(true);
+    setTimeout(() => setNamesCopied(false), 1800);
+  }
 
   // Realtime: attendee changes trigger router.refresh (needs the profile join);
   // message INSERTs are handled locally — avoids a full RSC refetch per chat message.
@@ -430,6 +499,11 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
   const startsAtDate = raid.starts_at ? new Date(raid.starts_at) : new Date(raid.created_at);
   const timeString = startsAtDate.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
 
+  // Completion time shown on the owner card once the raid is marked done.
+  const completedTime = completedAt
+    ? new Date(completedAt).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
   // Build the visual row list — day separators between groups whose first
   // message crosses a calendar day boundary from the previous group.
   const rows = useMemo(() => {
@@ -573,10 +647,54 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
           )}
         </div>
 
-        {/* Raid reactions + poster completion toggle */}
+        {/* Owner completion card — poster-only. Lifts "mark completed" out of the
+            reaction chips so it reads as the deliberate action that ends sign-ups.
+            Completed → solid teal card with an animated tick; "Fortryd" to undo. */}
+        {isPoster && (
+          <div className="px-4 pt-3.5 pb-1.5">
+            <div
+              className={`rounded-2xl p-4 flex items-center gap-3.5 border ${
+                completedAt ? 'bg-primary border-primary' : 'border-secondary'
+              }`}
+              style={completedAt ? undefined : { background: '#e6f6f3' }}
+            >
+              <div
+                key={completedAt ? 'on' : 'off'}
+                className="w-[52px] h-[52px] rounded-full shrink-0 border-[2.5px] border-white bg-white flex items-center justify-center"
+                style={{ animation: completedAt ? 'raid-tick-pop 0.34s cubic-bezier(.2,1.3,.4,1) both' : 'none' }}
+              >
+                <TickMark on={!!completedAt} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className={`text-[12px] font-bold uppercase tracking-wide mb-0.5 ${completedAt ? 'text-white/85' : 'text-primary'}`}>
+                  {completedAt ? t('host.doneLabel', { time: completedTime }) : t('host.activeLabel')}
+                </div>
+                <div className={`text-[17px] font-extrabold ${completedAt ? 'text-white' : 'text-card-foreground'}`}>
+                  {completedAt ? t('host.doneTitle') : t('host.activeTitle')}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleCompleted}
+                className={`shrink-0 rounded-[10px] px-4 py-2.5 text-[14px] font-extrabold ${
+                  completedAt
+                    ? 'bg-transparent border-[1.5px] border-white/60 text-white'
+                    : 'bg-primary text-primary-foreground'
+                }`}
+              >
+                {completedAt ? t('host.undoButton') : t('host.finishButton')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Reactions — own labelled group, separate from the completion action.
+            Anyone who can see the raid can react; stays tappable on completed
+            raids (post-raid "TfR"/shiny/hundo). */}
         <div className="px-4 py-3.5 border-b border-border flex flex-col gap-3">
-          {/* Reaction buttons — anyone who can see the raid can react. Available
-              on all raids, including ended/completed (post-raid "TfR"). */}
+          <p className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
+            {t('reactionsTitle')}
+          </p>
           <div className="flex flex-wrap gap-2">
             {reactionButtons.map(({ code, label }) => {
               const users = raidReactions[code];
@@ -642,33 +760,87 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
             </div>
           )}
 
-          {/* Poster-only: mark completed / undo */}
-          {isPoster && (
-            <button
-              type="button"
-              onClick={handleToggleCompleted}
-              className={`h-10 self-start rounded-lg px-4 text-[13px] font-bold border transition-all flex items-center gap-1.5 ${
-                completedAt
-                  ? 'bg-primary border-primary text-primary-foreground'
-                  : 'bg-background border-border text-card-foreground'
-              }`}
-            >
-              {completedAt && <Check size={15} />}
-              {completedAt ? t('completedMark') : t('markCompleted')}
-            </button>
-          )}
         </div>
 
-        {/* RSVP section */}
+        {/* Deltagere (participants) — vertical list with the host flagged VÆRT,
+            a "copy player names" helper, and a sign-ups-closed lock when done.
+            Non-posters keep the join/leave + extra control (hidden once done);
+            the host is auto-joined and sets their own extra inline. */}
         <div className="px-4 py-3.5 border-b border-border">
-          <p className="text-[14px] font-bold mb-2.5">
-            {completedAt ? t('detail.rsvpClosed') : t('detail.rsvpTitle')}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[16px] font-bold">
+              {t('detail.participantsTitle')} · {attendees.length}
+            </p>
+            {completedAt && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-input border border-border px-2.5 py-1 text-[12px] font-bold text-muted-foreground">
+                <Lock size={13} />
+                {t('detail.signupsClosed')}
+              </span>
+            )}
+          </div>
 
-          {/* Button + stepper row — hidden once the raid is completed; you can no
-              longer mark participation, the attendees list below becomes read-only. */}
-          {!completedAt && (
-            <div className="flex gap-2 items-center flex-wrap">
+          {attendees.length > 0 && (
+            <div className="flex flex-col">
+              {attendees.map(a => {
+                const isSelf = a.user_id === currentUserId;
+                const isHost = a.user_id === raid.user_id;
+                const showOwnStepper = isSelf && isPoster && !completedAt;
+                return (
+                  <div key={a.user_id} className="flex items-center gap-2.5 py-1.5">
+                    <div
+                      className={`w-[34px] h-[34px] rounded-full text-[14px] font-bold flex items-center justify-center shrink-0 ${
+                        isHost ? 'bg-primary text-primary-foreground' : 'bg-secondary text-primary'
+                      }`}
+                    >
+                      {isSelf ? 'D' : a.profiles?.trainer_name ? initials(a.profiles.trainer_name) : '?'}
+                    </div>
+                    <span className="text-[15px] font-semibold flex-1 truncate">
+                      {isSelf ? t('detail.you') : a.profiles?.trainer_name ?? '—'}
+                    </span>
+                    {isHost && (
+                      <span className="text-[11px] font-extrabold text-primary bg-secondary rounded-full px-2.5 py-1 tracking-wide">
+                        {t('detail.hostBadge')}
+                      </span>
+                    )}
+                    {showOwnStepper ? (
+                      <div className="bg-input rounded-full flex items-center gap-1 px-1 py-0.5">
+                        <button
+                          type="button"
+                          disabled={extra === 0}
+                          onClick={() => handleExtraChange(-1)}
+                          className="w-6 h-6 flex items-center justify-center text-muted-foreground disabled:opacity-40"
+                          aria-label={t('detail.extra')}
+                        >
+                          <Minus size={13} />
+                        </button>
+                        <span className="text-[13px] font-extrabold text-primary w-7 text-center">+{extra}</span>
+                        <button
+                          type="button"
+                          disabled={extra === 9}
+                          onClick={() => handleExtraChange(1)}
+                          className="w-6 h-6 flex items-center justify-center text-primary disabled:opacity-40"
+                          aria-label={t('detail.extra')}
+                        >
+                          <Plus size={13} />
+                        </button>
+                      </div>
+                    ) : (
+                      (a.extra_count ?? 0) > 0 && (
+                        <span className="text-[12px] font-bold text-primary bg-secondary rounded-full px-2 py-0.5">
+                          {t('detail.extraSuffix', { count: a.extra_count ?? 0 })}
+                        </span>
+                      )
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Non-poster RSVP — join/leave + extra. Hidden when completed (locked)
+              and for the poster (auto-joined host). */}
+          {!isPoster && !completedAt && (
+            <div className="flex gap-2 items-center flex-wrap mt-3">
               <button
                 onClick={joined ? handleLeave : handleJoin}
                 className={`flex-1 min-w-[120px] h-11 rounded-lg font-bold text-[14px] border transition-all flex items-center justify-center gap-1.5 ${
@@ -706,30 +878,36 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
             </div>
           )}
 
-          {/* Attendees list */}
+          {/* Copy player names — paste into Pokémon GO to invite the lobby. Stays
+              available after completion so the host can still round people up. */}
           {attendees.length > 0 && (
-            <div className="flex flex-wrap gap-2.5 mt-3">
-              {attendees.map(a => (
-                <div key={a.user_id} className="flex items-center gap-1.5">
-                  <div className="w-[26px] h-[26px] rounded-full bg-secondary text-primary text-[11px] font-bold flex items-center justify-center shrink-0">
-                    {a.profiles?.trainer_name ? initials(a.profiles.trainer_name) : '?'}
-                  </div>
-                  <span className="text-[12px] font-semibold">
-                    {a.profiles?.trainer_name ?? '—'}
-                  </span>
-                  {(a.extra_count ?? 0) > 0 && (
-                    <span className="text-[11px] text-muted-foreground">
-                      +{a.extra_count}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
+            <>
+              <button
+                type="button"
+                onClick={handleCopyNames}
+                className={`w-full mt-3 h-12 rounded-xl border-[1.5px] flex items-center justify-center gap-2 transition-colors ${
+                  namesCopied ? 'border-primary bg-secondary' : 'border-border bg-background'
+                }`}
+              >
+                {namesCopied ? (
+                  <Check size={18} className="text-primary" />
+                ) : (
+                  <Copy size={18} className="text-primary" />
+                )}
+                <span className={`text-[15px] font-bold ${namesCopied ? 'text-primary' : 'text-card-foreground'}`}>
+                  {namesCopied ? t('detail.copyNamesDone') : t('detail.copyNames')}
+                </span>
+              </button>
+              <div className="mt-2 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                <Users size={12} />
+                {t('detail.copyNamesHelper')}
+              </div>
+            </>
           )}
         </div>
 
         {/* Chat section */}
-        <div className="px-3 pt-3.5 pb-4">
+        <div ref={chatAnchorRef} className="px-3 pt-3.5 pb-4 scroll-mt-16">
           <p className="text-[14px] font-bold mb-3 px-1">{t('detail.chatTitle')}</p>
 
           {rows.length === 0 ? (
@@ -769,6 +947,20 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
         </div>
       </div>
 
+      {/* Unread-chat nudge — appears when new messages land below the fold so
+          the user scrolls down instead of missing them. Tapping jumps to chat. */}
+      {unseen > 0 && (
+        <button
+          type="button"
+          onClick={scrollToChat}
+          className="raid-nudge fixed left-1/2 bottom-[96px] z-20 flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 py-2.5"
+          style={{ transform: 'translateX(-50%)', boxShadow: '0 6px 18px rgba(0,176,159,0.4)' }}
+        >
+          <span className="text-[14px] font-bold">{t('detail.newMessages', { count: unseen })}</span>
+          <ArrowDown size={16} />
+        </button>
+      )}
+
       {/* Composer (replaces the old pinned <input> strip). Passes the
           channelName-shaped placeholder using the raid's boss/gym header. */}
       <Composer
@@ -787,6 +979,13 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
         onReply={handleSheetReply}
         onCopy={handleSheetCopy}
       />
+
+      <style>{`
+        @keyframes raid-tick-pop { 0% { transform: scale(0.6); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+        @keyframes raid-nudge { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -4px); } }
+        .raid-nudge { animation: raid-nudge 1.3s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .raid-nudge { animation: none; } }
+      `}</style>
     </div>
   );
 }
