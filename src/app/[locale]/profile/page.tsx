@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { Profile } from '@/lib/profile/helpers';
 import { Avatar, TeamChip, type AvatarTeam } from '@/components/Avatar';
 import { BottomNav } from '@/components/BottomNav';
-import { AppMenu } from '@/components/AppMenu';
+import { AppHeader } from '@/components/AppHeader';
 import { DesktopSidebar } from '@/components/desktop/DesktopSidebar';
 import { DesktopProfile } from '@/components/desktop/DesktopProfile';
 
@@ -46,13 +46,10 @@ export default async function ProfileTabPage() {
 
     {/* Mobile / tablet (<1024px): the existing single-column profile. */}
     <div className="lg:hidden min-h-screen bg-background flex flex-col">
-      {/* Header — matches /players visual chrome */}
-      <header className="fixed top-0 left-0 right-0 h-[60px] bg-card border-b border-border flex items-center px-4 z-10">
-        <AppMenu />
-        <span className="text-[18px] font-bold text-card-foreground">{t('headerTitle')}</span>
-      </header>
+      {/* Branded header — matches the other mobile tab screens */}
+      <AppHeader title={t('headerTitle')} />
 
-      <main className="flex-1 pt-[76px] pb-[80px] px-4 flex flex-col gap-4">
+      <main className="flex-1 pt-[116px] pb-[80px] px-4 flex flex-col gap-4">
         {/* Identity block */}
         <div className="flex flex-col items-center gap-2.5 py-3">
           <Avatar
