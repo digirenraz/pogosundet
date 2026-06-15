@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-06-15',
+    text: 'Toppen af appen viser nu app-ikonet og navnet "PoGoSundet" med skærmens titel i stor skrift nedenunder, så det tydeligt fremgår, hvilken app du er i.',
+  },
+  {
+    date: '2026-06-15',
     text: 'Rettet: Hvis du geninstallerede appen på din hjemmeskærm, blev du ikke spurgt om at tillade notifikationer igen, så de holdt op med at virke. Nu dukker spørgsmålet op igen, så du kan slå dem til på ny.',
   },
   {

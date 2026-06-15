@@ -27,8 +27,8 @@ export function PlayersScreen({ profiles, currentUserId }: PlayersScreenProps) {
       {/* Mobile / tablet (<1024px): the existing single-column directory + bottom nav. */}
       <div className="min-h-screen bg-background lg:hidden">
         <DirectoryHeader />
-        {/* Content padded for fixed header (60px) and fixed bottom nav (64px) */}
-        <main className="pt-[76px] pb-[80px] px-4 flex flex-col gap-4">
+        {/* Content padded for the branded header (~105px) and fixed bottom nav (64px) */}
+        <main className="pt-[116px] pb-[80px] px-4 flex flex-col gap-4">
           <PlayerDirectory
             profiles={profiles}
             currentUserId={currentUserId}

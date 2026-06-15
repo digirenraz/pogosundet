@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getRecentRaids } from '@/lib/raids/server-helpers';
 import { RaidList } from '@/components/RaidList';
-import { AppMenu } from '@/components/AppMenu';
+import { AppHeader } from '@/components/AppHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { PushSubscribePrompt } from '@/components/PushSubscribePrompt';
 import { DesktopShell } from '@/components/desktop/DesktopShell';
@@ -40,15 +40,26 @@ export default async function RaidsPage() {
   return (
     <DesktopShell me={(me as SidebarUser | null) ?? undefined}>
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-10 bg-card border-b border-border px-4 h-[60px] flex items-center justify-between">
-        <div className="flex items-center min-w-0">
-          {/* Hamburger only on mobile — desktop gets the sidebar's "Nyheder" entry */}
-          <span className="lg:hidden flex items-center">
-            <AppMenu />
-          </span>
-          <h1 className="text-[18px] font-bold text-card-foreground">{t('headerTitle')}</h1>
-        </div>
+      {/* Mobile: branded header (icon + wordmark + large title) with the "+" action. */}
+      <div className="lg:hidden">
+        <AppHeader
+          title={t('headerTitle')}
+          action={
+            <Link
+              href="/raids/new"
+              className="bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center shadow-[0_3px_8px_rgba(0,176,159,0.30)]"
+              aria-label={t('postButton')}
+            >
+              <Plus size={22} />
+            </Link>
+          }
+        />
+      </div>
+
+      {/* Desktop: the sidebar (DesktopShell) brands the screen, so keep the simple
+          single-row header here — title + create action. */}
+      <div className="hidden lg:flex fixed top-0 left-0 right-0 z-10 bg-card border-b border-border px-4 h-[60px] items-center justify-between">
+        <h1 className="text-[18px] font-bold text-card-foreground">{t('headerTitle')}</h1>
         <Link
           href="/raids/new"
           className="bg-primary text-primary-foreground rounded-full w-9 h-9 flex items-center justify-center"
@@ -58,8 +69,8 @@ export default async function RaidsPage() {
         </Link>
       </div>
 
-      {/* Content padded for fixed header (60px) and fixed bottom nav (64px) */}
-      <main className="pt-[76px] pb-[80px] px-4 flex flex-col gap-4">
+      {/* Content padded for the branded header (~105px mobile / 60px desktop) + bottom nav (64px) */}
+      <main className="pt-[116px] lg:pt-[76px] pb-[80px] px-4 flex flex-col gap-4">
         <PushSubscribePrompt userId={userId} />
         {!hasAny ? (
           <p className="text-center text-muted-foreground text-[14px] mt-8">{t('emptyState')}</p>
