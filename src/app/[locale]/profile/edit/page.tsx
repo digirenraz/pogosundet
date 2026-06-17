@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ArrowLeft, Trash2, LogOut } from 'lucide-react';
@@ -20,6 +20,32 @@ export default function ProfileEditPage() {
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Unsaved-changes guard
+  const [isDirty, setIsDirty] = useState(false);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const dirtyRef = useRef(false);
+
+  const handleDirtyChange = useCallback((dirty: boolean) => {
+    setIsDirty(dirty);
+    dirtyRef.current = dirty;
+  }, []);
+
+  useEffect(() => {
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      if (dirtyRef.current) e.preventDefault();
+    }
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, []);
+
+  function handleBack() {
+    if (isDirty) {
+      setShowUnsavedDialog(true);
+    } else {
+      router.push('/profile');
+    }
+  }
 
   // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -98,11 +124,33 @@ export default function ProfileEditPage() {
     <div className="min-h-screen bg-[#F9FAFB] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-3 border-b border-[#E5E7EB] bg-white">
-        <button onClick={() => router.push('/profile')} className="text-[#6B7280]">
+        <button onClick={handleBack} className="text-[#6B7280]">
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-[18px] font-bold text-[#111827]">{tEdit('headerTitle')}</h1>
       </div>
+
+      {/* Unsaved changes confirmation dialog */}
+      {showUnsavedDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl p-5 mx-6 max-w-sm w-full flex flex-col gap-3">
+            <p className="text-sm font-semibold text-[#111827]">{tEdit('unsavedTitle')}</p>
+            <p className="text-xs text-[#6B7280] leading-relaxed">{tEdit('unsavedBody')}</p>
+            <button
+              onClick={() => router.push('/profile')}
+              className="w-full bg-red-500 text-white font-semibold py-3 px-4 rounded-xl"
+            >
+              {tEdit('unsavedDiscard')}
+            </button>
+            <button
+              onClick={() => setShowUnsavedDialog(false)}
+              className="w-full text-[#2BBFAA] font-semibold py-3 px-4 rounded-xl"
+            >
+              {tEdit('unsavedStay')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       <div className="flex-1 px-4 pt-4 pb-[96px]">
@@ -118,6 +166,7 @@ export default function ProfileEditPage() {
             submitLabel={tEdit('submit')}
             loading={loading}
             generalError={generalError}
+            onDirtyChange={handleDirtyChange}
           />
         ) : (
           <p className="text-center text-[#9CA3AF] py-12">…</p>

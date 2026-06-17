@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { UserRound, Hash, User, AlignLeft, Camera, EyeOff } from 'lucide-react';
 import { validateProfile, type ProfileInput, type Team } from '@/lib/profile/validation';
@@ -22,6 +22,7 @@ interface ProfileFormProps {
   generalError: string;
   onBack?: () => void;
   backLabel?: string;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 const TEAM_KEYS: Team[] = ['mystic', 'valor', 'instinct'];
@@ -38,6 +39,7 @@ export function ProfileForm({
   generalError,
   onBack,
   backLabel,
+  onDirtyChange,
 }: ProfileFormProps) {
   // Avatar-related strings live in their own ProfileForm namespace so the
   // component doesn't need callers to add keys to their own namespaces.
@@ -58,6 +60,24 @@ export function ProfileForm({
   const [avatar, setAvatar] = useState<string | null>(initialValues?.avatar_url ?? null);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [uploadError, setUploadError] = useState('');
+
+  const isDirty = useCallback(() => {
+    if (!initialValues) return false;
+    return (
+      trainerName !== (initialValues.trainer_name ?? '') ||
+      friendCode !== (initialValues.friend_code ?? '') ||
+      hideFriendCode !== (initialValues.hide_friend_code ?? false) ||
+      firstName !== (initialValues.first_name ?? '') ||
+      bio !== (initialValues.bio ?? '') ||
+      (team ?? undefined) !== (initialValues.team ?? undefined) ||
+      (levelSet ? level : undefined) !== (initialValues.level ?? undefined) ||
+      (avatar ?? undefined) !== (initialValues.avatar_url ?? undefined)
+    );
+  }, [trainerName, friendCode, hideFriendCode, firstName, bio, team, level, levelSet, avatar, initialValues]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty());
+  }, [isDirty, onDirtyChange]);
 
   function handleFriendCodeChange(value: string) {
     const digits = value.replace(/\D/g, '').slice(0, 12);

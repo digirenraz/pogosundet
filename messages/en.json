@@ -282,7 +282,11 @@
     "deleteConfirmBody": "Your account, profile, and all data will be permanently deleted. This cannot be undone.",
     "deleteConfirmYes": "Yes, delete my account",
     "deleteConfirmNo": "Cancel",
-    "deleteErrorGeneric": "Something went wrong. Please try again."
+    "deleteErrorGeneric": "Something went wrong. Please try again.",
+    "unsavedTitle": "Unsaved changes",
+    "unsavedBody": "You have unsaved changes. Do you want to leave without saving?",
+    "unsavedDiscard": "Leave without saving",
+    "unsavedStay": "Stay and save"
   },
   "ProfileForm": {
     "photoAdd": "Add PoGo avatar",
