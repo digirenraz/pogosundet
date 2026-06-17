@@ -356,7 +356,11 @@
     "deleteConfirmBody": "Din konto, profil og alle data slettes permanent. Denne handling kan ikke fortrydes.",
     "deleteConfirmYes": "Ja, slet min konto",
     "deleteConfirmNo": "Annuller",
-    "deleteErrorGeneric": "Noget gik galt. Prøv igen."
+    "deleteErrorGeneric": "Noget gik galt. Prøv igen.",
+    "unsavedTitle": "Ugemte ændringer",
+    "unsavedBody": "Du har ændringer, der ikke er gemt. Vil du forlade siden uden at gemme?",
+    "unsavedDiscard": "Forlad uden at gemme",
+    "unsavedStay": "Bliv og gem"
   },
   "IosOnboarding": {
     "introTitle": "Modtag notifikationer",
