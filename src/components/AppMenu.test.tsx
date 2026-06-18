@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { AppMenu } from './AppMenu';
 import { CHANGELOG_ENTRIES } from '@/lib/changelog/entries';
+import { HELP_ENTRIES } from '@/lib/help/entries';
 import daMessages from '../../messages/da.json';
 
 // Renders AppMenu with the real Danish messages so the test pins the actual
@@ -60,5 +61,35 @@ describe('AppMenu', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Luk' }));
     expect(screen.queryByText(CHANGELOG_ENTRIES[0].text)).not.toBeInTheDocument();
+  });
+
+  it('shows the "Hjælp" menu item when the hamburger is clicked', () => {
+    renderAppMenu();
+
+    expect(screen.queryByText('Hjælp')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    expect(screen.getByText('Hjælp')).toBeInTheDocument();
+  });
+
+  it('opens the help sheet from the menu and lazy-loads the entries', async () => {
+    renderAppMenu();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hjælp' }));
+
+    expect(await screen.findByText(HELP_ENTRIES[0].title)).toBeInTheDocument();
+    expect(screen.getByText(HELP_ENTRIES[0].body)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Hjælp' })).toBeInTheDocument();
+  });
+
+  it('closes the help sheet via the close button', async () => {
+    renderAppMenu();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hjælp' }));
+    await screen.findByText(HELP_ENTRIES[0].title);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Luk' }));
+    expect(screen.queryByText(HELP_ENTRIES[0].title)).not.toBeInTheDocument();
   });
 });

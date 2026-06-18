@@ -203,6 +203,12 @@
     "close": "Close",
     "empty": "No news yet."
   },
+  "Help": {
+    "menuItem": "Help",
+    "sheetTitle": "Help",
+    "close": "Close",
+    "empty": "No help articles yet."
+  },
   "BugReport": {
     "menuItem": "Report a bug",
     "sheetTitle": "Report a bug",

@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bug, Menu, Newspaper, X } from 'lucide-react';
+import { Bug, CircleHelp, Menu, Newspaper, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ChangelogEntry } from '@/lib/changelog/entries';
+import type { HelpEntry } from '@/lib/help/entries';
 import { BugReportSheet } from '@/components/BugReportSheet';
 
 // ---------------------------------------------------------------------------
@@ -107,16 +108,101 @@ export function ChangelogSheet({ open, onClose }: ChangelogSheetProps) {
 }
 
 // ---------------------------------------------------------------------------
+// HelpSheet — bottom sheet listing help articles about the app's features.
+// Lazy-loaded like the changelog.
+// ---------------------------------------------------------------------------
+
+interface HelpSheetProps {
+  open: boolean;
+  onClose(): void;
+}
+
+export function HelpSheet({ open, onClose }: HelpSheetProps) {
+  const t = useTranslations('Help');
+  const [entries, setEntries] = useState<HelpEntry[] | null>(null);
+
+  useEffect(() => {
+    if (!open || entries !== null) return;
+    let cancelled = false;
+    import('@/lib/help/entries').then((mod) => {
+      if (!cancelled) setEntries(mod.HELP_ENTRIES);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, entries]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 bg-black/40 z-50 flex items-end"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-card rounded-t-2xl w-full max-w-[480px] mx-auto max-h-[80vh] overflow-y-auto px-4 pt-3.5 pb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-[16px] font-bold text-card-foreground">{t('sheetTitle')}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('close')}
+            className="w-10 h-10 -mr-2 flex items-center justify-center rounded-full text-muted-foreground"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {entries !== null &&
+          (entries.length === 0 ? (
+            <p className="text-[14px] text-muted-foreground py-4">{t('empty')}</p>
+          ) : (
+            <ul className="flex flex-col">
+              {entries.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="py-3 border-b border-border last:border-b-0"
+                >
+                  <h3 className="text-[14px] font-bold text-card-foreground mb-1">
+                    {entry.title}
+                  </h3>
+                  <p className="text-[13px] text-muted-foreground leading-relaxed">
+                    {entry.body}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ))}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ---------------------------------------------------------------------------
 // AppMenu — hamburger button at the left edge of the main 60px headers.
-// Opens a small anchored dropdown with two items: "Nyheder" → ChangelogSheet
-// and "Rapportér en fejl" → BugReportSheet.
+// Opens a small anchored dropdown with three items: "Nyheder" →
+// ChangelogSheet, "Hjælp" → HelpSheet, and "Rapportér en fejl" →
+// BugReportSheet.
 // ---------------------------------------------------------------------------
 
 export function AppMenu() {
   const t = useTranslations('AppMenu');
   const tBug = useTranslations('BugReport');
+  const tHelp = useTranslations('Help');
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [helpSheetOpen, setHelpSheetOpen] = useState(false);
   const [bugSheetOpen, setBugSheetOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -169,6 +255,17 @@ export function AppMenu() {
             type="button"
             onClick={() => {
               setMenuOpen(false);
+              setHelpSheetOpen(true);
+            }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[14px] font-semibold text-card-foreground text-left"
+          >
+            <CircleHelp size={18} className="text-muted-foreground" />
+            {tHelp('menuItem')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
               setBugSheetOpen(true);
             }}
             className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[14px] font-semibold text-card-foreground text-left"
@@ -180,6 +277,7 @@ export function AppMenu() {
       )}
 
       <ChangelogSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      <HelpSheet open={helpSheetOpen} onClose={() => setHelpSheetOpen(false)} />
       <BugReportSheet open={bugSheetOpen} onClose={() => setBugSheetOpen(false)} />
     </div>
   );
