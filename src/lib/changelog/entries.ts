@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-06-18',
+    text: 'Ny hjælpeside! Tryk på menuen (☰) og vælg "Hjælp" for at se en oversigt over alle appens funktioner — fra raids og chat til notifikationer og profilindstillinger.',
+  },
+  {
     date: '2026-06-15',
     text: 'Toppen af appen viser nu app-ikonet og navnet "PoGoSundet" med skærmens titel i stor skrift nedenunder, så det tydeligt fremgår, hvilken app du er i.',
   },

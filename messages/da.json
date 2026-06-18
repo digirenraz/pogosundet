@@ -270,6 +270,12 @@
     "close": "Luk",
     "empty": "Ingen nyheder endnu."
   },
+  "Help": {
+    "menuItem": "Hjælp",
+    "sheetTitle": "Hjælp",
+    "close": "Luk",
+    "empty": "Ingen hjælpeartikler endnu."
+  },
   "BugReport": {
     "menuItem": "Rapportér en fejl",
     "sheetTitle": "Rapportér en fejl",
