@@ -14,6 +14,17 @@ Update this file as items are completed or new ones surface. Keep `CLAUDE.md`'s 
 - [ ] Decide on a real domain name and configure it in Vercel + Supabase allowed URLs
 - [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
 
+### Automated PR review (wired 2026-06-20 — disabled until the API key is set)
+
+The `.github/workflows/claude-review.yml` workflow runs a fresh Claude over every
+non-draft PR and posts inline review comments before merge. It stays inert until
+the key is set — the job fails fast on the auth step and posts nothing; it is not
+a required status check, so merges are never blocked.
+
+- [ ] Add an **`ANTHROPIC_API_KEY`** repo secret (GitHub → Settings → Secrets and variables → Actions → New repository secret). Billed per review (small for our diff sizes).
+- [ ] Verify: open a throwaway test PR and confirm the review comments appear; then close it.
+- [ ] (Optional) For deeper reviews, add `--model claude-opus-4-8` to the `claude_args` block in the workflow (default is the cheaper Sonnet tier).
+
 ### Sentry error logging (wired 2026-05-29 — disabled until DSN is set)
 
 The code is in place but Sentry stays completely inert until `NEXT_PUBLIC_SENTRY_DSN` is set. To turn it on:

@@ -1,0 +1,94 @@
+name: Claude PR Review
+
+# Automated second-opinion code review on every pull request. A FRESH Claude
+# (no shared context with the Claude that wrote the code) reviews the diff and
+# posts inline comments before merge. Complements CI (lint + Vitest + Playwright
+# in ci.yml — tests, not review) and the in-session /code-review + /pr-review
+# skills (which only run when invoked). See the 2026-06-16 decisions-log entry.
+#
+# Requires an ANTHROPIC_API_KEY repo secret (Settings → Secrets and variables →
+# Actions). Until it's set, the review step is cleanly SKIPPED (a notice step
+# explains why) rather than failing red on every PR. It is never a required
+# status check, so it does not block merges either way.
+
+on:
+  pull_request:
+    # ready_for_review fires when a draft is marked ready, so drafts get their
+    # first review the moment they're opened for real (not while still WIP).
+    types: [opened, synchronize, ready_for_review]
+
+# One review per PR at a time — cancel a superseded run when new commits land,
+# so a rapid push sequence costs one review, not one per push.
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Skip draft PRs — review once they're marked ready, to avoid spending a
+    # review (and tokens) on work still in progress.
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    # Job-level env can reference secrets; step `if` can read env. This lets the
+    # review step skip cleanly when the key is absent instead of failing red.
+    env:
+      HAS_API_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    permissions:
+      contents: read          # read the diff / repo files
+      pull-requests: write     # post the review + inline comments
+      id-token: write          # OIDC, required by the action
+    steps:
+      - name: Notice when the API key is not configured
+        if: env.HAS_API_KEY != 'true'
+        run: echo "::notice::Skipping Claude PR review — ANTHROPIC_API_KEY repo secret is not set. See docs/launch-checklist.md."
+
+      - uses: actions/checkout@v4
+        if: env.HAS_API_KEY == 'true'
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        if: env.HAS_API_KEY == 'true'
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are a fresh second-opinion reviewer for the PoGoSundet project.
+            The PR branch is already checked out in the working directory.
+
+            FIRST, read CLAUDE.md at the repo root — it documents this project's
+            non-obvious invariants. Review the PR diff for correctness bugs and
+            best-practice issues AND for violations of these project rules:
+
+            - Every new server route handler / Server Component page that makes
+              Supabase calls must `export const preferredRegion = "dub1"` (it is
+              NOT inherited).
+            - No hardcoded user-facing strings — all UI text goes through
+              next-intl (keys in messages/da.json, mirrored in messages/en.json).
+            - The three Supabase clients (client.ts / server.ts / admin.ts) must
+              never be mixed; admin.ts (service role) must never be imported into
+              a Client Component.
+            - New personal-data fields or third-party services require a Privacy
+              Policy update (src/app/[locale]/privacy/page.tsx + messages Privacy
+              namespace) and a `Privacy.lastUpdated` bump (GDPR).
+            - A migration whose new columns/tables are referenced by a query in
+              the same PR must be applied to the shared Supabase project BEFORE
+              merge (flag if the PR adds such a query without noting this).
+            - Any change to public/sw.js behaviour must bump its cache-version
+              constant (SHELL_CACHE / RUNTIME_CACHE).
+            - A new notify-* Edge Function must replicate the isAuthorizedCaller()
+              WEBHOOK_SECRET gate.
+            - A user-facing feature or bug-fix merge should prepend an entry to
+              src/lib/changelog/entries.ts (skip for doc-only / refactor / infra).
+
+            Be concise and specific. Only flag real issues — do not nitpick style
+            the linter already enforces. If the PR looks good, say so briefly.
+
+            Post inline comments on the specific lines via
+            mcp__github_inline_comment__create_inline_comment (with
+            confirmed: true). Use `gh pr comment` for a short top-level summary.
+            Only post GitHub comments — do not submit review text as chat messages.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
