@@ -14,16 +14,21 @@ Update this file as items are completed or new ones surface. Keep `CLAUDE.md`'s 
 - [ ] Decide on a real domain name and configure it in Vercel + Supabase allowed URLs
 - [ ] Add the production domain to Supabase Auth → URL configuration (Site URL + Redirect URLs)
 
-### Automated PR review (wired 2026-06-20 — disabled until the API key is set)
+### Automated PR review (wired 2026-06-20 — disabled until the token is set)
 
 The `.github/workflows/claude-review.yml` workflow runs a fresh Claude over every
 non-draft PR and posts inline review comments before merge. It stays inert until
-the key is set — the job fails fast on the auth step and posts nothing; it is not
-a required status check, so merges are never blocked.
+the token is set — the review step is cleanly **skipped** (a notice explains why),
+not failed; it is not a required status check, so merges are never blocked.
 
-- [ ] Add an **`ANTHROPIC_API_KEY`** repo secret (GitHub → Settings → Secrets and variables → Actions → New repository secret). Billed per review (small for our diff sizes).
+Auth uses a **Claude Pro/Max subscription** (no separate Anthropic Console
+billing):
+
+- [ ] Generate a token: in a terminal with Claude Code, run **`claude setup-token`** (signs in against your Pro/Max subscription) and copy the value it prints.
+- [ ] Add it as a **`CLAUDE_CODE_OAUTH_TOKEN`** repo secret (GitHub → Settings → Secrets and variables → Actions → New repository secret).
 - [ ] Verify: open a throwaway test PR and confirm the review comments appear; then close it.
 - [ ] (Optional) For deeper reviews, add `--model claude-opus-4-8` to the `claude_args` block in the workflow (default is the cheaper Sonnet tier).
+- [ ] Note: the token is long-lived but not permanent — if reviews silently stop appearing months out, re-run `claude setup-token` and update the secret.
 
 ### Sentry error logging (wired 2026-05-29 — disabled until DSN is set)
 

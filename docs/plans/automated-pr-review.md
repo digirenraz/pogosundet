@@ -22,6 +22,10 @@ project-specific rules, not just generic bugs.
   spending a review on WIP.
 - **Concurrency:** `cancel-in-progress` keyed on the PR number, so a rapid push
   sequence costs one review, not one per push.
+- **Auth:** `claude_code_oauth_token` (from `claude setup-token`) against a
+  Claude Pro/Max subscription — PM's choice over a pay-as-you-go
+  `anthropic_api_key`, to avoid separate Console billing. The review step is
+  guarded on the secret being present so it skips cleanly until set.
 - **Model:** default (no `--model` in `claude_args`) — matches the canonical
   example and keeps per-review cost low (the PM noted diffs are small). Bump to
   Opus later via `claude_args: --model …` if review depth proves insufficient.
@@ -41,10 +45,12 @@ so a missing/failed review never blocks a merge. (Pre-launch the flow is
 squash-to-main; a hard gate would be friction.)
 
 ## Remaining ops (PM)
-Add an **`ANTHROPIC_API_KEY`** repo secret (Settings → Secrets and variables →
-Actions). Billed per review (small for our diff sizes). Until it's set the job
-fails fast on the auth step and posts nothing — merges are unaffected. Tracked
-in `docs/launch-checklist.md`.
+Auth uses a **Claude Pro/Max subscription** (chosen over a pay-as-you-go API
+key — no separate Anthropic Console billing). Generate a token with
+`claude setup-token` and add it as a **`CLAUDE_CODE_OAUTH_TOKEN`** repo secret
+(Settings → Secrets and variables → Actions). Until it's set the review step is
+cleanly skipped and posts nothing — merges are unaffected. The workflow uses the
+action's `claude_code_oauth_token` input. Tracked in `docs/launch-checklist.md`.
 
 ## Verification
 - YAML structure sanity-checked locally (top-level keys, action ref, secret ref).

@@ -6,10 +6,11 @@ name: Claude PR Review
 # in ci.yml — tests, not review) and the in-session /code-review + /pr-review
 # skills (which only run when invoked). See the 2026-06-16 decisions-log entry.
 #
-# Requires an ANTHROPIC_API_KEY repo secret (Settings → Secrets and variables →
-# Actions). Until it's set, the review step is cleanly SKIPPED (a notice step
-# explains why) rather than failing red on every PR. It is never a required
-# status check, so it does not block merges either way.
+# Requires a CLAUDE_CODE_OAUTH_TOKEN repo secret (Settings → Secrets and
+# variables → Actions) — generate it with `claude setup-token` against a Claude
+# Pro/Max subscription. Until it's set, the review step is cleanly SKIPPED (a
+# notice step explains why) rather than failing red on every PR. It is never a
+# required status check, so it does not block merges either way.
 
 on:
   pull_request:
@@ -32,25 +33,25 @@ jobs:
     # Job-level env can reference secrets; step `if` can read env. This lets the
     # review step skip cleanly when the key is absent instead of failing red.
     env:
-      HAS_API_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
     permissions:
       contents: read          # read the diff / repo files
       pull-requests: write     # post the review + inline comments
       id-token: write          # OIDC, required by the action
     steps:
-      - name: Notice when the API key is not configured
-        if: env.HAS_API_KEY != 'true'
-        run: echo "::notice::Skipping Claude PR review — ANTHROPIC_API_KEY repo secret is not set. See docs/launch-checklist.md."
+      - name: Notice when the token is not configured
+        if: env.HAS_TOKEN != 'true'
+        run: echo "::notice::Skipping Claude PR review — CLAUDE_CODE_OAUTH_TOKEN repo secret is not set. See docs/launch-checklist.md."
 
       - uses: actions/checkout@v4
-        if: env.HAS_API_KEY == 'true'
+        if: env.HAS_TOKEN == 'true'
         with:
           fetch-depth: 1
 
       - uses: anthropics/claude-code-action@v1
-        if: env.HAS_API_KEY == 'true'
+        if: env.HAS_TOKEN == 'true'
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
