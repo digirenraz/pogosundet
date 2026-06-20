@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PoGoSundet — How the Project Works (Internal)</title>
+<style>
+  :root {
+    --teal: #00b09f;
+    --teal-d: #0a8a7d;
+    --ink: #0a222b;
+    --ink-2: #0a1f27;
+    --sea: #103d51;
+    --muted: #5d7079;
+    --line: #e3eaec;
+    --bg: #f4f8f8;
+    --card: #ffffff;
+    --amber: #c98a2b;
+    --good: #1f9d6b;
+    --shadow: 0 2px 10px rgba(10,34,43,.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 22px 80px; }
+
+  /* Header */
+  header.hero {
+    background: linear-gradient(135deg, #0e4f59 0%, #0a2c34 100%);
+    color: #eafaf7;
+    padding: 46px 0 40px;
+    margin-bottom: 36px;
+  }
+  header.hero .wrap { padding-bottom: 0; }
+  .brand-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .medallion {
+    width: 46px; height: 46px; border-radius: 13px;
+    background: radial-gradient(circle at 50% 42%, #15545f, #0a2c34);
+    border: 3px solid #c79a5e;
+    box-shadow: 0 4px 12px rgba(0,176,159,.25);
+    flex: 0 0 auto;
+  }
+  .brand-row .name { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+  .hero h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: -.02em; font-weight: 800; }
+  .hero p { margin: 0; color: #b9ddd7; max-width: 680px; font-size: 15.5px; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .pill {
+    background: rgba(255,255,255,.10); color: #d8f3ee;
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 5px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  }
+
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--teal-d); margin: 44px 0 16px; font-weight: 800;
+  }
+  h2 .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px; background: var(--teal);
+    color: #fff; font-size: 12px; margin-right: 9px; vertical-align: middle;
+  }
+  p.lead { margin: 0 0 18px; color: var(--muted); max-width: 720px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; box-shadow: var(--shadow);
+  }
+
+  /* Tech stack grid */
+  .stack { display: grid; grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); gap: 14px; }
+  .stack .card { padding: 15px 16px; }
+  .stack .layer { font-size: 11.5px; font-weight: 700; color: var(--teal-d); text-transform: uppercase; letter-spacing: .05em; }
+  .stack .choice { font-size: 16px; font-weight: 800; margin: 3px 0 4px; color: var(--ink-2); }
+  .stack .note { font-size: 13px; color: var(--muted); margin: 0; }
+
+  /* PR flow pipeline */
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; }
+  .step {
+    flex: 1 1 0; min-width: 150px; position: relative;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px 14px 14px; margin: 0 16px 16px 0;
+    box-shadow: var(--shadow);
+  }
+  .step:last-child { margin-right: 0; }
+  .step .s-num { font-size: 11px; font-weight: 800; color: var(--teal); }
+  .step .s-title { font-size: 14.5px; font-weight: 800; margin: 4px 0 5px; color: var(--ink-2); }
+  .step .s-desc { font-size: 12.5px; color: var(--muted); margin: 0; }
+  .step .who { display: inline-block; margin-top: 9px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+  .who.ai { background: #e7f7f4; color: var(--teal-d); }
+  .who.bot { background: #eef2f9; color: #41618c; }
+  .step .arrow {
+    position: absolute; right: -13px; top: 50%; transform: translateY(-50%);
+    color: var(--teal); font-size: 18px; z-index: 2; font-weight: 900;
+  }
+  .step:last-child .arrow { display: none; }
+
+  /* CI pipeline */
+  .ci { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .ci-stage {
+    background: var(--card); border: 1px solid var(--line); border-radius: 11px;
+    padding: 13px 16px; box-shadow: var(--shadow); flex: 1 1 200px;
+  }
+  .ci-stage .t { font-weight: 800; font-size: 14px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+  .ci-stage .d { font-size: 12.5px; color: var(--muted); margin: 5px 0 0; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+  .dot.g { background: var(--good); }
+  .dot.t { background: var(--teal); }
+  .dot.p { background: #8a5cd0; }
+  .ci-arrow { color: var(--muted); font-weight: 900; font-size: 16px; }
+
+  /* Two-column split */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .split .card { padding: 18px 20px; }
+  .split h3 { margin: 0 0 4px; font-size: 15.5px; color: var(--ink-2); display: flex; align-items: center; gap: 9px; }
+  .split .sub { font-size: 12px; color: var(--muted); margin: 0 0 12px; }
+  ul.clean { margin: 0; padding: 0; list-style: none; }
+  ul.clean li { font-size: 13px; padding: 6px 0 6px 22px; position: relative; border-top: 1px solid #f0f4f5; color: #2c3e45; }
+  ul.clean li:first-child { border-top: none; }
+  ul.clean li::before { content: "✓"; position: absolute; left: 0; top: 6px; color: var(--teal); font-weight: 800; }
+  ul.clean li.no::before { content: "→"; color: var(--amber); }
+  ul.clean li b { color: var(--ink-2); }
+
+  /* Guardrails */
+  .rails { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .rail { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 15px 17px; box-shadow: var(--shadow); }
+  .rail .rt { font-weight: 800; font-size: 14px; color: var(--ink-2); margin-bottom: 4px; }
+  .rail .rd { font-size: 12.8px; color: var(--muted); }
+  .rail code { background: #eef3f3; padding: 1px 6px; border-radius: 5px; font-size: 11.8px; color: var(--sea); }
+
+  .callout {
+    border-left: 4px solid var(--amber); background: #fdf7ed;
+    padding: 13px 16px; border-radius: 0 10px 10px 0; margin-top: 18px;
+    font-size: 13px; color: #6b5526;
+  }
+  .callout b { color: #4d3d15; }
+
+  footer { margin-top: 50px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+
+  @media (max-width: 720px) {
+    .split { grid-template-columns: 1fr; }
+    .step .arrow { display: none; }
+    .step { margin-right: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brand-row">
+      <div class="medallion" aria-hidden="true"></div>
+      <span class="name">PoGoSundet</span>
+    </div>
+    <h1>How the project is built &amp; how changes ship</h1>
+    <p>A plain-language tour of the tech stack, the test safety net, and the pull-request flow — written as an intro for a fellow (semi-technical) PM. Internal reference; not part of the app.</p>
+    <div class="pill-row">
+      <span class="pill">Mobile-first PWA</span>
+      <span class="pill">Danish community · Frederikssund</span>
+      <span class="pill">EU-hosted (GDPR)</span>
+      <span class="pill">AI-reviewed pull requests</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <p class="lead" style="font-size:15px;color:#2c3e45;max-width:760px;">
+    <b>PoGoSundet</b> is a mobile web app that helps the local Pokémon GO community find each other,
+    share Trainer Codes, and coordinate raids. It installs to a phone's home screen like a native app and sends
+    push notifications. One codebase, built and verified by Claude Code with the PM steering.
+  </p>
+
+  <!-- TECH STACK -->
+  <h2><span class="num">1</span>The tech stack</h2>
+  <p class="lead">Each layer was chosen once and is locked unless there's a concrete reason to change. No custom servers — managed services do the heavy lifting.</p>
+  <div class="stack">
+    <div class="card">
+      <div class="layer">Frontend</div>
+      <div class="choice">Next.js 16 + React 19</div>
+      <p class="note">The app framework. Mobile-first, renders pages on the server for speed. Tailwind CSS for styling.</p>
+    </div>
+    <div class="card">
+      <div class="layer">Backend &amp; Database</div>
+      <div class="choice">Supabase</div>
+      <p class="note">Postgres database, login, file storage, live updates, and small server functions — all in the EU/Ireland region for GDPR.</p>
+    </div>
+    <div class="card">
+      <div class="layer">Login</div>
+      <div class="choice">Supabase Auth</div>
+      <p class="note">Google sign-in and email/password. Security rules live in the database itself.</p>
+    </div>
+    <div class="card">
+      <div class="layer">Hosting</div>
+      <div class="choice">Vercel</div>
+      <p class="note">Deploys automatically. Servers run in Dublin (<code style="font-size:11px">dub1</code>) next to the database to keep things fast.</p>
+    </div>
+    <div class="card">
+      <div class="layer">Language / i18n</div>
+      <div class="choice">next-intl</div>
+      <p class="note">Danish-first. Every piece of text lives in a translation file — no words are hard-coded in screens.</p>
+    </div>
+    <div class="card">
+      <div class="layer">App &amp; Push</div>
+      <div class="choice">PWA + Web Push</div>
+      <p class="note">A hand-written service worker makes it installable and delivers notifications (new raids, DMs, raid chat).</p>
+    </div>
+    <div class="card">
+      <div class="layer">Analytics &amp; Errors</div>
+      <div class="choice">Amplitude · Sentry</div>
+      <p class="note">Opt-in, anonymous product analytics and error logging. Both stay off until a consent banner is accepted / a key is set.</p>
+    </div>
+    <div class="card">
+      <div class="layer">Testing</div>
+      <div class="choice">Vitest · Playwright</div>
+      <p class="note">Vitest checks logic; Playwright drives a real browser through user flows. More on this below.</p>
+    </div>
+  </div>
+
+  <!-- PR FLOW -->
+  <h2><span class="num">2</span>How a change ships — the pull-request flow</h2>
+  <p class="lead">Nobody can push straight to the live <code style="font-size:12px;background:#eef3f3;padding:1px 6px;border-radius:5px;">main</code> branch — it's protected. Every change, even a typo fix, travels this path. A "PR" (pull request) is a proposed change that gets checked before it's accepted.</p>
+  <div class="flow">
+    <div class="step">
+      <div class="s-num">STEP 1</div>
+      <div class="s-title">Branch</div>
+      <p class="s-desc">Work happens on a copy of the code, isolated from what's live.</p>
+      <span class="who ai">Claude Code</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="step">
+      <div class="s-num">STEP 2</div>
+      <div class="s-title">Open a PR</div>
+      <p class="s-desc">The proposed change is published for review with a plain-language summary.</p>
+      <span class="who ai">Claude Code</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="step">
+      <div class="s-num">STEP 3</div>
+      <div class="s-title">Automatic checks</div>
+      <p class="s-desc">CI runs all tests <i>and</i> a fresh AI reviewer reads the diff — at the same time.</p>
+      <span class="who bot">CI + AI review</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="step">
+      <div class="s-num">STEP 4</div>
+      <div class="s-title">Address findings</div>
+      <p class="s-desc">Real issues get fixed; false alarms are pushed back on. Re-checks run.</p>
+      <span class="who ai">Claude Code</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="step">
+      <div class="s-num">STEP 5</div>
+      <div class="s-title">Merge &amp; deploy</div>
+      <p class="s-desc">Once green, it's merged to <code style="font-size:11px">main</code> and Vercel deploys it live.</p>
+      <span class="who ai">Claude Code</span>
+    </div>
+  </div>
+  <div class="callout">
+    <b>Why this matters:</b> the protected branch forces every change through the tests and the AI reviewer
+    <i>before</i> it can go live. It already paid off — the very first gated PR caught a flaky test that had slipped
+    onto <code>main</code> earlier, before any user could be affected.
+  </div>
+
+  <!-- CI -->
+  <h2><span class="num">3</span>What "CI" actually runs</h2>
+  <p class="lead">CI ("continuous integration") is the automated test runner. It fires on every PR and every merge, on a clean machine, in this order. If any stage fails, the PR is blocked from merging.</p>
+  <div class="ci">
+    <div class="ci-stage">
+      <div class="t"><span class="dot g"></span>Lint</div>
+      <p class="d">Catches code-style and obvious mistakes automatically.</p>
+    </div>
+    <span class="ci-arrow">→</span>
+    <div class="ci-stage">
+      <div class="t"><span class="dot t"></span>Unit tests · Vitest</div>
+      <p class="d">240+ fast checks on logic: validation, helpers, calculations.</p>
+    </div>
+    <span class="ci-arrow">→</span>
+    <div class="ci-stage">
+      <div class="t"><span class="dot p"></span>Browser tests · Playwright</div>
+      <p class="d">Drives a real Chrome browser through user journeys end-to-end.</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:14px;font-size:13px;">
+    Runs on Node 24 / Ubuntu. The two AI checks (this CI + the PR reviewer) are independent: <b>CI proves the code
+    works; the reviewer judges whether it's well-written and follows our project rules.</b> Tests, not opinions, versus opinions, not tests.
+  </p>
+
+  <!-- TEST COVERAGE -->
+  <h2><span class="num">4</span>Test coverage — what's guarded, what's verified by hand</h2>
+  <p class="lead">Two layers of automated tests, plus a deliberate manual step for things a test machine genuinely can't see.</p>
+  <div class="split">
+    <div class="card">
+      <h3><span class="dot t" style="width:11px;height:11px"></span>Unit tests <span style="font-weight:600;color:var(--muted);font-size:12px">(Vitest)</span></h3>
+      <p class="sub">Tiny, instant checks on pure logic. Written test-first (TDD).</p>
+      <ul class="clean">
+        <li><b>Validation</b> — profile fields, raid forms, message length limits</li>
+        <li><b>Helpers</b> — gym distance/sorting, friend-code redaction, participant lists</li>
+        <li><b>Data shaping</b> — chat message mapping, unread counts</li>
+        <li>240+ tests, co-located next to the code they cover</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot p" style="width:11px;height:11px"></span>Flow tests <span style="font-weight:600;color:var(--muted);font-size:12px">(Playwright)</span></h3>
+      <p class="sub">A real browser clicks through full user journeys. ~18 flow files.</p>
+      <ul class="clean">
+        <li><b>Logged-out flows</b> run in CI: home, login CTAs, privacy, loading screen, consent banner</li>
+        <li><b>Logged-in flows</b> — chat, DMs, raids, profile edit, hide friend code</li>
+        <li class="no"><b>Logged-in specs skip in CI</b> — they need test credentials CI doesn't have (they'd write into the shared database), so they run on a dev machine</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout" style="border-left-color: var(--teal); background:#edf8f6; color:#1f5b54;">
+    <b>Verified on production, not the test machine:</b> live features — push notifications, real-time chat delivery,
+    and actions only a raid's host can do — behave differently (or not at all) on a local test box. These are
+    confirmed by hand on the live app, often with a second account. It's a documented rule, not an oversight.
+  </div>
+
+  <!-- GUARDRAILS -->
+  <h2><span class="num">5</span>Project guardrails the AI reviewer enforces</h2>
+  <p class="lead">The PR reviewer is primed with this project's specific rules (kept in <code style="font-size:12px;background:#eef3f3;padding:1px 6px;border-radius:5px">CLAUDE.md</code>), so it flags more than generic bugs:</p>
+  <div class="rails">
+    <div class="rail">
+      <div class="rt">EU region on new server code</div>
+      <div class="rd">Every new server route must run in Dublin (<code>dub1</code>) — far from the EU database is slow.</div>
+    </div>
+    <div class="rail">
+      <div class="rt">No hard-coded text</div>
+      <div class="rd">All UI words go through the Danish translation file, never typed into a screen.</div>
+    </div>
+    <div class="rail">
+      <div class="rt">GDPR on new personal data</div>
+      <div class="rd">A new data field or third-party service must update the Privacy Policy.</div>
+    </div>
+    <div class="rail">
+      <div class="rt">Database migrations before merge</div>
+      <div class="rd">Schema changes are applied to the shared database <i>before</i> the PR merges, or it breaks.</div>
+    </div>
+    <div class="rail">
+      <div class="rt">App-version bump on app-shell changes</div>
+      <div class="rd">Touching the service worker bumps a cache version so installed phones update.</div>
+    </div>
+    <div class="rail">
+      <div class="rt">User-facing changelog</div>
+      <div class="rd">Features and visible fixes add a short Danish "Nyheder" entry for users.</div>
+    </div>
+  </div>
+
+  <!-- ENVIRONMENTS -->
+  <h2><span class="num">6</span>Environments &amp; a known gap</h2>
+  <div class="split">
+    <div class="card">
+      <h3>How code reaches users</h3>
+      <p class="sub">Two automatic deploys per change.</p>
+      <ul class="clean">
+        <li><b>Preview</b> — every PR gets its own throwaway URL to click around on</li>
+        <li><b>Production</b> — merging to <code style="font-size:11px">main</code> deploys the live app</li>
+        <li>Database changes are applied manually in Supabase's SQL editor (no auto-runner, by design)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>The one gap to know about</h3>
+      <p class="sub">Worth keeping in mind before launch.</p>
+      <ul class="clean">
+        <li class="no"><b>No separate staging database</b> — preview and production share one Supabase project, so test data created on a preview is visible in production</li>
+        <li class="no">This is why logged-in tests don't run in CI, and why risky data changes are double-checked by hand</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    Internal reference · PoGoSundet · generated for PM onboarding. The source of truth for all of this is
+    <code style="background:#eef3f3;padding:1px 6px;border-radius:5px;font-size:11px">CLAUDE.md</code> in the repo root.
+    Open this file in any browser — it's fully self-contained.
+  </footer>
+
+</div>
+</body>
+</html>
