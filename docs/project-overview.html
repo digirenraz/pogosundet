@@ -142,6 +142,76 @@
 
   footer { margin-top: 50px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 
+  /* CI run diagram — mock of an actual GitHub Actions run */
+  .ci-run { margin-top: 22px; }
+  .ci-trigger { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .trig-chip {
+    background: #eef3f3; border: 1px solid var(--line); border-radius: 8px;
+    padding: 7px 12px; font-size: 12.5px; font-weight: 700; color: var(--sea);
+  }
+  .trig-chip span { display: block; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+  .trig-arrow { color: var(--teal); font-weight: 900; font-size: 17px; }
+
+  .ci-job {
+    background: #0c2c34; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 8px 24px rgba(10,34,43,.16); border: 1px solid #0a242b;
+  }
+  .ci-job-head {
+    display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
+    padding: 14px 18px; background: #103a44; border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .ci-job-head .jname { color: #eafaf7; font-weight: 800; font-size: 14px; }
+  .ci-job-head .jname code { color: #8fe6da; background: rgba(0,176,159,.16); padding: 1px 7px; border-radius: 6px; font-size: 12.5px; }
+  .env-badge {
+    font-size: 11px; font-weight: 700; color: #bfe6df;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 999px; padding: 3px 10px;
+  }
+  .ci-steps-list { padding: 8px 0 10px; margin: 0; list-style: none; }
+  .ci-row {
+    display: flex; align-items: center; gap: 13px; padding: 9px 18px;
+    position: relative;
+  }
+  /* connecting rail */
+  .ci-row:not(:last-child)::before {
+    content: ""; position: absolute; left: 27px; top: 30px; bottom: -8px;
+    width: 2px; background: rgba(255,255,255,.10);
+  }
+  .ci-check {
+    width: 20px; height: 20px; border-radius: 50%; flex: 0 0 auto; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900; color: #07221f;
+    background: var(--teal); box-shadow: 0 0 0 4px rgba(0,176,159,.14);
+  }
+  .ci-check.cond { background: #3a5560; color: #cfe6ec; box-shadow: 0 0 0 4px rgba(255,255,255,.04); }
+  .ci-step-main { flex: 1 1 auto; min-width: 0; }
+  .ci-step-main .lbl { color: #eafaf7; font-size: 13.5px; font-weight: 700; }
+  .ci-step-main .cmd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px; color: #7fb8b0; margin-top: 1px;
+  }
+  .ci-step-main .lbl small { font-weight: 600; color: #6f97a0; font-size: 11px; }
+  .ci-tag {
+    font-size: 10.5px; font-weight: 700; color: #9bd9cf;
+    background: rgba(0,176,159,.14); border-radius: 6px; padding: 2px 8px; flex: 0 0 auto;
+  }
+  .ci-tag.skip { color: #d8c08a; background: rgba(201,138,43,.16); }
+
+  .ci-outcomes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .outcome { border-radius: 12px; padding: 14px 16px; border: 1px solid; }
+  .outcome.pass { background: #edf8f6; border-color: #c3e8e0; }
+  .outcome.fail { background: #fdf1ef; border-color: #f3d3cd; }
+  .outcome .oh { font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .outcome.pass .oh { color: #1f7a5e; }
+  .outcome.fail .oh { color: #b4493a; }
+  .outcome .od { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+  .badge-circle { width: 18px; height: 18px; border-radius: 50%; color: #fff; font-size: 11px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; }
+  .badge-circle.g { background: var(--good); }
+  .badge-circle.r { background: #cf5442; }
+  @media (max-width: 720px) {
+    .ci-outcomes { grid-template-columns: 1fr; }
+  }
+
   @media (max-width: 720px) {
     .split { grid-template-columns: 1fr; }
     .step .arrow { display: none; }
@@ -290,6 +360,76 @@
     Runs on Node 24 / Ubuntu. The two AI checks (this CI + the PR reviewer) are independent: <b>CI proves the code
     works; the reviewer judges whether it's well-written and follows our project rules.</b> Tests, not opinions, versus opinions, not tests.
   </p>
+
+  <!-- CI run diagram -->
+  <p class="lead" style="margin-top:26px;font-size:13px;color:var(--ink-2);font-weight:700;">A single CI run, step by step:</p>
+  <div class="ci-run">
+    <div class="ci-trigger">
+      <div class="trig-chip">Pull request<span>opened / updated</span></div>
+      <div class="trig-chip">Push to <code style="font-size:11px">main</code><span>after merge</span></div>
+      <span class="trig-arrow">→</span>
+      <span style="font-size:12.5px;color:var(--muted);font-weight:600;">either one starts a fresh run</span>
+    </div>
+
+    <div class="ci-job">
+      <div class="ci-job-head">
+        <span class="jname">Job: <code>ci / test</code></span>
+        <span class="env-badge">Ubuntu</span>
+        <span class="env-badge">Node 24</span>
+        <span class="env-badge">Playwright container (browsers pre-installed)</span>
+        <span class="env-badge">~2 min</span>
+      </div>
+      <ul class="ci-steps-list">
+        <li class="ci-row">
+          <div class="ci-check">✓</div>
+          <div class="ci-step-main"><div class="lbl">Check out the code</div><div class="cmd">actions/checkout</div></div>
+        </li>
+        <li class="ci-row">
+          <div class="ci-check">✓</div>
+          <div class="ci-step-main"><div class="lbl">Set up Node 24 <small>· with dependency cache</small></div><div class="cmd">actions/setup-node</div></div>
+        </li>
+        <li class="ci-row">
+          <div class="ci-check">✓</div>
+          <div class="ci-step-main"><div class="lbl">Install dependencies</div><div class="cmd">npm ci</div></div>
+        </li>
+        <li class="ci-row">
+          <div class="ci-check">✓</div>
+          <div class="ci-step-main"><div class="lbl">Lint — code style &amp; obvious mistakes</div><div class="cmd">npm run lint</div></div>
+          <span class="ci-tag">gate 1</span>
+        </li>
+        <li class="ci-row">
+          <div class="ci-check">✓</div>
+          <div class="ci-step-main"><div class="lbl">Unit tests — logic checks</div><div class="cmd">npm run test &nbsp;·&nbsp; vitest</div></div>
+          <span class="ci-tag">gate 2</span>
+        </li>
+        <li class="ci-row">
+          <div class="ci-check">✓</div>
+          <div class="ci-step-main"><div class="lbl">Browser tests — real Chrome through user flows</div><div class="cmd">npm run test:e2e &nbsp;·&nbsp; playwright</div></div>
+          <span class="ci-tag">gate 3</span>
+        </li>
+        <li class="ci-row">
+          <div class="ci-check cond">⤓</div>
+          <div class="ci-step-main"><div class="lbl">Upload test report <small>· only if something failed</small></div><div class="cmd">actions/upload-artifact</div></div>
+          <span class="ci-tag skip">conditional</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="ci-outcomes">
+      <div class="outcome pass">
+        <div class="oh"><span class="badge-circle g">✓</span>All gates pass</div>
+        <p class="od">The PR shows a green check. Combined with the AI review, it's clear to merge — and on <code style="font-size:11px;background:#e3efee;padding:1px 5px;border-radius:4px">main</code>, Vercel deploys it live.</p>
+      </div>
+      <div class="outcome fail">
+        <div class="oh"><span class="badge-circle r">✕</span>Any gate fails</div>
+        <p class="od">The run goes red and the PR is held back. A downloadable report (screenshots, traces) is attached so the failure can be diagnosed, fixed, and re-run.</p>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:13px;font-size:12px;">
+      Note: logged-in browser tests need credentials CI doesn't carry, so they <b>skip</b> on CI and run on a dev machine — the
+      shared-database reason is covered in section 6.
+    </p>
+  </div>
 
   <!-- TEST COVERAGE -->
   <h2><span class="num">4</span>Test coverage — what's guarded, what's verified by hand</h2>
