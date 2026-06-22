@@ -93,11 +93,15 @@ export function DesktopSidebar({ me }: DesktopSidebarProps) {
 
   // Active item: match the route suffix (locale prefix is as-needed, so paths
   // are /players, /raids, etc.). Chat stays active inside /chat/* sub-routes.
+  // Match /players explicitly rather than as a catch-all fallback — otherwise
+  // routes outside the main four (e.g. /onboarding, which has its own active
+  // item below) would also light up Players.
   const activeKey = (() => {
     if (/\/chat(\/.*)?$/.test(pathname)) return 'chat';
     if (/\/raids(\/.*)?$/.test(pathname)) return 'raids';
     if (/\/profile(\/.*)?$/.test(pathname)) return 'profil';
-    return 'spillere';
+    if (/\/players(\/.*)?$/.test(pathname)) return 'spillere';
+    return '';
   })();
 
   const team = (me?.team ?? 'none') as AvatarTeam;
