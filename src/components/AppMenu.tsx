@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bug, CircleHelp, Menu, Newspaper, X } from 'lucide-react';
+import Link from 'next/link';
+import { Bug, CircleHelp, Menu, Newspaper, Rocket, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ChangelogEntry } from '@/lib/changelog/entries';
 import type { HelpEntry } from '@/lib/help/entries';
@@ -200,6 +201,7 @@ export function AppMenu() {
   const t = useTranslations('AppMenu');
   const tBug = useTranslations('BugReport');
   const tHelp = useTranslations('Help');
+  const tOnboarding = useTranslations('Onboarding');
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [helpSheetOpen, setHelpSheetOpen] = useState(false);
@@ -240,6 +242,14 @@ export function AppMenu() {
       {/* Anchored dropdown */}
       {menuOpen && (
         <div className="absolute top-full left-0 mt-1 min-w-[180px] bg-card border border-border rounded-xl shadow-lg py-1.5 z-20">
+          <Link
+            href="/onboarding"
+            onClick={() => setMenuOpen(false)}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[14px] font-semibold text-card-foreground text-left"
+          >
+            <Rocket size={18} className="text-muted-foreground" />
+            {tOnboarding('navItem')}
+          </Link>
           <button
             type="button"
             onClick={() => {
