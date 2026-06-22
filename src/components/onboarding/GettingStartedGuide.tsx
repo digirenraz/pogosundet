@@ -113,11 +113,11 @@ export function GettingStartedGuide() {
   const t = useTranslations('Onboarding');
   const [copied, setCopied] = useState(false);
 
-  function copyCode() {
+  async function copyCode() {
     try {
-      navigator.clipboard.writeText(SAMPLE_CODE);
+      await navigator.clipboard.writeText(SAMPLE_CODE);
     } catch {
-      // Clipboard may be unavailable (insecure context) — ignore.
+      // Clipboard may be unavailable (insecure context / permission denied) — ignore.
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
