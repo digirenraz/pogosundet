@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-06-22',
+    text: 'Ny "Kom i gang"-guide! Find den i menuen (☰) eller i sidepanelet på computer. Den viser trin for trin, hvordan du installerer appen på din telefon, og hvordan du tilføjer venner lynhurtigt med QR-koder direkte fra Pokémon GO.',
+  },
+  {
     date: '2026-06-18',
     text: 'Ny hjælpeside! Tryk på menuen (☰) og vælg "Hjælp" for at se en oversigt over alle appens funktioner — fra raids og chat til notifikationer og profilindstillinger.',
   },

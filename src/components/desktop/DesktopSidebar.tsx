@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Users, Swords, MessageCircle, User, MapPinned, Newspaper, CircleHelp, Settings } from 'lucide-react';
+import { Users, Swords, MessageCircle, User, MapPinned, Newspaper, CircleHelp, Rocket, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Team } from '@/lib/profile/validation';
 import { useUnread } from '@/components/UnreadProvider';
@@ -86,6 +86,7 @@ export function DesktopSidebar({ me }: DesktopSidebarProps) {
   const t = useTranslations('BottomNav');
   const tMenu = useTranslations('AppMenu');
   const tHelp = useTranslations('Help');
+  const tOnboarding = useTranslations('Onboarding');
   const { chatUnread, raidUnread } = useUnread();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -151,6 +152,20 @@ export function DesktopSidebar({ me }: DesktopSidebarProps) {
       </div>
 
       <div className="flex-1" />
+
+      {/* Getting-started guide — a route (not a sheet), so active styling
+          highlights it when the user is on /onboarding. */}
+      <Link
+        href="/onboarding"
+        className="flex items-center gap-3 px-3 py-[11px] rounded-[10px] font-semibold"
+        style={{
+          background: /\/onboarding$/.test(pathname) ? 'var(--color-secondary)' : 'transparent',
+          color: /\/onboarding$/.test(pathname) ? 'var(--color-primary)' : 'var(--color-muted-foreground)',
+        }}
+      >
+        <Rocket size={20} />
+        <span className="flex-1 text-[14px]">{tOnboarding('navItem')}</span>
+      </Link>
 
       <button
         type="button"
