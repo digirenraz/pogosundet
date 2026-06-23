@@ -27,9 +27,16 @@ test.describe("Desktop scan-session status persistence", () => {
       test.skip(true, "No other players in the directory to mark");
     }
 
-    // Count the added marks before, mark one, then reload and confirm the
-    // progress count survived (seeded from the persisted status).
+    // Mark one player, then reload and confirm the progress count survived
+    // (seeded from the persisted status). The mark's upsert is fire-and-forget
+    // (`void saveScanStatus(...)`), so wait for the friend_scan_status request
+    // to commit before reloading — otherwise the reload can race the in-flight
+    // write and read an empty table.
+    const upsert = page
+      .waitForResponse((r) => r.url().includes("friend_scan_status"), { timeout: 5000 })
+      .catch(() => null);
     await added.click();
+    await upsert;
 
     await page.reload();
     await page.waitForLoadState("networkidle");
