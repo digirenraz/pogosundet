@@ -15,7 +15,8 @@ import {
   Users,
 } from 'lucide-react';
 import type { Profile } from '@/lib/profile/helpers';
-import { saveScanStatus, type ScanStatus } from '@/lib/players/scan-status';
+import type { ScanStatus } from '@/lib/players/scan-status';
+import { saveScanStatus } from '@/lib/players/save-scan-status';
 import { Avatar, TeamChip, LevelPill, TEAMS, type AvatarTeam } from '@/components/Avatar';
 import { FriendCodeQR } from '@/components/FriendCodeQR';
 import { FriendCodeHidden } from '@/components/FriendCodeHidden';

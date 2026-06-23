@@ -1,5 +1,8 @@
-import { createClient } from '@/lib/supabase/client';
-
+// Pure scan-status helpers + types (no Supabase import, so the server page can
+// import `buildScanStatusMap` without pulling the browser client into the
+// server bundle — keeps the "three clients, never mix" boundary clean). The
+// browser-only `saveScanStatus` lives in `save-scan-status.ts`.
+//
 // Desktop scan-session marks (see DesktopPlayers): the user works down the QR
 // queue tapping "Tilføjet → næste" / "Spring over". Persisted per-user, private
 // to the owner (RLS), in `friend_scan_status` (migration 021).
@@ -23,26 +26,4 @@ export function buildScanStatusMap(
     }
   }
   return map;
-}
-
-// Best-effort upsert of one mark. Fire-and-forget from the scan-session: a
-// failed write never blocks the UI (the optimistic local state already moved
-// on), and RLS guarantees the row is private to `userId`. `userId` is the
-// session user, so it satisfies the auth.uid() = user_id policy.
-export async function saveScanStatus(
-  userId: string,
-  targetUserId: string,
-  status: ScanStatus
-): Promise<void> {
-  try {
-    const supabase = createClient();
-    await supabase
-      .from('friend_scan_status')
-      .upsert(
-        { user_id: userId, target_user_id: targetUserId, status, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id,target_user_id' }
-      );
-  } catch {
-    // Network/RLS hiccup — ignore; the mark re-saves next time it's tapped.
-  }
 }
