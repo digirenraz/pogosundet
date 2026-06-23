@@ -15,6 +15,9 @@ interface PlayerDirectoryProps {
   // (see PlayersScreen) so the mobile + desktop layouts don't each open a
   // colliding `players-online` channel.
   onlineUserIds: Set<string>;
+  // Target user_ids the current user has already marked "added" in the desktop
+  // scan-session — drives the subtle "Allerede tilføjet" hint on each card.
+  addedUserIds: Set<string>;
 }
 
 const TEAM_COLOR: Record<DirectoryFilter, string> = {
@@ -25,7 +28,12 @@ const TEAM_COLOR: Record<DirectoryFilter, string> = {
   instinct: 'var(--color-team-instinct)',
 };
 
-export function PlayerDirectory({ profiles, currentUserId, onlineUserIds }: PlayerDirectoryProps) {
+export function PlayerDirectory({
+  profiles,
+  currentUserId,
+  onlineUserIds,
+  addedUserIds,
+}: PlayerDirectoryProps) {
   const t = useTranslations('PlayerDirectory');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<DirectoryFilter>('all');
@@ -122,6 +130,7 @@ export function PlayerDirectory({ profiles, currentUserId, onlineUserIds }: Play
                 key={profile.id}
                 profile={profile}
                 online={onlineUserIds.has(profile.user_id)}
+                added={addedUserIds.has(profile.user_id)}
               />
             ))}
           </div>

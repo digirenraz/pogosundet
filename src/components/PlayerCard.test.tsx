@@ -5,10 +5,10 @@ import { PlayerCard } from './PlayerCard';
 import type { Profile } from '@/lib/profile/helpers';
 import daMessages from '../../messages/da.json';
 
-function renderCard(profile: Profile) {
+function renderCard(profile: Profile, props: { added?: boolean } = {}) {
   return render(
     <NextIntlClientProvider locale="da" messages={daMessages}>
-      <PlayerCard profile={profile} />
+      <PlayerCard profile={profile} added={props.added} />
     </NextIntlClientProvider>
   );
 }
@@ -32,5 +32,17 @@ describe('PlayerCard friend-code visibility (issue #101)', () => {
     expect(screen.queryByText('1111 2222 3333')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Kopier/ })).not.toBeInTheDocument();
     expect(screen.getByText('Ønsker ikke nye venner lige nu')).toBeInTheDocument();
+  });
+});
+
+describe('PlayerCard "already added" hint (scan-session persistence)', () => {
+  it('shows the hint when added is true', () => {
+    renderCard({ ...base, hide_friend_code: false }, { added: true });
+    expect(screen.getByText('Allerede tilføjet')).toBeInTheDocument();
+  });
+
+  it('hides the hint by default', () => {
+    renderCard({ ...base, hide_friend_code: false });
+    expect(screen.queryByText('Allerede tilføjet')).not.toBeInTheDocument();
   });
 });

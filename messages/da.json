@@ -123,7 +123,8 @@
     "filterValor": "Valor",
     "filterInstinct": "Instinct",
     "countLabel": "{count} trænere · tryk for at se vennekode",
-    "onlineLabel": "online nu"
+    "onlineLabel": "online nu",
+    "alreadyAdded": "Allerede tilføjet"
   },
   "DesktopPlayers": {
     "scanTitle": "Scan-session",

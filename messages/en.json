@@ -121,7 +121,8 @@
     "filterValor": "Valor",
     "filterInstinct": "Instinct",
     "countLabel": "{count} trainers · tap to see friend code",
-    "onlineLabel": "online now"
+    "onlineLabel": "online now",
+    "alreadyAdded": "Already added"
   },
   "DesktopPlayers": {
     "scanTitle": "Scan session",
