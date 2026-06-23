@@ -1,7 +1,12 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getAllProfiles, redactHiddenFriendCodes } from '@/lib/profile/server-helpers';
+import { buildScanStatusMap, type ScanStatusRow } from '@/lib/players/scan-status';
 import { PlayersScreen } from '@/components/PlayersScreen';
+
+// Supabase EU region — keep queries in Dublin (see CLAUDE.md). This page makes
+// three Supabase calls (profiles, last_seen, friend_scan_status).
+export const preferredRegion = 'dub1';
 
 // Player Directory — the main authenticated screen.
 // Fetches all profiles server-side and passes them to the client component for search/display.
@@ -14,9 +19,12 @@ export default async function PlayersPage() {
 
   // getAllProfiles is cached (60s TTL) for performance.
   // last_seen_at is fetched fresh every render so the badge is never stale.
-  const [{ data: profiles }, lastSeenResult] = await Promise.all([
+  // friend_scan_status is per-user (RLS) — never cached; seeds the desktop
+  // scan-session queue and the "Allerede tilføjet" hint on player cards.
+  const [{ data: profiles }, lastSeenResult, scanStatusResult] = await Promise.all([
     getAllProfiles(),
     supabase.from('profiles').select('user_id, last_seen_at'),
+    supabase.from('friend_scan_status').select('target_user_id, status').eq('user_id', userId),
   ]);
   const lastSeenMap = Object.fromEntries(
     (lastSeenResult.data ?? []).map((p) => [p.user_id, p.last_seen_at])
@@ -29,7 +37,11 @@ export default async function PlayersPage() {
   // Withhold hidden friend codes from everyone but their owner (issue #101).
   const visibleProfiles = redactHiddenFriendCodes(freshProfiles, userId);
 
+  const scanStatus = buildScanStatusMap(scanStatusResult.data as ScanStatusRow[] | null);
+
   // PlayersScreen (client) owns the single presence subscription and renders
   // both the mobile directory and the desktop scan-session responsively.
-  return <PlayersScreen profiles={visibleProfiles} currentUserId={userId} />;
+  return (
+    <PlayersScreen profiles={visibleProfiles} currentUserId={userId} scanStatus={scanStatus} />
+  );
 }

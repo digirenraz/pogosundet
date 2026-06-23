@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import type { Profile } from '@/lib/profile/helpers';
+import type { ScanStatus } from '@/lib/players/scan-status';
 import { usePresence } from '@/lib/profile/use-presence';
 import { DirectoryHeader } from './DirectoryHeader';
 import { PlayerDirectory } from './PlayerDirectory';
@@ -11,6 +13,10 @@ import { DesktopPlayers } from './desktop/DesktopPlayers';
 interface PlayersScreenProps {
   profiles: Profile[];
   currentUserId: string;
+  // Persisted desktop scan-session marks (target user_id -> added/skipped),
+  // private to the current user. Seeds the scan-session queue and the
+  // "Allerede tilføjet" hint on player cards.
+  scanStatus: Record<string, ScanStatus>;
 }
 
 // Responsive shell for the player directory. Owns the SINGLE `usePresence`
@@ -18,9 +24,21 @@ interface PlayersScreenProps {
 // directory and the desktop scan-session render simultaneously (CSS toggles
 // visibility), so calling `usePresence` inside each would open two Supabase
 // channels with the same `players-online` topic and throw a collision error.
-export function PlayersScreen({ profiles, currentUserId }: PlayersScreenProps) {
+export function PlayersScreen({ profiles, currentUserId, scanStatus }: PlayersScreenProps) {
   const onlineUserIds = usePresence(currentUserId);
   const me = profiles.find((p) => p.user_id === currentUserId);
+
+  // Players already marked "added" — drives the subtle card hint. Skipped marks
+  // only seed the scan-session queue, so they're excluded here.
+  const addedUserIds = useMemo(
+    () =>
+      new Set(
+        Object.entries(scanStatus)
+          .filter(([, s]) => s === 'added')
+          .map(([userId]) => userId)
+      ),
+    [scanStatus]
+  );
 
   return (
     <>
@@ -33,6 +51,7 @@ export function PlayersScreen({ profiles, currentUserId }: PlayersScreenProps) {
             profiles={profiles}
             currentUserId={currentUserId}
             onlineUserIds={onlineUserIds}
+            addedUserIds={addedUserIds}
           />
         </main>
         <BottomNav />
@@ -46,6 +65,7 @@ export function PlayersScreen({ profiles, currentUserId }: PlayersScreenProps) {
             profiles={profiles}
             currentUserId={currentUserId}
             onlineUserIds={onlineUserIds}
+            initialStatus={scanStatus}
           />
         </div>
       </div>

@@ -15,6 +15,8 @@ import {
   Users,
 } from 'lucide-react';
 import type { Profile } from '@/lib/profile/helpers';
+import type { ScanStatus } from '@/lib/players/scan-status';
+import { saveScanStatus } from '@/lib/players/save-scan-status';
 import { Avatar, TeamChip, LevelPill, TEAMS, type AvatarTeam } from '@/components/Avatar';
 import { FriendCodeQR } from '@/components/FriendCodeQR';
 import { FriendCodeHidden } from '@/components/FriendCodeHidden';
@@ -26,16 +28,22 @@ interface DesktopPlayersProps {
   // Online set from the parent's single `usePresence` subscription (see
   // PlayersScreen) — avoids a second colliding `players-online` channel.
   onlineUserIds: Set<string>;
+  // Persisted marks (target user_id -> added/skipped) loaded server-side, so the
+  // queue's checks/skips survive a reload or navigation (migration 021).
+  initialStatus: Record<string, ScanStatus>;
 }
-
-type ScanStatus = 'added' | 'skipped';
 
 // Desktop "Scan-session": one big QR on screen at a time so a phone camera can't
 // lock onto the wrong code. Work down the queue on the left with the
 // "Tilføjet → næste" / "Spring over" buttons. Ported from the desktop design
 // mock (PageSpillere.jsx) onto real profile data + the real, scannable
-// FriendCodeQR.
-export function DesktopPlayers({ profiles, currentUserId, onlineUserIds }: DesktopPlayersProps) {
+// FriendCodeQR. Marks are keyed by the target's user_id and persisted per-user.
+export function DesktopPlayers({
+  profiles,
+  currentUserId,
+  onlineUserIds,
+  initialStatus,
+}: DesktopPlayersProps) {
   const t = useTranslations('DesktopPlayers');
   const tDir = useTranslations('PlayerDirectory');
 
@@ -45,7 +53,8 @@ export function DesktopPlayers({ profiles, currentUserId, onlineUserIds }: Deskt
   );
 
   const [idx, setIdx] = useState(0);
-  const [status, setStatus] = useState<Record<string, ScanStatus>>({});
+  // Keyed by target user_id; seeded from the persisted marks.
+  const [status, setStatus] = useState<Record<string, ScanStatus>>(initialStatus);
   const [copied, setCopied] = useState(false);
 
   const addedCount = Object.values(status).filter((s) => s === 'added').length;
@@ -53,7 +62,10 @@ export function DesktopPlayers({ profiles, currentUserId, onlineUserIds }: Deskt
 
   function mark(s: ScanStatus) {
     if (!cur) return;
-    setStatus((prev) => ({ ...prev, [cur.id]: s }));
+    // Optimistic local update keyed by target user_id, then persist best-effort
+    // (a failed write never blocks advancing the queue).
+    setStatus((prev) => ({ ...prev, [cur.user_id]: s }));
+    void saveScanStatus(currentUserId, cur.user_id, s);
     if (idx < list.length - 1) setIdx(idx + 1);
   }
 
@@ -133,7 +145,7 @@ export function DesktopPlayers({ profiles, currentUserId, onlineUserIds }: Deskt
 
         <div className="flex-1 overflow-y-auto px-3 pt-1 pb-4 flex flex-col gap-1">
           {list.map((p, i) => {
-            const st = status[p.id];
+            const st = status[p.user_id];
             const isCur = i === idx;
             const teamMeta = TEAMS[(p.team ?? 'none') as AvatarTeam];
             return (

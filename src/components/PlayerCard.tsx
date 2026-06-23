@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Copy, Check, EyeOff } from 'lucide-react';
+import { Copy, Check, EyeOff, UserCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
 import { lastSeenRelative } from '@/lib/profile/time';
@@ -11,9 +11,12 @@ import { Avatar, TEAMS, type AvatarTeam } from './Avatar';
 interface PlayerCardProps {
   profile: Profile;
   online?: boolean;
+  // True when the current user has already marked this player "added" in the
+  // desktop scan-session — shows a subtle hint (private to the viewer).
+  added?: boolean;
 }
 
-export function PlayerCard({ profile, online = false }: PlayerCardProps) {
+export function PlayerCard({ profile, online = false, added = false }: PlayerCardProps) {
   const t = useTranslations('PlayerDirectory');
   const tFc = useTranslations('FriendCode');
   const [copied, setCopied] = useState(false);
@@ -84,6 +87,13 @@ export function PlayerCard({ profile, online = false }: PlayerCardProps) {
 
       {profile.bio && (
         <p className="text-[14px] text-card-foreground leading-snug line-clamp-2">{profile.bio}</p>
+      )}
+
+      {added && (
+        <div className="flex items-center gap-1.5 text-primary text-[12px] font-semibold -mt-0.5">
+          <UserCheck size={13} className="flex-shrink-0" />
+          {t('alreadyAdded')}
+        </div>
       )}
 
       {profile.hide_friend_code ? (
