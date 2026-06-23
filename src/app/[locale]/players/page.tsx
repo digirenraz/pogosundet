@@ -4,6 +4,10 @@ import { getAllProfiles, redactHiddenFriendCodes } from '@/lib/profile/server-he
 import { buildScanStatusMap, type ScanStatusRow } from '@/lib/players/scan-status';
 import { PlayersScreen } from '@/components/PlayersScreen';
 
+// Supabase EU region — keep queries in Dublin (see CLAUDE.md). This page makes
+// three Supabase calls (profiles, last_seen, friend_scan_status).
+export const preferredRegion = 'dub1';
+
 // Player Directory — the main authenticated screen.
 // Fetches all profiles server-side and passes them to the client component for search/display.
 export default async function PlayersPage() {
