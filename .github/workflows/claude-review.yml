@@ -43,7 +43,7 @@ jobs:
         if: env.HAS_TOKEN != 'true'
         run: echo "::notice::Skipping Claude PR review — CLAUDE_CODE_OAUTH_TOKEN repo secret is not set. See docs/launch-checklist.md."
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: env.HAS_TOKEN == 'true'
         with:
           fetch-depth: 1
