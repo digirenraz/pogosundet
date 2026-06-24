@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PoGoSundet — Professionalisation Assessment</title>
+<style>
+  :root{
+    --ink:#0a1f27; --muted:#5b6b72; --line:#e3e9ea; --bg:#f7f9f9; --card:#fff;
+    --teal:#00b09f; --teal-d:#0a222b; --p0:#d6452b; --p1:#e08a00; --p2:#3a7bd5;
+    --good:#1f9d6b; --warn:#e08a00; --bad:#d6452b;
+    --shadow:0 1px 3px rgba(10,34,43,.08), 0 8px 24px rgba(10,34,43,.05);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:920px;margin:0 auto;padding:40px 20px 80px}
+  header.hero{background:linear-gradient(135deg,#0a222b,#0d3a3f);color:#fff;border-radius:18px;
+    padding:34px 32px;box-shadow:var(--shadow)}
+  header.hero h1{margin:0 0 6px;font-size:26px;letter-spacing:-.02em}
+  header.hero p{margin:4px 0;color:#b9d6d2}
+  .pills{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
+  .pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);
+    color:#eaf6f4;font-size:12.5px;padding:5px 11px;border-radius:999px}
+  h2{margin:42px 0 10px;font-size:21px;letter-spacing:-.01em;border-bottom:2px solid var(--line);padding-bottom:8px}
+  h3{margin:26px 0 6px;font-size:17px}
+  p.lead{color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:18px 20px;margin:14px 0;box-shadow:var(--shadow)}
+  .rec{border-left:5px solid var(--line)}
+  .rec.p0{border-left-color:var(--p0)} .rec.p1{border-left-color:var(--p1)} .rec.p2{border-left-color:var(--p2)}
+  .rec .top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .badge{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    padding:4px 9px;border-radius:6px;color:#fff;white-space:nowrap}
+  .b-p0{background:var(--p0)} .b-p1{background:var(--p1)} .b-p2{background:var(--p2)}
+  .rec h3{margin:0;flex:1 1 320px}
+  .meta{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px;font-size:13px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+  .tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:5px;background:#eef4f3;color:#0a3a3a}
+  .why{margin:8px 0}
+  details{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+  summary{cursor:pointer;font-size:13.5px;color:var(--teal);font-weight:600;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ ";color:var(--teal)}
+  details[open] summary::before{content:"▾ "}
+  details .body{padding-top:10px;font-size:14.5px}
+  code{background:#eef3f3;padding:1.5px 5px;border-radius:4px;font-size:13px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  pre{background:#0d2a2f;color:#d7ece8;padding:14px 16px;border-radius:10px;overflow:auto;font-size:12.5px;line-height:1.5}
+  pre code{background:none;color:inherit;padding:0}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#eef4f3;font-size:13px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .d-good{background:var(--good)} .d-warn{background:var(--warn)} .d-bad{background:var(--bad)}
+  .toc{columns:2;column-gap:28px;font-size:14px}
+  .toc a{color:var(--teal-d);text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  ul.tight{margin:6px 0 6px 0;padding-left:20px} ul.tight li{margin:3px 0}
+  .callout{background:#fff7ec;border:1px solid #f1dcb3;border-radius:10px;padding:12px 16px;margin:14px 0;font-size:14.5px}
+  .callout.teal{background:#ecfbf8;border-color:#bfe9e2}
+  footer{margin-top:50px;color:var(--muted);font-size:13px;text-align:center}
+  .num{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>PoGoSundet — Professionalisation Assessment</h1>
+  <p>An engineering-practices review: CI, testing, non-functional requirements, code review, GitHub policy, and environment separation.</p>
+  <p style="font-size:13px;opacity:.8">Prepared 2026-06-24 · Scope: whole repository &amp; workflow</p>
+  <div class="pills">
+    <span class="pill">Context: pre-launch, no real users</span>
+    <span class="pill">Budget: free-tier only</span>
+    <span class="pill">Constraint: stays 100% vibe-coded &amp; designed</span>
+  </div>
+</header>
+
+<h2 id="summary">1 · Executive summary <span style="font-size:13px;font-weight:400;color:var(--muted)">(plain language)</span></h2>
+<p class="lead">The good news first: for a vibe-coded project this is unusually disciplined. You have a real CI pipeline, ~34 unit-test files, 19 end-to-end tests, an automated AI code reviewer, branch protection, GDPR rigour, and the best in-repo documentation I've seen on a project this size (<code>CLAUDE.md</code> + <code>docs/</code>). None of what follows is a rescue mission — it's hardening.</p>
+
+<p>The central theme of every important finding is the same: <b>your safety net has holes in exactly the places a vibe-coded, "verify-on-prod" workflow leans on hardest.</b> Because a human rarely reads the diff line-by-line, the automated gates have to be airtight — and right now three of them aren't:</p>
+
+<div class="callout">
+<b>If you do only three things before launch, do these:</b>
+<ul class="tight">
+<li><b>① Run the type-check in CI.</b> Your own docs call the build "the canonical type gate" — but CI never builds or type-checks. Type errors can merge today.</li>
+<li><b>② Get a free second Supabase project for previews.</b> One shared database for preview <em>and</em> production is your single largest risk; the fix is free and unblocks several other items.</li>
+<li><b>③ Turn on error monitoring (Sentry — already wired, just needs a free DSN).</b> You verify on prod but currently fly blind when something breaks there.</li>
+</ul>
+</div>
+
+<p>Below: a scorecard, then every recommendation in priority order. Each has a plain-language summary and a collapsible <b>technical detail</b> block so Claude can execute it directly.</p>
+
+<h2 id="scorecard">2 · Scorecard</h2>
+<table>
+<thead><tr><th>Area</th><th>State</th><th>One-line verdict</th></tr></thead>
+<tbody>
+<tr><td>Documentation</td><td><span class="dot d-good"></span>Strong</td><td>Best-in-class; <code>CLAUDE.md</code> + decisions log are a genuine asset.</td></tr>
+<tr><td>Unit testing</td><td><span class="dot d-good"></span>Strong</td><td>TDD culture, pure-helper coverage, 34 test files.</td></tr>
+<tr><td>CI pipeline</td><td><span class="dot d-warn"></span>Partial</td><td>Lint + unit + e2e run, but <b>no type-check/build gate</b> and e2e barely covers logged-in flows.</td></tr>
+<tr><td>Environment separation</td><td><span class="dot d-bad"></span>Gap</td><td>Preview and prod share one database. The defining risk.</td></tr>
+<tr><td>Observability (errors/uptime)</td><td><span class="dot d-bad"></span>Gap</td><td>Sentry wired but disabled; no uptime/health check. Blind in prod.</td></tr>
+<tr><td>Code review</td><td><span class="dot d-warn"></span>Partial</td><td>AI reviewer built but token not set; 0 human approvals + self-merge.</td></tr>
+<tr><td>GitHub policy</td><td><span class="dot d-warn"></span>Partial</td><td>Branch protection on; but CI likely not a <em>required</em> check, no Dependabot, no secret-scanning/templates.</td></tr>
+<tr><td>DB migration safety</td><td><span class="dot d-warn"></span>Partial</td><td>Powerful but entirely manual; "apply-before-merge" is human-enforced against the live DB.</td></tr>
+<tr><td>Security</td><td><span class="dot d-good"></span>Good</td><td>RLS, webhook gate, security review done; one documented column-RLS residual.</td></tr>
+<tr><td>Accessibility / web-vitals</td><td><span class="dot d-warn"></span>Untested</td><td>Mobile-first app with no automated a11y or performance budget checks.</td></tr>
+</tbody>
+</table>
+
+<h2 id="contents">3 · Recommendations (by priority)</h2>
+<div class="card"><div class="toc">
+<p style="margin:0"><b>P0 — before launch</b></p>
+<a href="#r1">1 · Type-check &amp; build in CI</a><br>
+<a href="#r2">2 · Free staging Supabase project</a><br>
+<a href="#r3">3 · Enable Sentry error monitoring</a><br>
+<a href="#r4">4 · Make CI a required status check</a><br>
+<a href="#r5">5 · Secret scanning + push protection</a><br>
+<p style="margin:12px 0 0"><b>P1 — soon after</b></p>
+<a href="#r6">6 · Migration-safety CI guard</a><br>
+<a href="#r7">7 · Activate the AI PR reviewer</a><br>
+<a href="#r8">8 · Dependabot</a><br>
+<a href="#r9">9 · Logged-in e2e in CI (on staging)</a><br>
+<a href="#r10">10 · Mobile viewport in Playwright</a><br>
+<p style="margin:12px 0 0"><b>P2 — polish</b></p>
+<a href="#r11">11 · Pre-push quality hook</a><br>
+<a href="#r12">12 · Pin Node (.nvmrc + engines)</a><br>
+<a href="#r13">13 · PR template (invariant checklist)</a><br>
+<a href="#r14">14 · Automated accessibility checks</a><br>
+<a href="#r15">15 · Lighthouse / web-vitals budget</a><br>
+<a href="#r16">16 · CodeQL scanning</a><br>
+<a href="#r17">17 · Coverage reporting</a><br>
+<a href="#r18">18 · Close the friend-code RLS residual</a><br>
+</div></div>
+
+<!-- ================= P0 ================= -->
+<h2 id="p0">P0 · Do before launch</h2>
+
+<div class="card rec p0" id="r1">
+  <div class="top"><span class="badge b-p0">P0</span><h3>1 · Run the type-check (and build) in CI</h3></div>
+  <div class="meta"><span><b>Impact:</b> Very high</span><span><b>Effort:</b> 10 min</span><span><b>Cost:</b> Free</span><span class="tag">CI</span></div>
+  <p class="why"><b>Why it matters:</b> Your <code>CLAUDE.md</code> says "<i>npm run build is the canonical type gate</i>" — but CI runs only <code>lint</code>, <code>vitest</code>, and Playwright (which boots <code>next dev</code>, not a production build). <b>Nothing in CI ever type-checks or builds.</b> In a workflow where a human seldom reads the diff, a TypeScript error or a broken production build can be merged and only discovered when prod breaks. This is the cheapest high-value fix on the list.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Add a typecheck script and two CI steps. <code>tsc --noEmit</code> is the fast gate; <code>next build</code> additionally catches build-time failures (RSC boundaries, route config) that <code>tsc</code> misses.</p>
+  <pre><code>// package.json
+"scripts": {
+  "typecheck": "tsc --noEmit",
+  ...
+}</code></pre>
+  <pre><code># .github/workflows/ci.yml — add before the e2e step
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}</code></pre>
+  <p>Optional but recommended: have Playwright test against the production build instead of <code>next dev</code> (change <code>webServer.command</code> to <code>npm run build &amp;&amp; npm start</code> in CI) so e2e exercises the same artefact users get.</p>
+  </div></details>
+</div>
+
+<div class="card rec p0" id="r2">
+  <div class="top"><span class="badge b-p0">P0</span><h3>2 · Stand up a free second Supabase project as staging/preview</h3></div>
+  <div class="meta"><span><b>Impact:</b> Very high</span><span><b>Effort:</b> 1–2 hrs</span><span><b>Cost:</b> Free (Supabase free tier allows 2 projects)</span><span class="tag">Environments</span></div>
+  <p class="why"><b>Why it matters:</b> This is the risk your own "Open questions" flags twice. Today, profiles, raids, and chat created on a Vercel <em>preview</em> deploy land in the <em>production</em> database, and any data-writing test pollutes real data. It also forces the brittle "apply migrations to the live DB before merge" dance, and it's the reason logged-in e2e tests can't run in CI. A separate preview DB dissolves <b>three</b> problems at once — and it's free.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <ul class="tight">
+    <li>Create a second Supabase project (EU/Ireland, same as prod) — call it <code>pogosundet-preview</code>.</li>
+    <li>Apply all 21 migrations to it once (paste in order) so its schema matches prod.</li>
+    <li>In Vercel, set <b>Preview-scoped</b> overrides for <code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code> pointing at the preview project (Production env vars stay on prod). Vercel supports per-environment values natively.</li>
+    <li>Point CI's Supabase secrets at the <em>preview</em> project too — then CI e2e no longer touches prod (prerequisite for #9).</li>
+    <li>Now "apply-before-merge" becomes "apply to preview, verify on the preview deploy, then apply to prod at merge" — a real staging gate instead of editing the live DB.</li>
+  </ul>
+  <p class="num">Caveat to keep: Edge Functions / push webhooks are still wired to the prod project, so push delivery still needs a prod check — but every <em>data</em> flow becomes safely testable.</p>
+  </div></details>
+</div>
+
+<div class="card rec p0" id="r3">
+  <div class="top"><span class="badge b-p0">P0</span><h3>3 · Turn on Sentry error monitoring (already wired)</h3></div>
+  <div class="meta"><span><b>Impact:</b> High</span><span><b>Effort:</b> 20 min</span><span><b>Cost:</b> Free (Sentry free tier: 5k errors/mo)</span><span class="tag">Observability</span></div>
+  <p class="why"><b>Why it matters:</b> Your stated workflow is "verify on prod" — yet there is currently <b>no way to see when prod throws an error</b>. The Sentry SDK is already installed and configured (<code>sentry.*.config.ts</code>, <code>withSentryConfig</code> in <code>next.config.ts</code>); it does nothing because no DSN is set. For a vibe-coded app this is the single biggest visibility upgrade available, and it's already half-built and on the launch checklist.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <ul class="tight">
+    <li>Create a Next.js Sentry project in an <b>EU region</b> (DSN must contain <code>.de.</code>) for GDPR — already noted in <code>docs/launch-checklist.md</code>.</li>
+    <li>Add <code>NEXT_PUBLIC_SENTRY_DSN</code> to Vercel (Production + Preview). That alone enables capture.</li>
+    <li>Optionally add <code>SENTRY_ORG</code>/<code>SENTRY_PROJECT</code>/<code>SENTRY_AUTH_TOKEN</code> for readable (source-mapped) stack traces.</li>
+    <li>Trigger a test error and confirm it lands.</li>
+  </ul>
+  <p><b>Gap to note:</b> the four Supabase Edge Functions (Deno) are <em>not</em> covered by Sentry — if push delivery silently fails, you won't see it. A lightweight follow-up is <code>@sentry/deno</code> in the <code>notify-*</code> functions, or at minimum keep an eye on the Supabase function logs. Mention this when you pick it up.</p>
+  </div></details>
+</div>
+
+<div class="card rec p0" id="r4">
+  <div class="top"><span class="badge b-p0">P0</span><h3>4 · Make CI a <em>required</em> status check on <code>main</code></h3></div>
+  <div class="meta"><span><b>Impact:</b> High</span><span><b>Effort:</b> 5 min</span><span><b>Cost:</b> Free</span><span class="tag">GitHub policy</span></div>
+  <p class="why"><b>Why it matters:</b> Your branch ruleset requires a PR but <b>0 approvals</b>, and Claude self-merges. That's a reasonable choice for a solo vibe-coded project — <em>but only if CI is a required check.</em> If CI is merely advisory, a self-merge can land a red build. Combined with #1 (adding the type gate to CI), making CI required is what actually closes the "broken code can't reach main" loop.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>In the GitHub ruleset <i>Protect main — require PR</i> (id 17923605), enable <b>"Require status checks to pass"</b> and add the <code>test</code> job from <code>ci.yml</code> as a required check. Keep approvals at 0 so self-merge still works. The Claude review stays advisory (correct — it's a judgement aid, not a pass/fail gate). Verify by opening a PR with a deliberate failing test and confirming the merge button is blocked.</p>
+  <p>Quick way to confirm current state: GitHub → Settings → Rules → Rulesets → <i>Protect main</i> → check whether "Require status checks" is listed. If it isn't, that's the gap.</p>
+  </div></details>
+</div>
+
+<div class="card rec p0" id="r5">
+  <div class="top"><span class="badge b-p0">P0</span><h3>5 · Enable secret scanning + push protection</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium-high</span><span><b>Effort:</b> 5 min</span><span><b>Cost:</b> Free (public repo)</span><span class="tag">Security</span></div>
+  <p class="why"><b>Why it matters:</b> The repo was made <b>public</b> on 2026-06-20 to unlock free branch protection. Public repos get GitHub's secret scanning and <b>push protection</b> for free — push protection actively <em>blocks</em> a commit that contains a key before it ever reaches the public history. Given the whole security posture depends on "no secrets in code," this turns that rule from a manual promise into an enforced guarantee. Especially valuable when an AI is generating commits.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>GitHub → Settings → <b>Code security</b> → enable <i>Secret scanning</i> and <i>Push protection</i>. Both are free for public repositories. Push protection rejects pushes containing recognised credential patterns (Supabase service keys, GitHub PATs, Anthropic keys, etc.) with an override-with-justification flow. No code change.</p>
+  </div></details>
+</div>
+
+<!-- ================= P1 ================= -->
+<h2 id="p1">P1 · Soon after</h2>
+
+<div class="card rec p1" id="r6">
+  <div class="top"><span class="badge b-p1">P1</span><h3>6 · CI guard for the manual-migration workflow</h3></div>
+  <div class="meta"><span><b>Impact:</b> High</span><span><b>Effort:</b> 30–60 min</span><span><b>Cost:</b> Free</span><span class="tag">Migrations</span></div>
+  <p class="why"><b>Why it matters:</b> Your most dangerous class of bug is "a PR ships a query against a column the shared prod DB doesn't have yet" — it breaks the app for <em>every</em> user the instant it deploys. Right now the only defence is a human remembering the "apply-before-merge" rule. A cheap CI guard turns that into an explicit, un-skippable prompt.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Two layers, both free:</p>
+  <ul class="tight">
+    <li><b>CI label/comment guard:</b> a small workflow step that, when a PR's diff touches <code>supabase/migrations/**</code>, fails (or posts a sticky comment) unless the PR body contains a checked "Migration applied to prod ✅" box. Forces the author to acknowledge it.</li>
+    <li><b>Better, once #2 (staging DB) exists:</b> manage migrations with the Supabase CLI (<code>supabase migration new</code>, <code>supabase db push</code>) against the <em>preview</em> project, so the preview deploy proves the migration applies cleanly before prod. You already use the CLI for Edge Functions; this extends it to schema.</li>
+  </ul>
+  <p>This is also where the friend-code RLS residual (#18) would naturally get fixed, since you'd have a safe place to test a view/RPC refactor.</p>
+  </div></details>
+</div>
+
+<div class="card rec p1" id="r7">
+  <div class="top"><span class="badge b-p1">P1</span><h3>7 · Activate the automated PR reviewer</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium-high</span><span><b>Effort:</b> 10 min</span><span><b>Cost:</b> Free (uses your Claude subscription)</span><span class="tag">Review</span></div>
+  <p class="why"><b>Why it matters:</b> You already built <code>claude-review.yml</code> — a fresh Claude reviewing every PR against your CLAUDE.md invariants — but it's dormant because the <code>CLAUDE_CODE_OAUTH_TOKEN</code> secret isn't set. In a 0-human-approval workflow, this reviewer <em>is</em> your second pair of eyes. Switching it on is the highest-leverage 10 minutes after the P0s.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Per <code>docs/launch-checklist.md</code>: run <code>claude setup-token</code> (signs in via your Pro/Max subscription), add the output as the <code>CLAUDE_CODE_OAUTH_TOKEN</code> repo secret, open a throwaway PR to confirm inline comments appear. Consider bumping the model to Opus (<code>--model claude-opus-4-8</code> in <code>claude_args</code>) for the reviewer — diffs are small and the cost difference is negligible, but the catch rate is higher. The review is correctly <em>not</em> a required check, so it never blocks a merge.</p>
+  </div></details>
+</div>
+
+<div class="card rec p1" id="r8">
+  <div class="top"><span class="badge b-p1">P1</span><h3>8 · Add Dependabot</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 10 min</span><span><b>Cost:</b> Free</span><span class="tag">GitHub policy</span></div>
+  <p class="why"><b>Why it matters:</b> You're on the bleeding edge (Next 16, React 19) with no automated dependency or vulnerability tracking. Dependabot opens PRs for security patches and version bumps — and because those PRs run through your CI + AI reviewer, an AI can triage and merge the safe ones with the same workflow you already use. Keeps a vibe-coded app from silently rotting.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <pre><code># .github/dependabot.yml
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule: { interval: "weekly" }
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule: { interval: "weekly" }</code></pre>
+  <p>Grouping minor/patch bumps into one PR keeps the noise down. Also enable <b>Dependabot security alerts</b> under Settings → Code security (free, public repo).</p>
+  </div></details>
+</div>
+
+<div class="card rec p1" id="r9">
+  <div class="top"><span class="badge b-p1">P1</span><h3>9 · Run logged-in e2e tests in CI (against staging)</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium-high</span><span><b>Effort:</b> 30 min (after #2)</span><span><b>Cost:</b> Free</span><span class="tag">Testing</span></div>
+  <p class="why"><b>Why it matters:</b> You've written 19 e2e specs, but <b>17 of them silently skip in CI</b> because <code>E2E_TEST_EMAIL</code>/<code>E2E_TEST_PASSWORD</code> aren't set — so "CI green" today only proves the logged-out smoke flow. The reason they're not set is that CI points at the prod DB. Once #2 gives you a preview DB, you can add test creds and your real coverage (chat, raids, DMs, profile, hide-friend-code…) actually runs on every PR.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>After #2: create a dedicated test user in the preview project, add <code>E2E_TEST_EMAIL</code>/<code>E2E_TEST_PASSWORD</code> as repo secrets, and pass them in the e2e step's <code>env</code>. The 17 env-gated specs will run. Note the inherent limitation already documented: Supabase Realtime cross-user delivery is flaky under <code>next dev</code>, so realtime-dependent assertions stay prod-verified — but the bulk of the logged-in surface becomes CI-covered. Update the "Open questions" entry once done.</p>
+  </div></details>
+</div>
+
+<div class="card rec p1" id="r10">
+  <div class="top"><span class="badge b-p1">P1</span><h3>10 · Add a mobile viewport project to Playwright</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 15 min</span><span><b>Cost:</b> Free</span><span class="tag">Testing</span></div>
+  <p class="why"><b>Why it matters:</b> This is a <b>mobile-first PWA</b>, yet Playwright runs a single <code>Desktop Chrome</code> project. Individual specs set a phone viewport by hand (and the changelog/bug-report sheet bug — invisible behind the BottomNav — was a mobile-only regression a desktop viewport could never have caught). A dedicated mobile project makes the default what your users actually use.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <pre><code>// playwright.config.ts
+projects: [
+  { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
+  { name: "desktop-chrome", use: { ...devices["Desktop Chrome"] } },
+],</code></pre>
+  <p>Mobile-first as the primary project; keep desktop for the <code>lg+</code> sidebar layouts (<code>desktop-players</code>, branded header). Tag desktop-only specs with the desktop project to avoid running them on mobile. Consider adding WebKit/Mobile Safari later given the iOS PWA focus, but Chromium-only is fine for now to keep CI fast and free.</p>
+  </div></details>
+</div>
+
+<!-- ================= P2 ================= -->
+<h2 id="p2">P2 · Polish &amp; long-term hygiene</h2>
+
+<div class="card rec p2" id="r11">
+  <div class="top"><span class="badge b-p2">P2</span><h3>11 · Pre-push quality hook (lint + typecheck)</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 20 min</span><span><b>Cost:</b> Free</span><span class="tag">DX</span></div>
+  <p class="why"><b>Why it matters:</b> Catches lint/type failures locally <em>before</em> a PR and CI run, shortening the vibe-coding feedback loop. Note: web/cloud Claude sessions don't run local git hooks, so this mainly helps local/desktop work — pair it with the existing <b>SessionStart hook</b> approach for web sessions so both paths get a fast pre-flight check.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Add Husky + a <code>pre-push</code> hook running <code>npm run lint &amp;&amp; npm run typecheck</code> (full unit tests on pre-push can get slow — keep those in CI). For Claude-on-web, a <code>SessionStart</code> hook that runs the same gate gives parity. Keep it lightweight; a hook that's painful gets bypassed with <code>--no-verify</code>.</p>
+  </div></details>
+</div>
+
+<div class="card rec p2" id="r12">
+  <div class="top"><span class="badge b-p2">P2</span><h3>12 · Pin the Node version (<code>.nvmrc</code> + <code>engines</code>)</h3></div>
+  <div class="meta"><span><b>Impact:</b> Low-medium</span><span><b>Effort:</b> 5 min</span><span><b>Cost:</b> Free</span><span class="tag">DX</span></div>
+  <p class="why"><b>Why it matters:</b> CI pins Node 24, but nothing pins it for local dev or Vercel — so "works in CI, breaks locally" (or vice-versa) is possible. A one-line pin removes a whole class of "it's the environment" confusion, which matters more when the developer is an AI re-deriving context each session.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <pre><code># .nvmrc
+24</code></pre>
+  <pre><code>// package.json
+"engines": { "node": ">=24 <25" }</code></pre>
+  <p>Set the matching Node version in Vercel project settings too.</p>
+  </div></details>
+</div>
+
+<div class="card rec p2" id="r13">
+  <div class="top"><span class="badge b-p2">P2</span><h3>13 · PR template with the invariant checklist</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 15 min</span><span><b>Cost:</b> Free</span><span class="tag">GitHub policy</span></div>
+  <p class="why"><b>Why it matters:</b> Your CLAUDE.md invariants (migration applied? changelog entry? SW version bumped? <code>dub1</code> region? Privacy updated?) live in prose. A PR template turns them into a checklist the author must tick — and it doubles as the machine-checkable signal for the migration guard (#6). Low effort, reinforces discipline the AI reviewer also checks.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Add <code>.github/pull_request_template.md</code> with checkboxes:</p>
+  <pre><code>## Checklist
+- [ ] Migration applied to prod (if this PR adds a query against new columns)
+- [ ] Changelog entry added (user-facing change)
+- [ ] SW cache version bumped (if public/sw.js behaviour changed)
+- [ ] preferredRegion = "dub1" on new Supabase routes/pages
+- [ ] Privacy Policy + lastUpdated bumped (new personal data / 3rd party)
+- [ ] All UI strings via next-intl (no hardcoded text)</code></pre>
+  </div></details>
+</div>
+
+<div class="card rec p2" id="r14">
+  <div class="top"><span class="badge b-p2">P2</span><h3>14 · Automated accessibility checks</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 30 min</span><span><b>Cost:</b> Free</span><span class="tag">NFR</span></div>
+  <p class="why"><b>Why it matters:</b> A community app should be usable by everyone, and a11y bugs (contrast, missing labels, focus traps) are exactly the kind of thing a vibe-coded UI ships without noticing. <code>@axe-core/playwright</code> bolts onto your existing e2e run and flags violations automatically — no new infrastructure.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Add <code>@axe-core/playwright</code> and a spec that runs an axe scan on the key screens (login, players, raids, chat, profile). Start by asserting "no <em>critical/serious</em> violations" so it isn't noisy, then tighten. Pairs naturally with the mobile viewport project (#10).</p>
+  </div></details>
+</div>
+
+<div class="card rec p2" id="r15">
+  <div class="top"><span class="badge b-p2">P2</span><h3>15 · Lighthouse / web-vitals budget in CI</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 45 min</span><span><b>Cost:</b> Free</span><span class="tag">NFR</span></div>
+  <p class="why"><b>Why it matters:</b> Performance is a recurring theme in your decisions log (the nav-latency pass, perf indexes, package-import tree-shaking) — but it's all reactive. A Lighthouse CI check with a budget makes perf a gate: if a PR regresses load time or bundle size, CI flags it before it reaches the phone in someone's pocket.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Use <code>treosh/lighthouse-ci-action</code> against the built app in CI with a <code>lighthouserc</code> budget (e.g. performance ≥ 0.85, total JS &lt; a set KB). Run it non-blocking first (report only) to establish a baseline, then promote to a gate. Free for public repos. Best added <em>after</em> #1 makes CI build the app.</p>
+  </div></details>
+</div>
+
+<div class="card rec p2" id="r16">
+  <div class="top"><span class="badge b-p2">P2</span><h3>16 · CodeQL security scanning</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 10 min</span><span><b>Cost:</b> Free (public repo)</span><span class="tag">Security</span></div>
+  <p class="why"><b>Why it matters:</b> Free static security analysis for public repos. It complements your one-off manual security review with a continuous scan for common JS/TS vulnerability patterns on every push — a standing net rather than a point-in-time check.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Enable via GitHub → Settings → Code security → <i>CodeQL analysis</i> → "Default" setup (no YAML needed), or add <code>github/codeql-action</code> with the <code>javascript-typescript</code> language pack. Results show in the Security tab. Keep it advisory, not a required check, to avoid false-positive friction.</p>
+  </div></details>
+</div>
+
+<div class="card rec p2" id="r17">
+  <div class="top"><span class="badge b-p2">P2</span><h3>17 · Coverage reporting (soft threshold)</h3></div>
+  <div class="meta"><span><b>Impact:</b> Low-medium</span><span><b>Effort:</b> 20 min</span><span><b>Cost:</b> Free</span><span class="tag">Testing</span></div>
+  <p class="why"><b>Why it matters:</b> You can't see what your 34 test files actually cover. A coverage report (even just printed in CI) shows which <em>logic</em> is untested, so the TDD habit you already have gets pointed at the right gaps. Keep it a visibility tool, not a hard gate — chasing a coverage number on UI components wastes effort.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Add <code>@vitest/coverage-v8</code>, run <code>vitest run --coverage</code> in CI, and set a <em>soft</em> threshold on the <code>src/lib/**</code> pure-logic modules (where tests pay off most) rather than the whole tree. Print the summary in the CI log; optionally post it as a PR comment.</p>
+  </div></details>
+</div>
+
+<div class="card rec p2" id="r18">
+  <div class="top"><span class="badge b-p2">P2</span><h3>18 · Close the friend-code column-RLS residual</h3></div>
+  <div class="meta"><span><b>Impact:</b> Medium (privacy)</span><span><b>Effort:</b> 1–2 hrs</span><span><b>Cost:</b> Free</span><span class="tag">Security</span></div>
+  <p class="why"><b>Why it matters:</b> Documented in your decisions log: the "hide friend code" feature redacts at the page layer, but a technical user can still read any <code>friend_code</code> directly via the Supabase REST API with the public anon key, because RLS is row-level and the SELECT policy returns all columns. The in-app feature is honoured; the raw API isn't. Worth closing before launch since it's the one known way the privacy promise leaks.</p>
+  <details><summary>Technical detail</summary><div class="body">
+  <p>Proper fix is column-level masking: expose profiles through a <b>view or RPC</b> that omits <code>friend_code</code> for rows where <code>hide_friend_code</code> is true (and the viewer isn't the owner), and lock direct table SELECT down to the owner. This is exactly the kind of schema change that's risky on a shared prod DB — so it's best done <em>after</em> #2 (staging) and #6 (CLI migrations) give you a safe place to test it. Flag as a follow-up to security-review Finding 3.</p>
+  </div></details>
+</div>
+
+<h2 id="seq">4 · Suggested sequencing</h2>
+<div class="card">
+<p>Each phase unlocks the next, so order matters more than doing everything:</p>
+<table>
+<thead><tr><th>Phase</th><th>Items</th><th>Net effect</th></tr></thead>
+<tbody>
+<tr><td><b>This week</b></td><td>#1 typecheck/build in CI · #4 require CI · #5 secret scanning · #7 activate AI reviewer</td><td>Quick, free wins that immediately make "merged" mean "safe". ~1 hour total.</td></tr>
+<tr><td><b>Next</b></td><td>#2 staging Supabase · #3 Sentry</td><td>The two foundational gaps. #2 unlocks #6, #9, #18. #3 gives you eyes in prod.</td></tr>
+<tr><td><b>Then</b></td><td>#6 migration guard · #9 logged-in e2e · #8 Dependabot · #10 mobile viewport</td><td>Builds real safety on top of the new staging environment.</td></tr>
+<tr><td><b>Ongoing polish</b></td><td>#11–#18</td><td>Hygiene and NFR coverage; pick up as capacity allows.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout teal">
+<b>A note on the vibe-coding constraint.</b> Everything above is chosen to fit a workflow where an AI writes the code and a non-technical PM steers. The thread running through it: <b>shift verification left, from "a human catches it" / "we find it on prod" to "an automated gate blocks it before merge."</b> The type gate, required CI, the AI reviewer, the migration guard, and a real staging DB are all the same move — they let you keep vibe-coding fast precisely <em>because</em> the guardrails, not a careful human reviewer, are what hold the line.
+</div>
+
+<footer>
+PoGoSundet professionalisation assessment · generated 2026-06-24 · all recommendations free-tier &amp; pre-launch scoped
+</footer>
+
+</div>
+</body>
+</html>
