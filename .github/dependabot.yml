@@ -1,0 +1,35 @@
+# Dependabot keeps dependencies (and their security patches) current by opening
+# PRs on a schedule. Those PRs run through CI + the Claude review like any other,
+# so they can be triaged and merged with the normal workflow.
+#
+# See docs/professionalisation-report.html (recommendation #8).
+version: 2
+updates:
+  # npm (Next.js app dependencies)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      # Off-zero minute/day to avoid the Monday-9am stampede on GitHub's side.
+      day: "tuesday"
+      time: "07:13"
+    open-pull-requests-limit: 5
+    groups:
+      # Collapse low-risk minor/patch bumps into a single PR to cut noise.
+      # Majors stay as individual PRs so breaking changes are reviewed alone.
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "deps"
+
+  # GitHub Actions used by our workflows (ci.yml, claude-review.yml).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "07:13"
+    commit-message:
+      prefix: "ci"
