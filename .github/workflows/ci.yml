@@ -32,8 +32,24 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # The canonical type gate. CLAUDE.md calls `npm run build` the type gate,
+      # but nothing in CI used to build or typecheck — so TS errors could merge.
+      # `tsc --noEmit` is the fast standalone check.
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Unit tests (Vitest)
         run: npm run test
+
+      # Full production build — catches build-time failures `tsc` misses (RSC
+      # boundaries, route config, bundling). NEXT_PUBLIC_* are read at build
+      # time for the client bundle; Sentry source-map upload stays skipped
+      # without SENTRY_AUTH_TOKEN (see next.config.ts).
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: E2E tests (Playwright)
         run: npm run test:e2e
