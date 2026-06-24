@@ -9,6 +9,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # 'true' on normal PRs/pushes; '' (falsey) on Dependabot-triggered runs,
+    # which GitHub deliberately withholds repo secrets from. Steps that need a
+    # real Supabase backend (E2E) are gated on this; the rest run either way
+    # (Build uses placeholder fallbacks). Same pattern as claude-review.yml's
+    # HAS_TOKEN. Lets Dependabot PRs pass lint+typecheck+build (which is what
+    # actually validates a dependency bump) while skipping the backend-only E2E.
+    env:
+      HAS_SUPABASE_SECRETS: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL != '' }}
     # Run inside Playwright's official image: the browsers and all OS deps are
     # pre-installed, so CI no longer downloads Chromium from cdn.playwright.dev
     # at runtime. That CDN download intermittently stalls after reaching 100%
@@ -45,21 +53,32 @@ jobs:
       # boundaries, route config, bundling). NEXT_PUBLIC_* are read at build
       # time for the client bundle; Sentry source-map upload stays skipped
       # without SENTRY_AUTH_TOKEN (see next.config.ts).
+      # Placeholder fallbacks (||) so the build still runs when the real secrets
+      # are absent (Dependabot runs). The build only needs the NEXT_PUBLIC_* vars
+      # to be present and well-formed for the client bundle, not to reach a live
+      # Supabase — so a dummy URL/key is enough to validate that a dependency
+      # bump still compiles and builds.
       - name: Build
         run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
 
+      # E2E boots the app against a real Supabase, so it can't run without the
+      # secrets (Dependabot runs). Skipped there; lint+typecheck+build still gate
+      # the dependency. Normal PRs/pushes run it unchanged.
       - name: E2E tests (Playwright)
+        if: env.HAS_SUPABASE_SECRETS == 'true'
         run: npm run test:e2e
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      # Only meaningful when E2E actually ran; skip otherwise so it doesn't try
+      # to upload a non-existent report on a Dependabot run that failed earlier.
       - name: Upload Playwright report
-        if: failure()
+        if: failure() && env.HAS_SUPABASE_SECRETS == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
