@@ -21,6 +21,16 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # ESLint 10 majors are held: eslint-config-next still bundles
+    # eslint-plugin-react@7.x, which calls context.getFilename() — an API ESLint
+    # 10 removed — so ESLint 10 crashes on load. No ESLint-10-compatible
+    # eslint-plugin-react is published yet, so this is blocked upstream, not a
+    # config migration on our side. Drop this ignore once eslint-config-next
+    # declares ESLint 10 support, then bump eslint + eslint-config-next together.
+    # (Closed #174 for the same reason.)
+    ignore:
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "deps"
 
