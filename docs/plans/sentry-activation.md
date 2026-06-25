@@ -1,6 +1,8 @@
 # Activate Sentry error monitoring (professionalisation report #3)
 
-**Status:** code wired 2026-05-29, **disabled until a DSN is set** · **Priority:** P0 · **Cost:** free (Sentry free tier: 5k errors/mo)
+**Status: ✅ DONE — live on prod.** DSN set in Vercel (Production + Preview) on 2026-05-29 against the EU project `pogosundet`; **re-verified capturing 2026-06-25** (a triggered client error on the live site produced Sentry envelope POSTs to `…ingest.de.sentry.io/…/envelope/` returning `200`, SDK `sentry.javascript.nextjs/10.60.0`, `window.__SENTRY__` present). The 2026-06-24 professionalisation report listed this as "open" only because a code-only review can't see Vercel env vars.
+
+**Remaining (both optional):** source-map vars (`SENTRY_ORG`/`SENTRY_PROJECT`/`SENTRY_AUTH_TOKEN`) for un-minified traces, and `@sentry/deno` for the Edge Functions (Steps 3 + "Known gap" below). The Step 1–2 setup below is kept as a record / for recreating the project if ever needed.
 
 ## Why
 

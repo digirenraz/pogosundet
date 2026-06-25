@@ -30,15 +30,16 @@ billing):
 - [ ] (Optional) For deeper reviews, add `--model claude-opus-4-8` to the `claude_args` block in the workflow (default is the cheaper Sonnet tier).
 - [ ] Note: the token is long-lived but not permanent — if reviews silently stop appearing months out, re-run `claude setup-token` and update the secret.
 
-### Sentry error logging (wired 2026-05-29 — disabled until DSN is set)
+### Sentry error logging (LIVE — DSN set 2026-05-29, re-verified 2026-06-25)
 
-The code is in place but Sentry stays completely inert until `NEXT_PUBLIC_SENTRY_DSN` is set. To turn it on:
+Error monitoring is **active on prod**. Status of each step:
 
-- [ ] Create a Sentry project (platform: **Next.js**) in an **EU region** (DSN must contain `.de.`, e.g. `...ingest.de.sentry.io`) — required for GDPR.
-- [ ] Add `NEXT_PUBLIC_SENTRY_DSN` to Vercel env vars (Production + Preview). This alone enables error capture.
-- [ ] (Optional, for readable production stack traces) Add `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` to Vercel so the build uploads source maps. Without them the build still works; traces are just minified.
+- [x] Create a Sentry project (platform: **Next.js**) in an **EU region** — done: project `pogosundet` (org `private-c1n`), DSN host `ingest.de.sentry.io` ✅.
+- [x] Add `NEXT_PUBLIC_SENTRY_DSN` to Vercel env vars (Production + Preview) — done 2026-05-29 (confirmed via `vercel env ls`: set for Preview + Production).
+- [ ] (Optional, for readable production stack traces) Add `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` to Vercel so the build uploads source maps. Without them the build still works; traces are just minified. **Still open.**
 - [x] **GDPR — Privacy Policy updated 2026-05-29:** §7 (Databehandlere) now discloses Sentry as an EU-region error-logging processor; `Privacy.lastUpdated` bumped. (Sentry deliberately collects no IP/PII — `sendDefaultPii: false`.)
-- [ ] Verify: with the DSN set, trigger a test error and confirm it lands in the Sentry dashboard (e.g. temporarily throw in a route, or use `Sentry.captureException(new Error("test"))`).
+- [x] Verify a test error lands — done 2026-05-29 (route error captured) and **re-verified 2026-06-25**: a triggered client error on prod produced Sentry envelope POSTs to `…ingest.de.sentry.io/…/envelope/` returning **200** (`sentry.javascript.nextjs/10.60.0`).
+- [ ] (Optional follow-up) Cover the Deno Edge Functions with `@sentry/deno` — the four `notify-*` functions are **not** captured by the Next.js SDK. Full runbook: [`docs/plans/sentry-activation.md`](plans/sentry-activation.md).
 
 ## From Raid MVP (Slices 6–8)
 
