@@ -34,6 +34,12 @@
   .badge{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
     padding:4px 9px;border-radius:6px;color:#fff;white-space:nowrap}
   .b-p0{background:var(--p0)} .b-p1{background:var(--p1)} .b-p2{background:var(--p2)}
+  .b-done{background:var(--good)}
+  .rec.is-done{border-left-color:var(--good)!important;opacity:.92}
+  .rec.is-done h3{text-decoration:none}
+  .donebar{background:#e8f7f0;border:1px solid #bfe6d4;border-radius:8px;
+    padding:9px 13px;margin:10px 0 2px;font-size:13.5px;color:#0a4a36}
+  .donebar b{color:#0a3a2a}
   .rec h3{margin:0;flex:1 1 320px}
   .meta{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px;font-size:13px;color:var(--muted)}
   .meta b{color:var(--ink);font-weight:600}
@@ -70,7 +76,8 @@
 <header class="hero">
   <h1>PoGoSundet — Professionalisation Assessment</h1>
   <p>An engineering-practices review: CI, testing, non-functional requirements, code review, GitHub policy, and environment separation.</p>
-  <p style="font-size:13px;opacity:.8">Prepared 2026-06-24 · Scope: whole repository &amp; workflow</p>
+  <p style="font-size:13px;opacity:.8">Prepared 2026-06-24 · <b>Updated 2026-06-25</b> · Scope: whole repository &amp; workflow</p>
+  <p style="font-size:13px;color:#9fe6db;margin-top:6px">✅ <b>Progress since 2026-06-24:</b> items #1, #4, #5, #7, #8 completed in the engineering-hardening pass (CI now type-checks + builds and is a required check; secret scanning + push protection on; AI PR reviewer active; Dependabot added). 5 of 18 done. Remaining: the two foundational P0s (#2 staging DB, #3 Sentry) plus the P1/P2 hygiene items.</p>
   <div class="pills">
     <span class="pill">Context: pre-launch, no real users</span>
     <span class="pill">Budget: free-tier only</span>
@@ -86,9 +93,9 @@
 <div class="callout">
 <b>If you do only three things before launch, do these:</b>
 <ul class="tight">
-<li><b>① Run the type-check in CI.</b> Your own docs call the build "the canonical type gate" — but CI never builds or type-checks. Type errors can merge today.</li>
-<li><b>② Get a free second Supabase project for previews.</b> One shared database for preview <em>and</em> production is your single largest risk; the fix is free and unblocks several other items.</li>
-<li><b>③ Turn on error monitoring (Sentry — already wired, just needs a free DSN).</b> You verify on prod but currently fly blind when something breaks there.</li>
+<li><s><b>① Run the type-check in CI.</b> Your own docs call the build "the canonical type gate" — but CI never builds or type-checks. Type errors can merge today.</s> &nbsp;✅ <b>Done 2026-06-24</b> — CI now runs Typecheck + Build and <code>test</code> is a required check.</li>
+<li><b>② Get a free second Supabase project for previews.</b> One shared database for preview <em>and</em> production is your single largest risk; the fix is free and unblocks several other items. <b>← still the top open item.</b></li>
+<li><b>③ Turn on error monitoring (Sentry — already wired, just needs a free DSN).</b> You verify on prod but currently fly blind when something breaks there. <b>← still open (needs the EU DSN).</b></li>
 </ul>
 </div>
 
@@ -100,13 +107,13 @@
 <tbody>
 <tr><td>Documentation</td><td><span class="dot d-good"></span>Strong</td><td>Best-in-class; <code>CLAUDE.md</code> + decisions log are a genuine asset.</td></tr>
 <tr><td>Unit testing</td><td><span class="dot d-good"></span>Strong</td><td>TDD culture, pure-helper coverage, 34 test files.</td></tr>
-<tr><td>CI pipeline</td><td><span class="dot d-warn"></span>Partial</td><td>Lint + unit + e2e run, but <b>no type-check/build gate</b> and e2e barely covers logged-in flows.</td></tr>
+<tr><td>CI pipeline</td><td><span class="dot d-good"></span>Improved</td><td><b>Type-check + build now gated</b> (2026-06-24) and run as a required check. Remaining gap: logged-in e2e still skips in CI (#9).</td></tr>
 <tr><td>Environment separation</td><td><span class="dot d-bad"></span>Gap</td><td>Preview and prod share one database. The defining risk.</td></tr>
 <tr><td>Observability (errors/uptime)</td><td><span class="dot d-bad"></span>Gap</td><td>Sentry wired but disabled; no uptime/health check. Blind in prod.</td></tr>
-<tr><td>Code review</td><td><span class="dot d-warn"></span>Partial</td><td>AI reviewer built but token not set; 0 human approvals + self-merge.</td></tr>
-<tr><td>GitHub policy</td><td><span class="dot d-warn"></span>Partial</td><td>Branch protection on; but CI likely not a <em>required</em> check, no Dependabot, no secret-scanning/templates.</td></tr>
+<tr><td>Code review</td><td><span class="dot d-good"></span>Good</td><td>AI reviewer now <b>active</b> (token set; ran on PRs #179/#180). 0 human approvals + self-merge, backed by required CI + the reviewer.</td></tr>
+<tr><td>GitHub policy</td><td><span class="dot d-good"></span>Good</td><td>Branch protection + <b>required CI check</b> + <b>secret scanning/push protection</b> + <b>Dependabot</b> all on. Remaining: PR template (#13), CodeQL (#16).</td></tr>
 <tr><td>DB migration safety</td><td><span class="dot d-warn"></span>Partial</td><td>Powerful but entirely manual; "apply-before-merge" is human-enforced against the live DB.</td></tr>
-<tr><td>Security</td><td><span class="dot d-good"></span>Good</td><td>RLS, webhook gate, security review done; one documented column-RLS residual.</td></tr>
+<tr><td>Security</td><td><span class="dot d-good"></span>Good</td><td>RLS, webhook gate, security review, <b>secret scanning + push protection</b> (2026-06-24). One documented column-RLS residual (#18); CodeQL still off (#16).</td></tr>
 <tr><td>Accessibility / web-vitals</td><td><span class="dot d-warn"></span>Untested</td><td>Mobile-first app with no automated a11y or performance budget checks.</td></tr>
 </tbody>
 </table>
@@ -114,15 +121,15 @@
 <h2 id="contents">3 · Recommendations (by priority)</h2>
 <div class="card"><div class="toc">
 <p style="margin:0"><b>P0 — before launch</b></p>
-<a href="#r1">1 · Type-check &amp; build in CI</a><br>
+<a href="#r1">✅ 1 · Type-check &amp; build in CI</a><br>
 <a href="#r2">2 · Free staging Supabase project</a><br>
 <a href="#r3">3 · Enable Sentry error monitoring</a><br>
-<a href="#r4">4 · Make CI a required status check</a><br>
-<a href="#r5">5 · Secret scanning + push protection</a><br>
+<a href="#r4">✅ 4 · Make CI a required status check</a><br>
+<a href="#r5">✅ 5 · Secret scanning + push protection</a><br>
 <p style="margin:12px 0 0"><b>P1 — soon after</b></p>
 <a href="#r6">6 · Migration-safety CI guard</a><br>
-<a href="#r7">7 · Activate the AI PR reviewer</a><br>
-<a href="#r8">8 · Dependabot</a><br>
+<a href="#r7">✅ 7 · Activate the AI PR reviewer</a><br>
+<a href="#r8">✅ 8 · Dependabot</a><br>
 <a href="#r9">9 · Logged-in e2e in CI (on staging)</a><br>
 <a href="#r10">10 · Mobile viewport in Playwright</a><br>
 <p style="margin:12px 0 0"><b>P2 — polish</b></p>
@@ -139,9 +146,10 @@
 <!-- ================= P0 ================= -->
 <h2 id="p0">P0 · Do before launch</h2>
 
-<div class="card rec p0" id="r1">
-  <div class="top"><span class="badge b-p0">P0</span><h3>1 · Run the type-check (and build) in CI</h3></div>
+<div class="card rec p0 is-done" id="r1">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p0">P0</span><h3>1 · Run the type-check (and build) in CI</h3></div>
   <div class="meta"><span><b>Impact:</b> Very high</span><span><b>Effort:</b> 10 min</span><span><b>Cost:</b> Free</span><span class="tag">CI</span></div>
+  <div class="donebar">✅ <b>Done 2026-06-24</b> — added a <code>typecheck</code> npm script and wired Typecheck + Build steps into <code>ci.yml</code>. CI now runs Lint → Typecheck → Build → Vitest → Playwright. (The optional "Playwright against the production build" sub-item is not yet done.)</div>
   <p class="why"><b>Why it matters:</b> Your <code>CLAUDE.md</code> says "<i>npm run build is the canonical type gate</i>" — but CI runs only <code>lint</code>, <code>vitest</code>, and Playwright (which boots <code>next dev</code>, not a production build). <b>Nothing in CI ever type-checks or builds.</b> In a workflow where a human seldom reads the diff, a TypeScript error or a broken production build can be merged and only discovered when prod breaks. This is the cheapest high-value fix on the list.</p>
   <details><summary>Technical detail</summary><div class="body">
   <p>Add a typecheck script and two CI steps. <code>tsc --noEmit</code> is the fast gate; <code>next build</code> additionally catches build-time failures (RSC boundaries, route config) that <code>tsc</code> misses.</p>
@@ -194,9 +202,10 @@
   </div></details>
 </div>
 
-<div class="card rec p0" id="r4">
-  <div class="top"><span class="badge b-p0">P0</span><h3>4 · Make CI a <em>required</em> status check on <code>main</code></h3></div>
+<div class="card rec p0 is-done" id="r4">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p0">P0</span><h3>4 · Make CI a <em>required</em> status check on <code>main</code></h3></div>
   <div class="meta"><span><b>Impact:</b> High</span><span><b>Effort:</b> 5 min</span><span><b>Cost:</b> Free</span><span class="tag">GitHub policy</span></div>
+  <div class="donebar">✅ <b>Done 2026-06-24</b> — "Require status checks" enabled on the <i>Protect main</i> ruleset with <code>test</code> as the sole required check (approvals stay 0; the Claude review stays advisory). Verified: a PR reads <code>blocked</code> while <code>test</code> is pending and flips to <code>clean</code> on success.</div>
   <p class="why"><b>Why it matters:</b> Your branch ruleset requires a PR but <b>0 approvals</b>, and Claude self-merges. That's a reasonable choice for a solo vibe-coded project — <em>but only if CI is a required check.</em> If CI is merely advisory, a self-merge can land a red build. Combined with #1 (adding the type gate to CI), making CI required is what actually closes the "broken code can't reach main" loop.</p>
   <details><summary>Technical detail</summary><div class="body">
   <p>In the GitHub ruleset <i>Protect main — require PR</i> (id 17923605), enable <b>"Require status checks to pass"</b> and add the <code>test</code> job from <code>ci.yml</code> as a required check. Keep approvals at 0 so self-merge still works. The Claude review stays advisory (correct — it's a judgement aid, not a pass/fail gate). Verify by opening a PR with a deliberate failing test and confirming the merge button is blocked.</p>
@@ -204,9 +213,10 @@
   </div></details>
 </div>
 
-<div class="card rec p0" id="r5">
-  <div class="top"><span class="badge b-p0">P0</span><h3>5 · Enable secret scanning + push protection</h3></div>
+<div class="card rec p0 is-done" id="r5">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p0">P0</span><h3>5 · Enable secret scanning + push protection</h3></div>
   <div class="meta"><span><b>Impact:</b> Medium-high</span><span><b>Effort:</b> 5 min</span><span><b>Cost:</b> Free (public repo)</span><span class="tag">Security</span></div>
+  <div class="donebar">✅ <b>Done 2026-06-24</b> — GitHub Advanced Security → Secret scanning + Push protection both <code>enabled</code> (confirmed via the repo API). Verified by pushing a throwaway branch of fake credentials and confirming GitHub rejected it (<code>GH013</code>) before it reached the remote.</div>
   <p class="why"><b>Why it matters:</b> The repo was made <b>public</b> on 2026-06-20 to unlock free branch protection. Public repos get GitHub's secret scanning and <b>push protection</b> for free — push protection actively <em>blocks</em> a commit that contains a key before it ever reaches the public history. Given the whole security posture depends on "no secrets in code," this turns that rule from a manual promise into an enforced guarantee. Especially valuable when an AI is generating commits.</p>
   <details><summary>Technical detail</summary><div class="body">
   <p>GitHub → Settings → <b>Code security</b> → enable <i>Secret scanning</i> and <i>Push protection</i>. Both are free for public repositories. Push protection rejects pushes containing recognised credential patterns (Supabase service keys, GitHub PATs, Anthropic keys, etc.) with an override-with-justification flow. No code change.</p>
@@ -230,18 +240,20 @@
   </div></details>
 </div>
 
-<div class="card rec p1" id="r7">
-  <div class="top"><span class="badge b-p1">P1</span><h3>7 · Activate the automated PR reviewer</h3></div>
+<div class="card rec p1 is-done" id="r7">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p1">P1</span><h3>7 · Activate the automated PR reviewer</h3></div>
   <div class="meta"><span><b>Impact:</b> Medium-high</span><span><b>Effort:</b> 10 min</span><span><b>Cost:</b> Free (uses your Claude subscription)</span><span class="tag">Review</span></div>
+  <div class="donebar">✅ <b>Done</b> — the <code>CLAUDE_CODE_OAUTH_TOKEN</code> secret is set and <code>claude-review.yml</code> now posts inline reviews on every PR (observed on PRs #179 and #180). Optional model bump to Opus not applied.</div>
   <p class="why"><b>Why it matters:</b> You already built <code>claude-review.yml</code> — a fresh Claude reviewing every PR against your CLAUDE.md invariants — but it's dormant because the <code>CLAUDE_CODE_OAUTH_TOKEN</code> secret isn't set. In a 0-human-approval workflow, this reviewer <em>is</em> your second pair of eyes. Switching it on is the highest-leverage 10 minutes after the P0s.</p>
   <details><summary>Technical detail</summary><div class="body">
   <p>Per <code>docs/launch-checklist.md</code>: run <code>claude setup-token</code> (signs in via your Pro/Max subscription), add the output as the <code>CLAUDE_CODE_OAUTH_TOKEN</code> repo secret, open a throwaway PR to confirm inline comments appear. Consider bumping the model to Opus (<code>--model claude-opus-4-8</code> in <code>claude_args</code>) for the reviewer — diffs are small and the cost difference is negligible, but the catch rate is higher. The review is correctly <em>not</em> a required check, so it never blocks a merge.</p>
   </div></details>
 </div>
 
-<div class="card rec p1" id="r8">
-  <div class="top"><span class="badge b-p1">P1</span><h3>8 · Add Dependabot</h3></div>
+<div class="card rec p1 is-done" id="r8">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p1">P1</span><h3>8 · Add Dependabot</h3></div>
   <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 10 min</span><span><b>Cost:</b> Free</span><span class="tag">GitHub policy</span></div>
+  <div class="donebar">✅ <b>Done 2026-06-24</b> — added <code>.github/dependabot.yml</code> (weekly npm + github-actions, minor/patch grouped, majors separate). First batch triaged: safe bumps merged (incl. TypeScript 6, @types/node 26, the 17-package minor/patch group); ESLint 9→10 ignored (blocked upstream). CI build/e2e fixed to run on Dependabot PRs (secrets withheld → placeholder fallbacks). A follow-up <code>npm audit fix</code> (PR #180, 2026-06-25) cleared 5 of 7 advisories; the 2 remaining are a misreported <code>next</code>→postcss pair (the only "fix" is a bogus major downgrade).</div>
   <p class="why"><b>Why it matters:</b> You're on the bleeding edge (Next 16, React 19) with no automated dependency or vulnerability tracking. Dependabot opens PRs for security patches and version bumps — and because those PRs run through your CI + AI reviewer, an AI can triage and merge the safe ones with the same workflow you already use. Keeps a vibe-coded app from silently rotting.</p>
   <details><summary>Technical detail</summary><div class="body">
   <pre><code># .github/dependabot.yml
@@ -376,8 +388,8 @@ projects: [
 <table>
 <thead><tr><th>Phase</th><th>Items</th><th>Net effect</th></tr></thead>
 <tbody>
-<tr><td><b>This week</b></td><td>#1 typecheck/build in CI · #4 require CI · #5 secret scanning · #7 activate AI reviewer</td><td>Quick, free wins that immediately make "merged" mean "safe". ~1 hour total.</td></tr>
-<tr><td><b>Next</b></td><td>#2 staging Supabase · #3 Sentry</td><td>The two foundational gaps. #2 unlocks #6, #9, #18. #3 gives you eyes in prod.</td></tr>
+<tr><td><b>This week</b> ✅</td><td><s>#1 typecheck/build in CI · #4 require CI · #5 secret scanning · #7 activate AI reviewer</s> · #8 Dependabot</td><td><b>Done 2026-06-24/25.</b> "Merged" now means lint + typecheck + build pass (required), with secret scanning + an active AI reviewer behind it.</td></tr>
+<tr><td><b>Next ←</b></td><td>#2 staging Supabase · #3 Sentry</td><td><b>The two foundational gaps — now the highest-priority open items.</b> #2 unlocks #6, #9, #18. #3 gives you eyes in prod.</td></tr>
 <tr><td><b>Then</b></td><td>#6 migration guard · #9 logged-in e2e · #8 Dependabot · #10 mobile viewport</td><td>Builds real safety on top of the new staging environment.</td></tr>
 <tr><td><b>Ongoing polish</b></td><td>#11–#18</td><td>Hygiene and NFR coverage; pick up as capacity allows.</td></tr>
 </tbody>
