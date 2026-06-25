@@ -2,7 +2,13 @@
 -- PoGoSundet — staging/preview Supabase bootstrap
 -- One-paste concatenation of supabase/migrations/001..021, in order.
 -- Generated 2026-06-25 from the migration files. Re-generate with
--- scripts in docs/plans/staging-supabase.md if migrations change.
+-- the script in docs/plans/staging-supabase.md if migrations change.
+--
+-- NOTE: every 'alter publication supabase_realtime add table ...' is
+-- wrapped in a duplicate_object guard, because raid_messages is added by
+-- BOTH 003 and 005 — running them back-to-back in one script would abort
+-- on the second add without this guard. (In prod the migrations were
+-- applied separately, so the source files keep the raw statements.)
 --
 -- Apply this ONCE to a FRESH second Supabase project (SQL editor).
 -- After this: create the 'raid-images' Storage bucket + its 2 RLS
@@ -132,7 +138,7 @@ ALTER TABLE public.raid_messages
 
 -- Enable real-time replication so clients receive new messages without polling.
 -- Requires Replication to be enabled for this table in Supabase dashboard.
-ALTER PUBLICATION supabase_realtime ADD TABLE public.raid_messages;
+do $$ begin ALTER PUBLICATION supabase_realtime ADD TABLE public.raid_messages; exception when duplicate_object then null; end $$;
 
 
 -- =============================================================
@@ -163,9 +169,9 @@ create policy "Users can manage own subscription"
 -- Enable Supabase Realtime broadcasts on raid-related tables so the app can
 -- subscribe to changes via the JS client (used by useRaidsRealtime hook).
 -- Apply manually in the Supabase SQL editor.
-alter publication supabase_realtime add table public.raids;
-alter publication supabase_realtime add table public.raid_attendees;
-alter publication supabase_realtime add table public.raid_messages;
+do $$ begin alter publication supabase_realtime add table public.raids; exception when duplicate_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.raid_attendees; exception when duplicate_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.raid_messages; exception when duplicate_object then null; end $$;
 
 
 -- =============================================================
@@ -238,7 +244,7 @@ CREATE INDEX channel_messages_channel_created_idx
   ON public.channel_messages (channel, created_at DESC);
 
 -- Enable real-time replication so clients receive new messages without polling.
-ALTER PUBLICATION supabase_realtime ADD TABLE public.channel_messages;
+do $$ begin ALTER PUBLICATION supabase_realtime ADD TABLE public.channel_messages; exception when duplicate_object then null; end $$;
 
 
 -- =============================================================
@@ -309,7 +315,7 @@ CREATE POLICY "Users remove own reactions"
   USING (auth.uid() = user_id);
 
 -- Enable real-time replication so reaction toggles propagate to all clients.
-ALTER PUBLICATION supabase_realtime ADD TABLE public.channel_message_reactions;
+do $$ begin ALTER PUBLICATION supabase_realtime ADD TABLE public.channel_message_reactions; exception when duplicate_object then null; end $$;
 
 
 -- =============================================================
@@ -376,7 +382,7 @@ CREATE POLICY "Users remove own raid reactions"
   USING (auth.uid() = user_id);
 
 -- Enable real-time replication so reaction toggles propagate to all clients.
-ALTER PUBLICATION supabase_realtime ADD TABLE public.raid_message_reactions;
+do $$ begin ALTER PUBLICATION supabase_realtime ADD TABLE public.raid_message_reactions; exception when duplicate_object then null; end $$;
 
 
 -- =============================================================
@@ -479,8 +485,8 @@ CREATE POLICY "Users update own dm_reads" ON public.dm_reads
   FOR UPDATE USING (auth.uid() = user_id);
 
 -- Realtime publication so message + reaction inserts surface to subscribed clients.
-ALTER PUBLICATION supabase_realtime ADD TABLE public.direct_messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.direct_message_reactions;
+do $$ begin ALTER PUBLICATION supabase_realtime ADD TABLE public.direct_messages; exception when duplicate_object then null; end $$;
+do $$ begin ALTER PUBLICATION supabase_realtime ADD TABLE public.direct_message_reactions; exception when duplicate_object then null; end $$;
 
 
 -- =============================================================
@@ -527,7 +533,7 @@ CREATE POLICY "Users remove own raid reactions"
   USING (auth.uid() = user_id);
 
 -- Enable real-time replication so reaction toggles propagate to all clients.
-ALTER PUBLICATION supabase_realtime ADD TABLE public.raid_reactions;
+do $$ begin ALTER PUBLICATION supabase_realtime ADD TABLE public.raid_reactions; exception when duplicate_object then null; end $$;
 
 
 -- =============================================================

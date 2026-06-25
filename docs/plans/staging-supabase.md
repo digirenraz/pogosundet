@@ -96,9 +96,14 @@ A real staging gate instead of editing the live DB. (Report #6 adds a CI guard o
 - Add a decisions-log entry.
 
 ## Regenerating `docs/staging-bootstrap.sql`
-If migrations change, rebuild it:
+If migrations change, rebuild it. The `perl` step wraps every
+`alter publication … add table …` in a `duplicate_object` guard — required
+because `raid_messages` is added by **both** 003 and 005, which would abort
+the one-paste run without it:
 ```bash
 { echo "-- (header)"; for f in supabase/migrations/*.sql; do
-    printf '\n-- =====\n-- %s\n-- =====\n' "$(basename "$f")"; cat "$f"; echo; done
+    printf '\n-- =====\n-- %s\n-- =====\n' "$(basename "$f")"
+    perl -pe 's/^\s*(alter\s+publication\s+\S+\s+add\s+table\s+[^;]+;)\s*$/do \$\$ begin $1 exception when duplicate_object then null; end \$\$;\n/i' "$f"
+    echo; done
 } > docs/staging-bootstrap.sql
 ```
