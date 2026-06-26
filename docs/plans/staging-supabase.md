@@ -1,6 +1,8 @@
 # Staging / preview Supabase project (professionalisation report #2)
 
-**Status:** not started · **Priority:** P0 (the single largest pre-launch risk) · **Cost:** free (Supabase free tier allows 2 projects)
+**Status: ✅ DONE — verified 2026-06-26.** Preview project `pogosundet-preview` (ref `eqdzrkijenzcpgmuluvn`, EU) created; schema applied; Vercel **Preview**-scoped env vars point at it; **confirm-email disabled** on the preview project (Step 6, so signups are instant); end-to-end verified — a test signup created an auth user **and** profile (`GalopingMadness`) in the preview DB, while prod stayed at its original 3 profiles (no test data). The steps below are kept as the record / for rebuilding. **Remaining:** create the `avatars` bucket (Step 3 — only `raid-images` was made initially, so profile-photo uploads on preview will fail until added); and wire CI at preview (report #9).
+
+**Priority:** P0 (was the single largest pre-launch risk) · **Cost:** free (Supabase free tier allows 2 projects)
 
 ## Why
 
@@ -32,11 +34,12 @@ Open the new project's **SQL editor** → paste the entire contents of **`docs/s
 
 > Sanity check: Table editor should now show ~16 tables (`profiles`, `raids`, `raid_attendees`, … `friend_scan_status`, `gyms`).
 
-### Step 3 — Storage bucket + RLS (PM, ~3 min)
-The `raid-images` bucket is **not** in the migrations (buckets are created outside SQL migrations). Create it, then add its two policies:
+### Step 3 — Storage buckets + RLS (PM, ~4 min)
+The app uses **two** public Storage buckets — `raid-images` (raid screenshots) and `avatars` (profile photos). Buckets are **not** in the SQL migrations (they're created outside migrations), so create both, then add their policies. Miss `avatars` and profile-photo uploads fail on preview with a generic "Noget gik galt" (learned the hard way 2026-06-26).
 
 1. Dashboard → **Storage** → **New bucket** → name `raid-images` → **Public bucket: ON** → Create.
-2. SQL editor → run:
+2. Repeat → **New bucket** → name `avatars` → **Public bucket: ON** → Create.
+3. SQL editor → run:
 
 ```sql
 -- raid-images: authenticated users can upload
@@ -48,6 +51,16 @@ create policy "raid-images insert (authenticated)"
 create policy "raid-images select (public)"
   on storage.objects for select to public
   using (bucket_id = 'raid-images');
+
+-- avatars: authenticated users can upload
+create policy "avatars insert (authenticated)"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'avatars');
+
+-- avatars: anyone can read (public profile photos)
+create policy "avatars select (public)"
+  on storage.objects for select to public
+  using (bucket_id = 'avatars');
 ```
 
 ### Step 4 — Seed gyms (optional, recommended, ~1 min)
@@ -65,9 +78,10 @@ Vercel → Project → Settings → **Environment Variables**. For each of these
 Vercel supports per-environment values natively — Production stays untouched. Redeploy a preview to pick them up.
 
 ### Step 6 — Auth on the preview project (PM, ~5 min)
-- **Email/password** works out of the box — enough for the e2e test user (#9) and most manual testing.
+- **Disable "Confirm email"** (done 2026-06-26): Auth → Sign In / Providers → **User Signups** → turn off **"Confirm email"** → Save. This is the right call for a staging project — signups become instant (no email round-trip) and it's what makes logged-in e2e (#9) feasible. It also sidesteps the confirmation-link problem below. (A brand-new project defaults to confirmation **on**, and its Site URL defaults to `http://localhost:3000`, so confirmation emails point at localhost — disabling confirmation avoids that entirely.)
+- **Email/password** then works out of the box — enough for the e2e test user (#9) and manual testing.
 - **Google OAuth** is optional on preview and needs its own setup (a Google OAuth client + the preview deploy's `/auth/callback` URL in both Google's allowlist and Supabase → Auth → URL config). Skip unless you specifically need to test the Google flow on preview.
-- Add the preview deploy domain(s) to the preview project's **Auth → URL Configuration → Redirect URLs** so email confirmation / OAuth redirects resolve.
+- If you ever re-enable email confirmation, also set the preview project's **Site URL** + add the preview domain(s) to **Auth → URL Configuration → Redirect URLs** (note our email template uses `{{ .SiteURL }}`, a single fixed value — awkward with dynamic per-branch preview URLs).
 
 ### Step 7 — Verify (PM, ~5 min)
 1. Open a **preview deploy** (any branch PR). Register a throwaway account / create a raid.
