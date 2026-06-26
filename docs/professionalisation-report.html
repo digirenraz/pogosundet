@@ -77,7 +77,7 @@
   <h1>PoGoSundet — Professionalisation Assessment</h1>
   <p>An engineering-practices review: CI, testing, non-functional requirements, code review, GitHub policy, and environment separation.</p>
   <p style="font-size:13px;opacity:.8">Prepared 2026-06-24 · <b>Updated 2026-06-25</b> · Scope: whole repository &amp; workflow</p>
-  <p style="font-size:13px;color:#9fe6db;margin-top:6px">✅ <b>Progress:</b> items #1, #4, #5, #7, #8 completed in the 2026-06-24 hardening pass; <b>#3 (Sentry) confirmed already live</b> (DSN set 2026-05-29, re-verified 2026-06-25 — this report had misread it as disabled). <b>6 of 18 done.</b> The one remaining P0 is <b>#2 (staging DB)</b>, plus the P1/P2 hygiene items.</p>
+  <p style="font-size:13px;color:#9fe6db;margin-top:6px">✅ <b>Progress:</b> #1, #4, #5, #7, #8 done in the 2026-06-24 hardening pass; <b>#3 (Sentry)</b> confirmed already live (2026-06-25); <b>#2 (staging Supabase)</b> stood up + verified end-to-end (2026-06-26). <b>7 of 18 done — all P0s complete.</b> Remaining: P1/P2 hygiene items (#6, #9, #10–#18; #2 unblocked #6/#9/#18).</p>
   <div class="pills">
     <span class="pill">Context: pre-launch, no real users</span>
     <span class="pill">Budget: free-tier only</span>
@@ -94,7 +94,7 @@
 <b>If you do only three things before launch, do these:</b>
 <ul class="tight">
 <li><s><b>① Run the type-check in CI.</b> Your own docs call the build "the canonical type gate" — but CI never builds or type-checks. Type errors can merge today.</s> &nbsp;✅ <b>Done 2026-06-24</b> — CI now runs Typecheck + Build and <code>test</code> is a required check.</li>
-<li><b>② Get a free second Supabase project for previews.</b> One shared database for preview <em>and</em> production is your single largest risk; the fix is free and unblocks several other items. <b>← still the top open item.</b></li>
+<li><s><b>② Get a free second Supabase project for previews.</b> One shared database for preview <em>and</em> production is your single largest risk; the fix is free and unblocks several other items.</s> &nbsp;✅ <b>Done 2026-06-26</b> — preview now runs on its own Supabase project; prod isolated (verified end-to-end).</li>
 <li><s><b>③ Turn on error monitoring (Sentry — already wired, just needs a free DSN).</b> You verify on prod but currently fly blind when something breaks there.</s> &nbsp;✅ <b>Already done</b> — the DSN has been set in Vercel since 2026-05-29; re-verified capturing on prod 2026-06-25.</li>
 </ul>
 </div>
@@ -108,7 +108,7 @@
 <tr><td>Documentation</td><td><span class="dot d-good"></span>Strong</td><td>Best-in-class; <code>CLAUDE.md</code> + decisions log are a genuine asset.</td></tr>
 <tr><td>Unit testing</td><td><span class="dot d-good"></span>Strong</td><td>TDD culture, pure-helper coverage, 34 test files.</td></tr>
 <tr><td>CI pipeline</td><td><span class="dot d-good"></span>Improved</td><td><b>Type-check + build now gated</b> (2026-06-24) and run as a required check. Remaining gap: logged-in e2e still skips in CI (#9).</td></tr>
-<tr><td>Environment separation</td><td><span class="dot d-bad"></span>Gap</td><td>Preview and prod share one database. The defining risk.</td></tr>
+<tr><td>Environment separation</td><td><span class="dot d-good"></span>Resolved</td><td><b>Preview now uses a separate Supabase project</b> (`pogosundet-preview`); prod isolated (verified 2026-06-26). Edge Functions/push still on prod (documented caveat).</td></tr>
 <tr><td>Observability (errors/uptime)</td><td><span class="dot d-warn"></span>Partial</td><td><b>Sentry error monitoring is live</b> (DSN set since 2026-05-29, re-verified 2026-06-25). Remaining gaps: no uptime/health check; Edge Functions not covered.</td></tr>
 <tr><td>Code review</td><td><span class="dot d-good"></span>Good</td><td>AI reviewer now <b>active</b> (token set; ran on PRs #179/#180). 0 human approvals + self-merge, backed by required CI + the reviewer.</td></tr>
 <tr><td>GitHub policy</td><td><span class="dot d-good"></span>Good</td><td>Branch protection + <b>required CI check</b> + <b>secret scanning/push protection</b> + <b>Dependabot</b> all on. Remaining: PR template (#13), CodeQL (#16).</td></tr>
@@ -122,7 +122,7 @@
 <div class="card"><div class="toc">
 <p style="margin:0"><b>P0 — before launch</b></p>
 <a href="#r1">✅ 1 · Type-check &amp; build in CI</a><br>
-<a href="#r2">2 · Free staging Supabase project</a><br>
+<a href="#r2">✅ 2 · Free staging Supabase project</a><br>
 <a href="#r3">✅ 3 · Enable Sentry error monitoring</a><br>
 <a href="#r4">✅ 4 · Make CI a required status check</a><br>
 <a href="#r5">✅ 5 · Secret scanning + push protection</a><br>
@@ -171,9 +171,10 @@
   </div></details>
 </div>
 
-<div class="card rec p0" id="r2">
-  <div class="top"><span class="badge b-p0">P0</span><h3>2 · Stand up a free second Supabase project as staging/preview</h3></div>
+<div class="card rec p0 is-done" id="r2">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p0">P0</span><h3>2 · Stand up a free second Supabase project as staging/preview</h3></div>
   <div class="meta"><span><b>Impact:</b> Very high</span><span><b>Effort:</b> 1–2 hrs</span><span><b>Cost:</b> Free (Supabase free tier allows 2 projects)</span><span class="tag">Environments</span></div>
+  <div class="donebar">✅ <b>Done — verified end-to-end 2026-06-26.</b> Preview project <code>pogosundet-preview</code> (EU) created, schema applied, Vercel <b>Preview</b>-scoped env vars repointed at it (prod untouched), confirm-email disabled for instant test signups. A test signup created an auth user + profile (<code>GalopingMadness</code>) in the <b>preview</b> DB while prod stayed at its original 3 profiles — full isolation confirmed. Runbook + one-paste schema: <code>docs/plans/staging-supabase.md</code> / <code>docs/staging-bootstrap.sql</code>. Minor remaining config: add the <code>avatars</code> Storage bucket on preview (profile-photo uploads), and wire CI at preview (#9). This unblocks #6, #9, #18.</div>
   <p class="why"><b>Why it matters:</b> This is the risk your own "Open questions" flags twice. Today, profiles, raids, and chat created on a Vercel <em>preview</em> deploy land in the <em>production</em> database, and any data-writing test pollutes real data. It also forces the brittle "apply migrations to the live DB before merge" dance, and it's the reason logged-in e2e tests can't run in CI. A separate preview DB dissolves <b>three</b> problems at once — and it's free.</p>
   <details><summary>Technical detail</summary><div class="body">
   <ul class="tight">
@@ -390,7 +391,7 @@ projects: [
 <thead><tr><th>Phase</th><th>Items</th><th>Net effect</th></tr></thead>
 <tbody>
 <tr><td><b>This week</b> ✅</td><td><s>#1 typecheck/build in CI · #4 require CI · #5 secret scanning · #7 activate AI reviewer</s> · #8 Dependabot</td><td><b>Done 2026-06-24/25.</b> "Merged" now means lint + typecheck + build pass (required), with secret scanning + an active AI reviewer behind it.</td></tr>
-<tr><td><b>Next ←</b></td><td>#2 staging Supabase · <s>#3 Sentry</s> ✅</td><td><b>#2 is now the single highest-priority open item</b> — it unlocks #6, #9, #18. #3 (Sentry, eyes in prod) is already live.</td></tr>
+<tr><td><b>Next ←</b></td><td><s>#2 staging Supabase</s> ✅ · <s>#3 Sentry</s> ✅</td><td><b>Both foundational P0s done.</b> #2 (verified 2026-06-26) unblocked #6, #9, #18; #3 (Sentry) live. Next focus: #9 (logged-in e2e on the new preview DB), then #6/#10.</td></tr>
 <tr><td><b>Then</b></td><td>#6 migration guard · #9 logged-in e2e · #10 mobile viewport</td><td>Builds real safety on top of the new staging environment.</td></tr>
 <tr><td><b>Ongoing polish</b></td><td>#11–#18</td><td>Hygiene and NFR coverage; pick up as capacity allows.</td></tr>
 </tbody>
