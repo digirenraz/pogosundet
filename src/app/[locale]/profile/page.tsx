@@ -22,11 +22,10 @@ export default async function ProfileTabPage() {
 
   if (!userId) redirect('/login');
 
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
+  // Migration 022 revoked SELECT (friend_code) from the authenticated role.
+  // get_own_profile() is a SECURITY DEFINER RPC that returns the full row
+  // including friend_code for the profile owner (enforced by auth.uid()).
+  const { data } = await supabase.rpc('get_own_profile').single();
 
   // The middleware guarantees a profile exists for authenticated routes; the
   // null-check stays as a safety net.
