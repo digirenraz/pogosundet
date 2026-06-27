@@ -1,0 +1,61 @@
+name: Migration safety guard
+
+# Enforces the apply-before-merge rule (CLAUDE.md → Database migrations): there is
+# no migration runner and merging a PR deploys it to PROD, so any migration whose
+# columns/tables are referenced by a shipping query MUST be applied to the prod
+# Supabase SQL editor before the PR merges — otherwise prod errors the moment the
+# code deploys.
+#
+# This guard can't apply the SQL for you; it makes the human confirmation
+# machine-checkable. When a PR touches supabase/migrations/, the "Migration" box
+# in the PR description (which carries a hidden <!-- migration-applied --> marker,
+# see .github/pull_request_template.md) must be checked, or this check fails.
+#
+# Advisory by design — it is NOT a required status check (the only required check
+# is `test`, per the 2026-06-24 decision), so it can't deadlock a merge. It
+# surfaces as a failed check + an error annotation the merger sees at merge time.
+# Re-runs on `edited` so ticking the box after the fact clears it without a push.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  migration-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require migration-applied confirmation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          # Passed via env (not inlined) so a PR body can't inject shell.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+
+          # Files changed in this PR (paginated; no checkout needed).
+          changed="$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')"
+
+          if ! grep -q '^supabase/migrations/' <<< "$changed"; then
+            echo "::notice::No files under supabase/migrations/ — migration guard not applicable."
+            exit 0
+          fi
+
+          echo "This PR changes migration files:"
+          grep '^supabase/migrations/' <<< "$changed" | sed 's/^/  - /'
+
+          # The marker rides on the migration checkbox; a checked box renders as
+          # "- [x]" / "- [X]". Require the marker on a checked line.
+          if grep -qiE '\[x\][^[:cntrl:]]*migration-applied' <<< "$PR_BODY"; then
+            echo "::notice::Migration-applied confirmation found. ✅"
+            exit 0
+          fi
+
+          echo "::error::This PR changes supabase/migrations/ but the 'Migration' box in the PR description is not checked. Apply the migration to the PROD Supabase SQL editor BEFORE merge (apply-before-merge rule in CLAUDE.md), then tick the box. If the migration is safe to apply after merge (constraints/indexes not referenced by any shipping query), note that in the PR body and tick the box."
+          exit 1
