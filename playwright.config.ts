@@ -10,6 +10,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
+  // 60s per test — the /players page cold-loads multiple Supabase queries on
+  // the dev server and can take 30-40s on a fresh CI run.
+  timeout: 60_000,
   use: {
     baseURL: BASE_URL,
     trace: "on-first-retry",
