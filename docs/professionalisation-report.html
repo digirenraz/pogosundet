@@ -76,8 +76,8 @@
 <header class="hero">
   <h1>PoGoSundet — Professionalisation Assessment</h1>
   <p>An engineering-practices review: CI, testing, non-functional requirements, code review, GitHub policy, and environment separation.</p>
-  <p style="font-size:13px;opacity:.8">Prepared 2026-06-24 · <b>Updated 2026-06-25</b> · Scope: whole repository &amp; workflow</p>
-  <p style="font-size:13px;color:#9fe6db;margin-top:6px">✅ <b>Progress:</b> #1, #4, #5, #7, #8 done in the 2026-06-24 hardening pass; <b>#3 (Sentry)</b> confirmed already live (2026-06-25); <b>#2 (staging Supabase)</b> stood up + verified end-to-end (2026-06-26). <b>7 of 18 done — all P0s complete.</b> Remaining: P1/P2 hygiene items (#6, #9, #10–#18; #2 unblocked #6/#9/#18).</p>
+  <p style="font-size:13px;opacity:.8">Prepared 2026-06-24 · <b>Updated 2026-06-27</b> · Scope: whole repository &amp; workflow</p>
+  <p style="font-size:13px;color:#9fe6db;margin-top:6px">✅ <b>Progress:</b> #1, #4, #5, #7, #8 done in the 2026-06-24 hardening pass; <b>#3 (Sentry)</b> confirmed already live (2026-06-25); <b>#2 (staging Supabase)</b> stood up + verified end-to-end (2026-06-26); <b>#6 (migration-safety guard)</b> + <b>#13 (PR template)</b> shipped (2026-06-27). <b>9 of 18 done — all P0s complete.</b> Remaining: P1/P2 hygiene items (#9, #10, #11, #12, #14, #15, #16, #17, #18).</p>
   <div class="pills">
     <span class="pill">Context: pre-launch, no real users</span>
     <span class="pill">Budget: free-tier only</span>
@@ -111,8 +111,8 @@
 <tr><td>Environment separation</td><td><span class="dot d-good"></span>Resolved</td><td><b>Preview now uses a separate Supabase project</b> (`pogosundet-preview`); prod isolated (verified 2026-06-26). Edge Functions/push still on prod (documented caveat).</td></tr>
 <tr><td>Observability (errors/uptime)</td><td><span class="dot d-warn"></span>Partial</td><td><b>Sentry error monitoring is live</b> (DSN set since 2026-05-29, re-verified 2026-06-25). Remaining gaps: no uptime/health check; Edge Functions not covered.</td></tr>
 <tr><td>Code review</td><td><span class="dot d-good"></span>Good</td><td>AI reviewer now <b>active</b> (token set; ran on PRs #179/#180). 0 human approvals + self-merge, backed by required CI + the reviewer.</td></tr>
-<tr><td>GitHub policy</td><td><span class="dot d-good"></span>Good</td><td>Branch protection + <b>required CI check</b> + <b>secret scanning/push protection</b> + <b>Dependabot</b> all on. Remaining: PR template (#13), CodeQL (#16).</td></tr>
-<tr><td>DB migration safety</td><td><span class="dot d-warn"></span>Partial</td><td>Powerful but entirely manual; "apply-before-merge" is human-enforced against the live DB.</td></tr>
+<tr><td>GitHub policy</td><td><span class="dot d-good"></span>Good</td><td>Branch protection + <b>required CI check</b> + <b>secret scanning/push protection</b> + <b>Dependabot</b> + <b>PR template</b> all on. Remaining: CodeQL (#16).</td></tr>
+<tr><td>DB migration safety</td><td><span class="dot d-good"></span>Good</td><td>Still manual SQL, but the <b>migration-safety guard (#6)</b> now fails any PR touching <code>supabase/migrations/</code> unless the PR confirms apply-before-merge. Possible upgrade: Supabase-CLI <code>db push</code> against the preview project.</td></tr>
 <tr><td>Security</td><td><span class="dot d-good"></span>Good</td><td>RLS, webhook gate, security review, <b>secret scanning + push protection</b> (2026-06-24). One documented column-RLS residual (#18); CodeQL still off (#16).</td></tr>
 <tr><td>Accessibility / web-vitals</td><td><span class="dot d-warn"></span>Untested</td><td>Mobile-first app with no automated a11y or performance budget checks.</td></tr>
 </tbody>
@@ -228,8 +228,9 @@
 <!-- ================= P1 ================= -->
 <h2 id="p1">P1 · Soon after</h2>
 
-<div class="card rec p1" id="r6">
-  <div class="top"><span class="badge b-p1">P1</span><h3>6 · CI guard for the manual-migration workflow</h3></div>
+<div class="card rec p1 is-done" id="r6">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p1">P1</span><h3>6 · CI guard for the manual-migration workflow</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27:</b> <code>.github/workflows/migration-guard.yml</code> fails any PR touching <code>supabase/migrations/**</code> unless the PR description's <b>Migration</b> box (hidden <code>&lt;!-- migration-applied --&gt;</code> marker, supplied by the #13 template) is checked. Read-only, re-runs on <code>edited</code>, advisory (not a required check). The Supabase-CLI <code>db push</code> approach below remains a possible later upgrade now that #2 exists.</p>
   <div class="meta"><span><b>Impact:</b> High</span><span><b>Effort:</b> 30–60 min</span><span><b>Cost:</b> Free</span><span class="tag">Migrations</span></div>
   <p class="why"><b>Why it matters:</b> Your most dangerous class of bug is "a PR ships a query against a column the shared prod DB doesn't have yet" — it breaks the app for <em>every</em> user the instant it deploys. Right now the only defence is a human remembering the "apply-before-merge" rule. A cheap CI guard turns that into an explicit, un-skippable prompt.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -323,8 +324,9 @@ projects: [
   </div></details>
 </div>
 
-<div class="card rec p2" id="r13">
-  <div class="top"><span class="badge b-p2">P2</span><h3>13 · PR template with the invariant checklist</h3></div>
+<div class="card rec p2 is-done" id="r13">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p2">P2</span><h3>13 · PR template with the invariant checklist</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27:</b> <code>.github/pull_request_template.md</code> ships the checklist below (migration / changelog / SW-bump / <code>dub1</code> / i18n / Privacy / tests-green); the migration line carries the <code>&lt;!-- migration-applied --&gt;</code> marker the #6 guard parses.</p>
   <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 15 min</span><span><b>Cost:</b> Free</span><span class="tag">GitHub policy</span></div>
   <p class="why"><b>Why it matters:</b> Your CLAUDE.md invariants (migration applied? changelog entry? SW version bumped? <code>dub1</code> region? Privacy updated?) live in prose. A PR template turns them into a checklist the author must tick — and it doubles as the machine-checkable signal for the migration guard (#6). Low effort, reinforces discipline the AI reviewer also checks.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -392,8 +394,8 @@ projects: [
 <tbody>
 <tr><td><b>This week</b> ✅</td><td><s>#1 typecheck/build in CI · #4 require CI · #5 secret scanning · #7 activate AI reviewer</s> · #8 Dependabot</td><td><b>Done 2026-06-24/25.</b> "Merged" now means lint + typecheck + build pass (required), with secret scanning + an active AI reviewer behind it.</td></tr>
 <tr><td><b>Next ←</b></td><td><s>#2 staging Supabase</s> ✅ · <s>#3 Sentry</s> ✅</td><td><b>Both foundational P0s done.</b> #2 (verified 2026-06-26) unblocked #6, #9, #18; #3 (Sentry) live. Next focus: #9 (logged-in e2e on the new preview DB), then #6/#10.</td></tr>
-<tr><td><b>Then</b></td><td>#6 migration guard · #9 logged-in e2e · #10 mobile viewport</td><td>Builds real safety on top of the new staging environment.</td></tr>
-<tr><td><b>Ongoing polish</b></td><td>#11–#18</td><td>Hygiene and NFR coverage; pick up as capacity allows.</td></tr>
+<tr><td><b>Then</b></td><td><s>#6 migration guard</s> ✅ · <s>#13 PR template</s> ✅ · #9 logged-in e2e · #10 mobile viewport</td><td>#6 + #13 done 2026-06-27 (the PR template feeds the guard's checkbox). Next: #9/#10 on the new preview DB.</td></tr>
+<tr><td><b>Ongoing polish</b></td><td>#11, #12, #14–#18</td><td>Hygiene and NFR coverage; pick up as capacity allows.</td></tr>
 </tbody>
 </table>
 </div>
