@@ -12,6 +12,12 @@ jobs:
   lighthouse:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Skip on Dependabot runs (no secrets). The Next.js middleware makes
+    # Supabase calls on every request; without real credentials the server
+    # starts but all pages 500 and Lighthouse can't scan them. Same pattern
+    # as ci.yml's HAS_SUPABASE_SECRETS guard on the E2E step.
+    env:
+      HAS_SUPABASE_SECRETS: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL != '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -23,20 +29,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Build the production bundle. NEXT_PUBLIC_* vars must be present at
-      # build time for the client bundle — use placeholder fallbacks so this
-      # works even when secrets are absent (e.g. Dependabot).
+      # Build the production bundle. NEXT_PUBLIC_* vars are read server-side
+      # at runtime too (middleware), so pass real secrets here — the guard
+      # above skips this whole job when secrets are absent (Dependabot).
       - name: Build
+        if: env.HAS_SUPABASE_SECRETS == 'true'
         run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       # treosh/lighthouse-ci-action starts the server (npm start), waits for
       # it to be ready, then runs Lighthouse against each URL in .lighthouserc.json.
-      # Results are uploaded to temporary-public-storage and linked in the
-      # step summary / PR comment.
+      # env vars here are inherited by the npm-start subprocess so the
+      # middleware can reach Supabase and pages load correctly.
       - name: Lighthouse CI
+        if: env.HAS_SUPABASE_SECRETS == 'true'
         uses: treosh/lighthouse-ci-action@v12
         with:
           configPath: .lighthouserc.json
@@ -44,3 +52,6 @@ jobs:
           serverReadyPattern: "Ready on"
           uploadArtifacts: true
           temporaryPublicStorage: true
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
