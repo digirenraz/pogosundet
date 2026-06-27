@@ -21,13 +21,15 @@ export async function createProfile(input: ProfileInput & { user_id: string }) {
   return { data: data as Profile | null, error };
 }
 
-// Fetch a profile by auth user ID. Returns null data (not an error) if not found.
-export async function getProfile(userId: string) {
+// Fetch the authenticated user's own profile, including friend_code.
+// Migration 022 revoked SELECT (friend_code) from the authenticated role, so a
+// direct table query would lose the field. get_own_profile() is a SECURITY
+// DEFINER RPC that bypasses the column restriction while enforcing the
+// owner-only filter (WHERE user_id = auth.uid()) at the DB level.
+export async function getProfile() {
   const supabase = createClient();
   const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', userId)
+    .rpc('get_own_profile')
     .single();
   return { data: data as Profile | null, error };
 }

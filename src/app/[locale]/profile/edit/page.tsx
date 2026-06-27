@@ -60,7 +60,7 @@ export default function ProfileEditPage() {
       const uid = claimsData?.claims?.sub;
       if (!uid) { router.push('/login'); return; }
       setUserId(uid);
-      const { data } = await getProfile(uid);
+      const { data } = await getProfile();
       if (data) {
         setInitialValues({
           trainer_name: data.trainer_name,

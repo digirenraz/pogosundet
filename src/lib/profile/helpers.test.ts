@@ -63,34 +63,33 @@ describe('createProfile', () => {
 describe('getProfile', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('queries profiles by user_id and returns the row', async () => {
+  // Migration 022: getProfile now calls the get_own_profile() SECURITY DEFINER
+  // RPC instead of a direct table query, so friend_code is returned despite the
+  // column-level REVOKE on the authenticated role.
+
+  it('calls get_own_profile RPC and returns the row', async () => {
     const existingRow = { id: 'profile-1', ...profileInput };
     const chain = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: existingRow, error: null }),
     };
-    const supabase = { from: vi.fn().mockReturnValue(chain) };
+    const supabase = { rpc: vi.fn().mockReturnValue(chain) };
     vi.mocked(createClient).mockReturnValue(supabase as never);
 
-    const result = await getProfile('user-123');
+    const result = await getProfile();
 
-    expect(supabase.from).toHaveBeenCalledWith('profiles');
-    expect(chain.eq).toHaveBeenCalledWith('user_id', 'user-123');
+    expect(supabase.rpc).toHaveBeenCalledWith('get_own_profile');
     expect(result.data).toEqual(existingRow);
     expect(result.error).toBeNull();
   });
 
   it('returns null data when no profile exists', async () => {
     const chain = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
     };
-    const supabase = { from: vi.fn().mockReturnValue(chain) };
+    const supabase = { rpc: vi.fn().mockReturnValue(chain) };
     vi.mocked(createClient).mockReturnValue(supabase as never);
 
-    const result = await getProfile('user-456');
+    const result = await getProfile();
 
     expect(result.data).toBeNull();
   });
