@@ -51,7 +51,8 @@ jobs:
           serverCommand: npm start
           serverReadyPattern: "Ready on"
           uploadArtifacts: true
-          temporaryPublicStorage: true
+          # temporaryPublicStorage disabled — depends on an external LHCI cloud
+          # service that can be unavailable in CI; artifacts cover our needs.
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
