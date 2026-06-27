@@ -74,10 +74,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          # Auth-gated e2e specs skip when these are absent; set them (pointing
-          # at a test user on pogosundet-preview) to run logged-in tests in CI.
-          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          # Auth-gated e2e specs skip when these are absent. Only expose once
+          # NEXT_PUBLIC_SUPABASE_URL + key are also updated to pogosundet-preview
+          # AND a test user exists on that project (see report #9 PM ops).
+          # Until then, leave commented so tests skip rather than fail on bad creds.
+          # E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          # E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
 
       # Only meaningful when E2E actually ran; skip otherwise so it doesn't try
       # to upload a non-existent report on a Dependabot run that failed earlier.
