@@ -5,10 +5,11 @@ import { test, expect } from "@playwright/test";
 const EMAIL = process.env.E2E_TEST_EMAIL;
 const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
-test.describe("Desktop scan-session status persistence", () => {
+test.describe("Desktop scan-session status persistence", { tag: "@desktop" }, () => {
   test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
 
-  // The scan-session is desktop-only (lg+).
+  // The scan-session is desktop-only (lg+). Runs under the desktop-chrome
+  // project (@desktop tag); the explicit viewport keeps the exact dimensions.
   test.use({ viewport: { width: 1280, height: 900 } });
 
   test.beforeEach(async ({ page }) => {
