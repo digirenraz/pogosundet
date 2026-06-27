@@ -1,0 +1,5 @@
+# Pre-push quality gate (report #11): fast feedback before code reaches CI.
+# Mirrors the first two CI steps (Lint → Typecheck). && so either failure aborts
+# the push. Heavier gates (build, Vitest, Playwright) stay CI-only.
+# Bypass in a pinch with: git push --no-verify
+npm run lint && npm run typecheck

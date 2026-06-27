@@ -77,7 +77,7 @@
   <h1>PoGoSundet — Professionalisation Assessment</h1>
   <p>An engineering-practices review: CI, testing, non-functional requirements, code review, GitHub policy, and environment separation.</p>
   <p style="font-size:13px;opacity:.8">Prepared 2026-06-24 · <b>Updated 2026-06-27</b> · Scope: whole repository &amp; workflow</p>
-  <p style="font-size:13px;color:#9fe6db;margin-top:6px">✅ <b>Progress:</b> #1, #4, #5, #7, #8 done in the 2026-06-24 hardening pass; <b>#3 (Sentry)</b> confirmed already live (2026-06-25); <b>#2 (staging Supabase)</b> stood up + verified end-to-end (2026-06-26); <b>#6 (migration-safety guard)</b> + <b>#13 (PR template)</b> shipped (2026-06-27). <b>9 of 18 done — all P0s complete.</b> Remaining: P1/P2 hygiene items (#9, #10, #11, #12, #14, #15, #16, #17, #18).</p>
+  <p style="font-size:13px;color:#9fe6db;margin-top:6px">✅ <b>Progress:</b> #1, #4, #5, #7, #8 done in the 2026-06-24 hardening pass; <b>#3 (Sentry)</b> confirmed already live (2026-06-25); <b>#2 (staging Supabase)</b> stood up + verified end-to-end (2026-06-26); <b>#6 (migration-safety guard)</b> + <b>#13 (PR template)</b> + <b>#11 (pre-push hook)</b> + <b>#12 (Node pin)</b> shipped (2026-06-27). <b>11 of 18 done — all P0s complete.</b> Remaining: P1/P2 hygiene items (#9, #10, #14, #15, #16, #17, #18).</p>
   <div class="pills">
     <span class="pill">Context: pre-launch, no real users</span>
     <span class="pill">Budget: free-tier only</span>
@@ -302,8 +302,9 @@ projects: [
 <!-- ================= P2 ================= -->
 <h2 id="p2">P2 · Polish &amp; long-term hygiene</h2>
 
-<div class="card rec p2" id="r11">
-  <div class="top"><span class="badge b-p2">P2</span><h3>11 · Pre-push quality hook (lint + typecheck)</h3></div>
+<div class="card rec p2 is-done" id="r11">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p2">P2</span><h3>11 · Pre-push quality hook (lint + typecheck)</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27:</b> Husky 9 + <code>.husky/pre-push</code> runs <code>npm run lint &amp;&amp; npm run typecheck</code> before every push (bypass: <code>--no-verify</code>); build/Vitest/Playwright stay CI-only. The optional <code>SessionStart</code> companion was intentionally skipped (too noisy per session; CI remains the backstop for web sessions that don't run local hooks).</p>
   <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 20 min</span><span><b>Cost:</b> Free</span><span class="tag">DX</span></div>
   <p class="why"><b>Why it matters:</b> Catches lint/type failures locally <em>before</em> a PR and CI run, shortening the vibe-coding feedback loop. Note: web/cloud Claude sessions don't run local git hooks, so this mainly helps local/desktop work — pair it with the existing <b>SessionStart hook</b> approach for web sessions so both paths get a fast pre-flight check.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -311,8 +312,9 @@ projects: [
   </div></details>
 </div>
 
-<div class="card rec p2" id="r12">
-  <div class="top"><span class="badge b-p2">P2</span><h3>12 · Pin the Node version (<code>.nvmrc</code> + <code>engines</code>)</h3></div>
+<div class="card rec p2 is-done" id="r12">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p2">P2</span><h3>12 · Pin the Node version (<code>.nvmrc</code> + <code>engines</code>)</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27:</b> <code>.nvmrc</code> = <code>24</code> + <code>package.json</code> <code>engines.node</code> = <code>&gt;=24 &lt;25</code>; local <code>nvm use</code>, CI, and Vercel (which reads <code>engines.node</code>) now agree. Advisory (no <code>engine-strict</code>).</p>
   <div class="meta"><span><b>Impact:</b> Low-medium</span><span><b>Effort:</b> 5 min</span><span><b>Cost:</b> Free</span><span class="tag">DX</span></div>
   <p class="why"><b>Why it matters:</b> CI pins Node 24, but nothing pins it for local dev or Vercel — so "works in CI, breaks locally" (or vice-versa) is possible. A one-line pin removes a whole class of "it's the environment" confusion, which matters more when the developer is an AI re-deriving context each session.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -395,7 +397,7 @@ projects: [
 <tr><td><b>This week</b> ✅</td><td><s>#1 typecheck/build in CI · #4 require CI · #5 secret scanning · #7 activate AI reviewer</s> · #8 Dependabot</td><td><b>Done 2026-06-24/25.</b> "Merged" now means lint + typecheck + build pass (required), with secret scanning + an active AI reviewer behind it.</td></tr>
 <tr><td><b>Next ←</b></td><td><s>#2 staging Supabase</s> ✅ · <s>#3 Sentry</s> ✅</td><td><b>Both foundational P0s done.</b> #2 (verified 2026-06-26) unblocked #6, #9, #18; #3 (Sentry) live. Next focus: #9 (logged-in e2e on the new preview DB), then #6/#10.</td></tr>
 <tr><td><b>Then</b></td><td><s>#6 migration guard</s> ✅ · <s>#13 PR template</s> ✅ · #9 logged-in e2e · #10 mobile viewport</td><td>#6 + #13 done 2026-06-27 (the PR template feeds the guard's checkbox). Next: #9/#10 on the new preview DB.</td></tr>
-<tr><td><b>Ongoing polish</b></td><td>#11, #12, #14–#18</td><td>Hygiene and NFR coverage; pick up as capacity allows.</td></tr>
+<tr><td><b>Ongoing polish</b></td><td><s>#11 pre-push</s> ✅ · <s>#12 Node pin</s> ✅ · #14–#18</td><td>#11/#12 done 2026-06-27. Remaining hygiene &amp; NFR coverage; pick up as capacity allows.</td></tr>
 </tbody>
 </table>
 </div>
