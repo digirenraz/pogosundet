@@ -1,0 +1,46 @@
+name: Lighthouse CI
+
+# Report-only for now (all assertions use "warn", not "error") — see
+# .lighthouserc.json. Promote to a required gate once baseline scores
+# are established. Not a required status check, so it can never block a merge.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build the production bundle. NEXT_PUBLIC_* vars must be present at
+      # build time for the client bundle — use placeholder fallbacks so this
+      # works even when secrets are absent (e.g. Dependabot).
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+
+      # treosh/lighthouse-ci-action starts the server (npm start), waits for
+      # it to be ready, then runs Lighthouse against each URL in .lighthouserc.json.
+      # Results are uploaded to temporary-public-storage and linked in the
+      # step summary / PR comment.
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: .lighthouserc.json
+          serverCommand: npm start
+          serverReadyPattern: "Ready on"
+          uploadArtifacts: true
+          temporaryPublicStorage: true
