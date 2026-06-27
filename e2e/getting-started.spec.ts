@@ -15,7 +15,7 @@ test.describe("Kom i gang (getting-started guide)", () => {
     await page.waitForURL(/\/players$/);
   });
 
-  test("desktop: sidebar item opens the guide", async ({ page }) => {
+  test("desktop: sidebar item opens the guide", { tag: "@desktop" }, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/players");
 

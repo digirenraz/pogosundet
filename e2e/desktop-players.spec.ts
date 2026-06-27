@@ -17,7 +17,7 @@ test.describe("Desktop player overview (scan-session)", () => {
     await page.waitForURL(/\/players$/);
   });
 
-  test("shows the sidebar + scan-session and advances the queue", async ({ page }) => {
+  test("shows the sidebar + scan-session and advances the queue", { tag: "@desktop" }, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
     // Desktop sidebar brand + the scan-session heading render.
