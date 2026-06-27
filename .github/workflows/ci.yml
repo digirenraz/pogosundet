@@ -49,6 +49,14 @@ jobs:
       - name: Unit tests (Vitest)
         run: npm run test
 
+      # Coverage over src/lib/** pure-logic modules (report #17). Visibility
+      # tool only — continue-on-error so low numbers never block a merge.
+      # Promote to a hard gate by removing continue-on-error and adding
+      # thresholds to vitest.config.ts once a baseline is known.
+      - name: Coverage (src/lib/**)
+        run: npm run test:coverage
+        continue-on-error: true
+
       # Full production build — catches build-time failures `tsc` misses (RSC
       # boundaries, route config, bundling). NEXT_PUBLIC_* are read at build
       # time for the client bundle; Sentry source-map upload stays skipped
