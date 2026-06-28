@@ -66,14 +66,43 @@ async function globalSetup() {
   try {
     const page = await browser.newPage();
     await page.goto(`${BASE_URL}/login`);
+    console.log(`[global-setup] Navigated to login, URL: ${page.url()}`);
+
     await page.getByLabel(/E-mail/i).fill(email);
     await page.getByLabel(/Adgangskode/i).fill(password);
     await page.getByRole("button", { name: /^Log ind$/ }).click();
+    console.log(`[global-setup] Clicked Log ind, waiting for /players...`);
 
     // Allow up to 60 s — the DB may be finishing its cold start.
-    await page.waitForURL(/\/players$/, { timeout: 60_000 });
-    console.log(`[global-setup] Logged in as ${email}`);
+    // Use Promise.race to detect wrong-credentials (login error stays on /login)
+    // vs. slow redirect (navigation started but page load hangs).
+    const result = await Promise.race([
+      page.waitForURL(/\/players$/, { timeout: 60_000 }).then(() => "ok"),
+      page.waitForURL(/\/profile\/setup$/, { timeout: 60_000 }).then(() => "no-profile"),
+      // Detect a Supabase login error shown on the page.
+      page.getByText(/Ugyldig|Invalid|forkert|incorrect|not found/i)
+        .waitFor({ timeout: 60_000 })
+        .then(() => "auth-error"),
+    ]).catch((e) => {
+      console.error(`[global-setup] Race timed out. URL: ${page.url()}`);
+      throw e;
+    });
 
+    if (result === "no-profile") {
+      throw new Error(
+        `[global-setup] Login succeeded but redirected to /profile/setup — ` +
+        `the test user has no profile row. Create one in the preview DB.`
+      );
+    }
+    if (result === "auth-error") {
+      const errText = await page.getByText(/Ugyldig|Invalid|forkert|incorrect|not found/i).innerText().catch(() => "(could not read error)");
+      throw new Error(
+        `[global-setup] Login failed — auth error on page: "${errText}". ` +
+        `Check E2E_TEST_EMAIL / E2E_TEST_PASSWORD match a user on ${supabaseUrl}.`
+      );
+    }
+
+    console.log(`[global-setup] Logged in as ${email}`);
     await page.context().storageState({ path: AUTH_FILE });
     console.log(`[global-setup] Auth state saved to ${AUTH_FILE}`);
   } catch (e) {
