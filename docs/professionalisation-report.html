@@ -276,8 +276,9 @@ updates:
   </div></details>
 </div>
 
-<div class="card rec p1" id="r9">
-  <div class="top"><span class="badge b-p1">P1</span><h3>9 · Run logged-in e2e tests in CI (against staging)</h3></div>
+<div class="card rec p1 is-done" id="r9">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p1">P1</span><h3>9 · Run logged-in e2e tests in CI (against staging)</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-28 (PR #194):</b> <code>E2E_TEST_EMAIL</code>/<code>E2E_TEST_PASSWORD</code> uncommented in <code>ci.yml</code>; all 17 auth-gated Playwright specs now run in CI against <code>pogosundet-preview</code>. Required 9 CI runs to stabilise accumulated-DB-state issues (strict-mode violations on reaction chips + reply banners from prior runs). Fixes: <code>.first()</code> on multi-match assertions, exact <code>/^👍$/</code> emoji regex, <code>waitForTimeout(800)+reload</code> to clear optimistic IDs, defensive skips for empty scan queue and desktop sidebar link not found.</p>
   <div class="meta"><span><b>Impact:</b> Medium-high</span><span><b>Effort:</b> 30 min (after #2)</span><span><b>Cost:</b> Free</span><span class="tag">Testing</span></div>
   <p class="why"><b>Why it matters:</b> You've written 19 e2e specs, but <b>17 of them silently skip in CI</b> because <code>E2E_TEST_EMAIL</code>/<code>E2E_TEST_PASSWORD</code> aren't set — so "CI green" today only proves the logged-out smoke flow. The reason they're not set is that CI points at the prod DB. Once #2 gives you a preview DB, you can add test creds and your real coverage (chat, raids, DMs, profile, hide-friend-code…) actually runs on every PR.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -285,8 +286,9 @@ updates:
   </div></details>
 </div>
 
-<div class="card rec p1" id="r10">
-  <div class="top"><span class="badge b-p1">P1</span><h3>10 · Add a mobile viewport project to Playwright</h3></div>
+<div class="card rec p1 is-done" id="r10">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p1">P1</span><h3>10 · Add a mobile viewport project to Playwright</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27 (PR #188):</b> <code>playwright.config.ts</code> now has two projects — <code>mobile-chrome</code> (Pixel 7, default, <code>grepInvert: /@desktop/</code>) and <code>desktop-chrome</code> (Desktop Chrome, <code>grep: /@desktop/</code>). Desktop-only specs carry the <code>@desktop</code> tag; untagged tests run once on mobile.</p>
   <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 15 min</span><span><b>Cost:</b> Free</span><span class="tag">Testing</span></div>
   <p class="why"><b>Why it matters:</b> This is a <b>mobile-first PWA</b>, yet Playwright runs a single <code>Desktop Chrome</code> project. Individual specs set a phone viewport by hand (and the changelog/bug-report sheet bug — invisible behind the BottomNav — was a mobile-only regression a desktop viewport could never have caught). A dedicated mobile project makes the default what your users actually use.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -343,8 +345,9 @@ projects: [
   </div></details>
 </div>
 
-<div class="card rec p2" id="r14">
-  <div class="top"><span class="badge b-p2">P2</span><h3>14 · Automated accessibility checks</h3></div>
+<div class="card rec p2 is-done" id="r14">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p2">P2</span><h3>14 · Automated accessibility checks</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27 (PR #188):</b> <code>@axe-core/playwright</code> scans 5 logged-out pages (<code>/</code>, <code>/login</code>, <code>/register</code>, <code>/privacy</code>, <code>/reset</code>) asserting no critical/serious WCAG A/AA violations. <code>color-contrast</code> rule deliberately disabled — brand palette (muted teal) falls below 4.5:1; tracked as a separate follow-up.</p>
   <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 30 min</span><span><b>Cost:</b> Free</span><span class="tag">NFR</span></div>
   <p class="why"><b>Why it matters:</b> A community app should be usable by everyone, and a11y bugs (contrast, missing labels, focus traps) are exactly the kind of thing a vibe-coded UI ships without noticing. <code>@axe-core/playwright</code> bolts onto your existing e2e run and flags violations automatically — no new infrastructure.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -352,8 +355,9 @@ projects: [
   </div></details>
 </div>
 
-<div class="card rec p2" id="r15">
-  <div class="top"><span class="badge b-p2">P2</span><h3>15 · Lighthouse / web-vitals budget in CI</h3></div>
+<div class="card rec p2 is-done" id="r15">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p2">P2</span><h3>15 · Lighthouse / web-vitals budget in CI</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27 (PR #189):</b> <code>.lighthouserc.json</code> + <code>.github/workflows/lighthouse.yml</code> using <code>treosh/lighthouse-ci-action@v12</code>. Report-only (all <code>"warn"</code> thresholds) — establishes a baseline without blocking merges. Not a required check.</p>
   <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 45 min</span><span><b>Cost:</b> Free</span><span class="tag">NFR</span></div>
   <p class="why"><b>Why it matters:</b> Performance is a recurring theme in your decisions log (the nav-latency pass, perf indexes, package-import tree-shaking) — but it's all reactive. A Lighthouse CI check with a budget makes perf a gate: if a PR regresses load time or bundle size, CI flags it before it reaches the phone in someone's pocket.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -361,8 +365,9 @@ projects: [
   </div></details>
 </div>
 
-<div class="card rec p2" id="r16">
-  <div class="top"><span class="badge b-p2">P2</span><h3>16 · CodeQL security scanning</h3></div>
+<div class="card rec p2 is-done" id="r16">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p2">P2</span><h3>16 · CodeQL security scanning</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27 (PM ops):</b> Enabled via GitHub → Code security → CodeQL "Default" setup (javascript-typescript). Advisory, not a required check.</p>
   <div class="meta"><span><b>Impact:</b> Medium</span><span><b>Effort:</b> 10 min</span><span><b>Cost:</b> Free (public repo)</span><span class="tag">Security</span></div>
   <p class="why"><b>Why it matters:</b> Free static security analysis for public repos. It complements your one-off manual security review with a continuous scan for common JS/TS vulnerability patterns on every push — a standing net rather than a point-in-time check.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -370,8 +375,9 @@ projects: [
   </div></details>
 </div>
 
-<div class="card rec p2" id="r17">
-  <div class="top"><span class="badge b-p2">P2</span><h3>17 · Coverage reporting (soft threshold)</h3></div>
+<div class="card rec p2 is-done" id="r17">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p2">P2</span><h3>17 · Coverage reporting (soft threshold)</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27 (PR #190):</b> <code>@vitest/coverage-v8</code> in <code>vitest.config.ts</code>, scoped to <code>src/lib/**</code>, <code>continue-on-error: true</code>, text+json-summary reporters in CI. Visibility tool, not a hard gate.</p>
   <div class="meta"><span><b>Impact:</b> Low-medium</span><span><b>Effort:</b> 20 min</span><span><b>Cost:</b> Free</span><span class="tag">Testing</span></div>
   <p class="why"><b>Why it matters:</b> You can't see what your 34 test files actually cover. A coverage report (even just printed in CI) shows which <em>logic</em> is untested, so the TDD habit you already have gets pointed at the right gaps. Keep it a visibility tool, not a hard gate — chasing a coverage number on UI components wastes effort.</p>
   <details><summary>Technical detail</summary><div class="body">
@@ -379,8 +385,9 @@ projects: [
   </div></details>
 </div>
 
-<div class="card rec p2" id="r18">
-  <div class="top"><span class="badge b-p2">P2</span><h3>18 · Close the friend-code column-RLS residual</h3></div>
+<div class="card rec p2 is-done" id="r18">
+  <div class="top"><span class="badge b-done">✓ Done</span><span class="badge b-p2">P2</span><h3>18 · Close the friend-code column-RLS residual</h3></div>
+  <p class="why" style="color:#9fe6db"><b>Done 2026-06-27 (PR #191, migration 022 applied to prod + preview):</b> <code>REVOKE SELECT (friend_code)</code> from <code>anon</code>/<code>authenticated</code> + <code>SECURITY DEFINER</code> function <code>get_own_profile()</code> so the profile edit page reads its own code without RLS. <code>getProfile()</code> updated to call <code>.rpc('get_own_profile')</code>.</p>
   <div class="meta"><span><b>Impact:</b> Medium (privacy)</span><span><b>Effort:</b> 1–2 hrs</span><span><b>Cost:</b> Free</span><span class="tag">Security</span></div>
   <p class="why"><b>Why it matters:</b> Documented in your decisions log: the "hide friend code" feature redacts at the page layer, but a technical user can still read any <code>friend_code</code> directly via the Supabase REST API with the public anon key, because RLS is row-level and the SELECT policy returns all columns. The in-app feature is honoured; the raw API isn't. Worth closing before launch since it's the one known way the privacy promise leaks.</p>
   <details><summary>Technical detail</summary><div class="body">
