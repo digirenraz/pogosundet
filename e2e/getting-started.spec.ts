@@ -15,23 +15,15 @@ test.describe("Kom i gang (getting-started guide)", () => {
     // doesn't wait for that and its fixed overlay intercepts clicks on the sidebar.
     await page.locator('[aria-label="Indlæser"]').waitFor({ state: "hidden", timeout: 15000 }).catch(() => {});
 
-    // "Kom i gang" lives in the desktop sidebar (lg+). Try by accessible link
-    // name first (robust regardless of locale-prefixed href). The item is in the
-    // bottom group and may need scrolling; use evaluate to scroll + click.
-    // If the sidebar link isn't found (e.g., rendered with a different href),
-    // fall back to direct navigation so we still verify the page content.
+    // "Kom i gang" lives in the desktop sidebar (lg+). Use force:true to click
+    // even if the item is in the bottom group below the visible area. Regular
+    // Playwright click (not evaluate) is needed so Next.js's router handles the
+    // navigation correctly — evaluate(el.click()) bypasses the router and can
+    // cause an unexpected redirect to /login.
     const komIGangLink = page.getByRole("link", { name: /Kom i gang/ }).first();
-    const found = await komIGangLink.waitFor({ state: "attached", timeout: 10000 }).then(() => true).catch(() => false);
-    if (found) {
-      await komIGangLink.evaluate((el) => {
-        el.scrollIntoView({ block: "center" });
-        (el as HTMLElement).click();
-      });
-    } else {
-      // Sidebar link not found — navigate directly (still verifies page content).
-      await page.goto("/onboarding");
-    }
-    await page.waitForURL(/\/onboarding$/);
+    await komIGangLink.waitFor({ state: "attached", timeout: 10000 });
+    await komIGangLink.click({ force: true });
+    await page.waitForURL(/\/onboarding$/, { timeout: 15000 });
 
     await expect(
       page.getByRole("heading", { name: "Velkommen til PoGoSundet" })

@@ -37,8 +37,9 @@ test.describe("Chat — reactions + replies", () => {
     await reloadedBubble.evaluate((el) => (el as HTMLElement).click());
 
     // Action sheet is now open — click 👍 via evaluate for the same reason.
-    // The quick-reaction buttons have text-content "👍" (no aria-label).
-    const thumbsUp = page.locator('button').filter({ hasText: '👍' }).first();
+    // Use an EXACT regex /^👍$/ to avoid matching accumulated reaction chips
+    // from prior test runs (those have text "👍 3" etc. which also match '👍').
+    const thumbsUp = page.locator('button').filter({ hasText: /^👍$/ }).first();
     await thumbsUp.waitFor({ state: "visible", timeout: 10000 });
     await thumbsUp.evaluate((el) => (el as HTMLElement).click());
 

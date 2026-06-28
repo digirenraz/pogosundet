@@ -59,7 +59,8 @@ test.describe("Direct messages", () => {
 
     // React 👍 from the action sheet.
     await expect(page.getByRole("button", { name: "Svar" })).toBeVisible();
-    const thumbsUpDm = page.locator('button').filter({ hasText: '👍' }).first();
+    // Exact regex /^👍$/ avoids matching accumulated reaction chips ("👍 3" etc.)
+    const thumbsUpDm = page.locator('button').filter({ hasText: /^👍$/ }).first();
     await thumbsUpDm.evaluate((el) => (el as HTMLElement).click());
     // Reaction chip may take several seconds to appear in CI (Supabase write + Realtime).
     await expect(page.getByRole("button", { name: /👍\s*1/ })).toBeVisible({ timeout: 15000 });
