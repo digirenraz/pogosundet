@@ -61,12 +61,15 @@ test.describe("Direct messages", () => {
     await expect(page.getByRole("button", { name: "Svar" })).toBeVisible();
     const thumbsUpDm = page.locator('button').filter({ hasText: '👍' }).first();
     await thumbsUpDm.evaluate((el) => (el as HTMLElement).click());
-    await expect(page.getByRole("button", { name: /👍\s*1/ })).toBeVisible();
+    // Reaction chip may take several seconds to appear in CI (Supabase write + Realtime).
+    await expect(page.getByRole("button", { name: /👍\s*1/ })).toBeVisible({ timeout: 15000 });
 
     // Reply to the same message — same evaluate pattern to keep sheet open.
     await page.getByRole("button", { name: body }).evaluate((el) => (el as HTMLElement).click());
     await page.getByRole("button", { name: "Svar" }).evaluate((el) => (el as HTMLElement).click());
-    await expect(page.getByText(/Svarer/)).toBeVisible();
+    // Multiple prior test runs accumulate "Svarer" banners — use .first() to
+    // avoid strict-mode violations when there are leftover reply quotes.
+    await expect(page.getByText(/Svarer/).first()).toBeVisible();
     const reply = `e2e-dm-reply ${Date.now()}`;
     await page.getByRole("textbox", { name: /Skriv et svar/ }).fill(reply);
     await page.getByRole("button", { name: /^Send$/ }).click();
