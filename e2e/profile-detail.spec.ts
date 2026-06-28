@@ -44,7 +44,7 @@ test.describe("Player detail deck", () => {
       el.scrollIntoView({ block: "center" });
       (el as HTMLElement).click();
     });
-    await expect(page.getByRole("button", { name: /Kopieret!/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Kopieret!/ }).first()).toBeVisible();
 
     // Pagination starts at "1 / N"
     await expect(page.getByText(/^1 \/ \d+$/)).toBeVisible();

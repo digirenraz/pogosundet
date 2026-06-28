@@ -18,13 +18,23 @@ test.describe("Chat — reactions + replies", () => {
 
     const bubble = page.getByRole("button", { name: body });
     await expect(bubble).toBeVisible();
+
+    // Wait for the optimistic placeholder to be replaced by a real DB id —
+    // the action sheet refuses to open for `opt-*` ids. Reload to pick up the
+    // Realtime echo (cross-user delivery is unreliable in dev/CI).
+    await page.waitForTimeout(800);
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+    const reloadedBubble = page.getByRole("button", { name: body });
+    await expect(reloadedBubble).toBeVisible();
+
     // Use evaluate(el.click()) rather than Playwright's click() to avoid a
     // race: Playwright's click dispatches mousedown then mouseup as separate
     // events. If the action sheet's backdrop button (absolute inset-0) renders
     // between mousedown and mouseup, it intercepts the mouseup, firing onClose
     // and immediately dismissing the sheet before we can click an emoji.
     // el.click() dispatches a single synthetic click with no separate mouse events.
-    await bubble.evaluate((el) => (el as HTMLElement).click());
+    await reloadedBubble.evaluate((el) => (el as HTMLElement).click());
 
     // Action sheet is now open — click 👍 via evaluate for the same reason.
     // The quick-reaction buttons have text-content "👍" (no aria-label).

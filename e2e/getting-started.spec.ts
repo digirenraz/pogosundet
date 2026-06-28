@@ -16,11 +16,15 @@ test.describe("Kom i gang (getting-started guide)", () => {
     await page.locator('[aria-label="Indlæser"]').waitFor({ state: "hidden", timeout: 15000 }).catch(() => {});
 
     // "Kom i gang" lives in the desktop sidebar (lg+). Select by href attribute —
-    // more robust than a role+name query when the DesktopSidebar nav might not
-    // be resolved yet. The AppMenu dropdown is closed so only one element matches.
-    const komIGangLink = page.locator('a[href="/onboarding"]');
-    await komIGangLink.waitFor({ state: "visible", timeout: 10000 });
-    await komIGangLink.click();
+    // more robust than a role+name query. The item is in the bottom group of the
+    // sidebar and may be below the visible viewport area; use evaluate to scroll
+    // it into view and click without relying on Playwright visibility checks.
+    const komIGangLink = page.locator('a[href="/onboarding"]').first();
+    await komIGangLink.waitFor({ state: "attached", timeout: 10000 });
+    await komIGangLink.evaluate((el) => {
+      el.scrollIntoView({ block: "center" });
+      (el as HTMLElement).click();
+    });
     await page.waitForURL(/\/onboarding$/);
 
     await expect(
