@@ -7,6 +7,7 @@ const BASE_URL = "http://localhost:3000";
 
 async function globalSetup() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const email = process.env.E2E_TEST_EMAIL;
   const password = process.env.E2E_TEST_PASSWORD;
@@ -22,7 +23,6 @@ async function globalSetup() {
   }
 
   // Warm up the Supabase DB (free-tier projects sleep after inactivity).
-  // Ping both the REST API and the GoTrue auth health endpoint.
   if (supabaseUrl && serviceRoleKey) {
     try {
       const res = await fetch(
@@ -38,76 +38,116 @@ async function globalSetup() {
     } catch (e) {
       console.log(`[global-setup] REST warmup failed: ${e}`);
     }
-
-    try {
-      const res = await fetch(`${supabaseUrl}/auth/v1/health`);
-      console.log(`[global-setup] Auth warmup: ${res.status}`);
-    } catch (e) {
-      console.log(`[global-setup] Auth warmup failed: ${e}`);
-    }
   }
 
-  // If credentials are not configured, skip auth state creation — all
-  // auth-gated tests will be skipped anyway.
   if (!email || !password) {
     console.log("[global-setup] No E2E credentials — auth state skipped");
     return;
   }
 
-  // Ensure the auth state directory exists.
+  // Step 1: Verify credentials via direct API call (no browser). This gives
+  // an immediate, unambiguous answer on whether the secret values are correct —
+  // before we even launch a browser.
+  if (!supabaseUrl || !anonKey) {
+    throw new Error("[global-setup] NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY missing");
+  }
+
+  console.log(`[global-setup] Checking credentials for ${email} via API...`);
+  const apiRes = await fetch(
+    `${supabaseUrl}/auth/v1/token?grant_type=password`,
+    {
+      method: "POST",
+      headers: {
+        apikey: anonKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    }
+  );
+  const apiData = await apiRes.json();
+  if (!apiRes.ok) {
+    throw new Error(
+      `[global-setup] API login failed (${apiRes.status}): ${JSON.stringify(apiData)}\n` +
+        `  → Check E2E_TEST_EMAIL / E2E_TEST_PASSWORD match a user on ${supabaseUrl}`
+    );
+  }
+  console.log(`[global-setup] API login OK for ${email} (user: ${apiData.user?.id})`);
+
+  // Step 2: Open a browser, set the session cookies directly from the API
+  // tokens, and navigate to /players to let the middleware set the profile
+  // guard cookie. Then save the full storage state.
   const authDir = path.dirname(AUTH_FILE);
   if (!fs.existsSync(authDir)) {
     fs.mkdirSync(authDir, { recursive: true });
   }
 
-  // Log in once via the real UI and save the session. All auth-gated tests
-  // reuse this state instead of repeating the form login each time.
+  const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
+
   const browser = await chromium.launch();
   try {
-    const page = await browser.newPage();
-    await page.goto(`${BASE_URL}/login`);
-    console.log(`[global-setup] Navigated to login, URL: ${page.url()}`);
+    const context = await browser.newContext();
 
-    await page.getByLabel(/E-mail/i).fill(email);
-    await page.getByLabel(/Adgangskode/i).fill(password);
-    await page.getByRole("button", { name: /^Log ind$/ }).click();
-    console.log(`[global-setup] Clicked Log ind, waiting for /players...`);
+    // Build the Supabase session payload and encode it the way @supabase/ssr
+    // expects: "base64-" prefix + base64url(JSON.stringify(session)).
+    const session = {
+      access_token: apiData.access_token,
+      token_type: "bearer",
+      expires_in: apiData.expires_in,
+      expires_at: apiData.expires_at,
+      refresh_token: apiData.refresh_token,
+      user: apiData.user,
+    };
+    const encoded =
+      "base64-" +
+      Buffer.from(JSON.stringify(session))
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=/g, "");
 
-    // Allow up to 60 s — the DB may be finishing its cold start.
-    // Use Promise.race to detect wrong-credentials (login error stays on /login)
-    // vs. slow redirect (navigation started but page load hangs).
-    const result = await Promise.race([
-      page.waitForURL(/\/players$/, { timeout: 60_000 }).then(() => "ok"),
-      page.waitForURL(/\/profile\/setup$/, { timeout: 60_000 }).then(() => "no-profile"),
-      // Detect a Supabase login error shown on the page.
-      page.getByText(/Ugyldig|Invalid|forkert|incorrect|not found/i)
-        .waitFor({ timeout: 60_000 })
-        .then(() => "auth-error"),
-    ]).catch((e) => {
-      console.error(`[global-setup] Race timed out. URL: ${page.url()}`);
-      throw e;
-    });
+    // Supabase SSR splits large cookies into chunks (.0, .1, …). The session
+    // JSON is typically ~2 KB — well under the 4 KB cookie limit — so a single
+    // cookie suffices. If it ever needs chunking, Supabase will re-chunk on
+    // the next server response, so setting one cookie here is safe.
+    await context.addCookies([
+      {
+        name: `sb-${projectRef}-auth-token`,
+        value: encoded,
+        domain: "localhost",
+        path: "/",
+        httpOnly: false,
+        secure: false,
+        sameSite: "Lax",
+      },
+    ]);
 
-    if (result === "no-profile") {
+    const page = await context.newPage();
+    // Navigate to /players; the middleware will verify the session and set the
+    // pogo-profile-ok guard cookie. waitForURL gives 30 s — if it redirects to
+    // /profile/setup, the test user has no profile row.
+    await page.goto(`${BASE_URL}/players`, { waitUntil: "networkidle" });
+
+    const finalUrl = page.url();
+    console.log(`[global-setup] After /players navigation: ${finalUrl}`);
+
+    if (finalUrl.includes("/profile/setup")) {
       throw new Error(
-        `[global-setup] Login succeeded but redirected to /profile/setup — ` +
-        `the test user has no profile row. Create one in the preview DB.`
+        `[global-setup] Login succeeded but middleware redirected to /profile/setup — ` +
+          `the test user (${email}) has no profile row on ${supabaseUrl}. ` +
+          `INSERT one into public.profiles.`
       );
     }
-    if (result === "auth-error") {
-      const errText = await page.getByText(/Ugyldig|Invalid|forkert|incorrect|not found/i).innerText().catch(() => "(could not read error)");
+    if (!finalUrl.includes("/players")) {
       throw new Error(
-        `[global-setup] Login failed — auth error on page: "${errText}". ` +
-        `Check E2E_TEST_EMAIL / E2E_TEST_PASSWORD match a user on ${supabaseUrl}.`
+        `[global-setup] Unexpected URL after /players navigation: ${finalUrl}`
       );
     }
 
-    console.log(`[global-setup] Logged in as ${email}`);
-    await page.context().storageState({ path: AUTH_FILE });
+    await context.storageState({ path: AUTH_FILE });
     console.log(`[global-setup] Auth state saved to ${AUTH_FILE}`);
   } catch (e) {
-    console.error("[global-setup] Login failed:", e);
-    throw e; // Fail loudly so CI shows the real reason.
+    console.error("[global-setup] Failed:", e);
+    throw e;
   } finally {
     await browser.close();
   }
