@@ -10,6 +10,7 @@ test.describe("Kom i gang (getting-started guide)", () => {
   test("desktop: sidebar item opens the guide", { tag: "@desktop" }, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/players");
+    await page.waitForLoadState("networkidle");
 
     // "Kom i gang" lives in the desktop sidebar (lg+).
     await page.getByRole("link", { name: "Kom i gang" }).click();
@@ -29,6 +30,7 @@ test.describe("Kom i gang (getting-started guide)", () => {
   test("mobile: hamburger menu opens the guide", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/players");
+    await page.waitForLoadState("networkidle");
 
     await page.getByRole("button", { name: "Menu" }).click();
     await page.getByRole("link", { name: "Kom i gang" }).click();

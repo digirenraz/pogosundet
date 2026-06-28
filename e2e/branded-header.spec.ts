@@ -16,28 +16,32 @@ test.describe("Branded header", () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto("/players");
+    await page.waitForLoadState("networkidle");
   });
 
   test("shows the wordmark + large title on the tab screens", async ({ page }) => {
     // Players — wordmark in the lockup, screen name as the large title.
-    await expect(page.getByText("PoGoSundet")).toBeVisible();
+    await expect(page.getByRole("banner").getByText("PoGoSundet")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: /Lokale Trænere/i })
     ).toBeVisible();
 
     // Raids — branded header with the "+" create action.
     await page.goto("/raids");
-    await expect(page.getByText("PoGoSundet")).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("banner").getByText("PoGoSundet")).toBeVisible();
     await expect(page.getByRole("heading", { name: /Aktive Raids/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /Post raid/i })).toBeVisible();
 
     // Chat — branded header.
     await page.goto("/chat");
-    await expect(page.getByText("PoGoSundet")).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("banner").getByText("PoGoSundet")).toBeVisible();
 
     // Profil — branded header.
     await page.goto("/profile");
-    await expect(page.getByText("PoGoSundet")).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("banner").getByText("PoGoSundet")).toBeVisible();
     await expect(page.getByRole("heading", { name: /Min profil/i })).toBeVisible();
   });
 });

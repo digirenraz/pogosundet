@@ -9,7 +9,8 @@ test.describe("Chat — reactions + replies", () => {
 
   test("tap a message → react 👍 → chip appears below the bubble", async ({ page }) => {
     await page.goto("/chat/generelt");
-    await expect(page.getByText(/Velkommen til #generelt/)).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByText(/Velkommen til #generelt/).first()).toBeVisible();
 
     const body = `e2e-react ${Date.now()}`;
     await page.getByRole("textbox", { name: /Besked til #generelt/ }).fill(body);
@@ -30,7 +31,8 @@ test.describe("Chat — reactions + replies", () => {
 
   test("tap a message → Svar → composer banner → send reply → quoted preview", async ({ page }) => {
     await page.goto("/chat/generelt");
-    await expect(page.getByText(/Velkommen til #generelt/)).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByText(/Velkommen til #generelt/).first()).toBeVisible();
 
     // Seed an original message to reply to.
     const original = `e2e-original ${Date.now()}`;

@@ -10,6 +10,7 @@ test.describe("Player detail deck", () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto("/players");
+    await page.waitForLoadState("networkidle");
   });
 
   test("opens a player, copies the friend code, swipes, and returns", async ({ page }) => {
@@ -21,7 +22,7 @@ test.describe("Player detail deck", () => {
 
     // QR section + friend code visible
     await expect(page.getByText(/Vennekode/i)).toBeVisible();
-    await expect(page.getByText(friendCode)).toBeVisible();
+    await expect(page.getByText(friendCode).last()).toBeVisible();
     await expect(page.locator("svg").first()).toBeVisible();
 
     // Copy the code — button switches to "Kopieret!"

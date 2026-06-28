@@ -11,6 +11,7 @@ test.describe("Desktop player overview (scan-session)", () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto("/players");
+    await page.waitForLoadState("networkidle");
   });
 
   test("shows the sidebar + scan-session and advances the queue", { tag: "@desktop" }, async ({ page }) => {
@@ -47,7 +48,7 @@ test.describe("Desktop player overview (scan-session)", () => {
     await page.setViewportSize({ width: 375, height: 800 });
 
     // The mobile directory header + bottom nav are present.
-    await expect(page.getByText("Lokale Trænere")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Lokale Trænere" })).toBeVisible();
     // The desktop-only scan-session heading is hidden at mobile width.
     await expect(page.getByText("Scan-session")).toBeHidden();
   });

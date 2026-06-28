@@ -9,6 +9,7 @@ test.describe("Profile edit", () => {
 
   test("sets team to Valor, picks level 42, saves, lands on /profile with the chip visible", async ({ page }) => {
     await page.goto("/profile/edit");
+    await page.waitForLoadState("networkidle");
     await expect(page.getByRole("heading", { name: /Rediger profil/i }).or(page.getByText(/Rediger profil/))).toBeVisible();
 
     // Pick Valor
@@ -36,6 +37,7 @@ test.describe("Profile edit", () => {
 
   test("logs out from the edit profile page", async ({ page }) => {
     await page.goto("/profile/edit");
+    await page.waitForLoadState("networkidle");
     const logout = page.getByRole("button", { name: /^Log ud$/ });
     await expect(logout).toBeVisible();
     await logout.click();
