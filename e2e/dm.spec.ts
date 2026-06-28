@@ -6,18 +6,10 @@ import { test, expect } from "@playwright/test";
 // covered here — Realtime is unreliable in `npm run dev` per CLAUDE.md 2026-05-19;
 // verify cross-user on the Vercel preview.
 const EMAIL = process.env.E2E_TEST_EMAIL;
-const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
 test.describe("Direct messages", () => {
-  test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/E-mail/i).fill(EMAIL!);
-    await page.getByLabel(/Adgangskode/i).fill(PASSWORD!);
-    await page.getByRole("button", { name: /^Log ind$/ }).click();
-    await page.waitForURL(/\/players$/);
-  });
+  test.skip(!EMAIL, "E2E_TEST_EMAIL not configured");
+  test.use({ storageState: "e2e/.auth/user.json" });
 
   test("/chat shows the DM section (empty or populated)", async ({ page }) => {
     await page.goto("/chat");

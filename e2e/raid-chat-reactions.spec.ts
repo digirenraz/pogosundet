@@ -7,18 +7,10 @@ import { test, expect } from "@playwright/test";
 // Single-user only — cross-user realtime is unreliable locally per CLAUDE.md
 // (decision 2026-05-19). Push to a Vercel preview to validate cross-user.
 const EMAIL = process.env.E2E_TEST_EMAIL;
-const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
 test.describe("Raid chat — reactions + replies", () => {
-  test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/E-mail/i).fill(EMAIL!);
-    await page.getByLabel(/Adgangskode/i).fill(PASSWORD!);
-    await page.getByRole("button", { name: /^Log ind$/ }).click();
-    await page.waitForURL(/\/players$/);
-  });
+  test.skip(!EMAIL, "E2E_TEST_EMAIL not configured");
+  test.use({ storageState: "e2e/.auth/user.json" });
 
   // Helper: open the first raid card on /raids. Skips the test if none exist.
   async function openFirstRaid(page: import("@playwright/test").Page) {

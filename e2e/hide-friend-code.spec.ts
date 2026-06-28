@@ -3,18 +3,10 @@ import { test, expect } from "@playwright/test";
 // Issue #101: "hide my friend code" toggle on the edit-profile page.
 // Requires an existing test account with a profile already created.
 const EMAIL = process.env.E2E_TEST_EMAIL;
-const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
 test.describe("Hide friend code", () => {
-  test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/E-mail/i).fill(EMAIL!);
-    await page.getByLabel(/Adgangskode/i).fill(PASSWORD!);
-    await page.getByRole("button", { name: /^Log ind$/ }).click();
-    await page.waitForURL(/\/players$/);
-  });
+  test.skip(!EMAIL, "E2E_TEST_EMAIL not configured");
+  test.use({ storageState: "e2e/.auth/user.json" });
 
   // The toggle round-trips through the form. We flip it on, save, reopen, and
   // assert it persisted — then restore it to off so the shared test account is

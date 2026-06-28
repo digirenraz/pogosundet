@@ -1,19 +1,15 @@
 import { test, expect } from "@playwright/test";
 
-// Requires an existing test account; configure via E2E_TEST_EMAIL / E2E_TEST_PASSWORD.
+// Requires an existing test account; configure via E2E_TEST_EMAIL.
 // CI doesn't have these by default — the test skips when they're missing.
 const EMAIL = process.env.E2E_TEST_EMAIL;
-const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
 test.describe("Player detail deck", () => {
-  test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
+  test.skip(!EMAIL, "E2E_TEST_EMAIL not configured");
+  test.use({ storageState: "e2e/.auth/user.json" });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/E-mail/i).fill(EMAIL!);
-    await page.getByLabel(/Adgangskode/i).fill(PASSWORD!);
-    await page.getByRole("button", { name: /^Log ind$/ }).click();
-    await page.waitForURL(/\/players$/);
+    await page.goto("/players");
   });
 
   test("opens a player, copies the friend code, swipes, and returns", async ({ page }) => {

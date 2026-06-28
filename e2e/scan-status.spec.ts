@@ -3,21 +3,17 @@ import { test, expect } from "@playwright/test";
 // Requires an existing test account with a profile, AND at least one OTHER
 // player in the directory (the scan queue filters out the current user).
 const EMAIL = process.env.E2E_TEST_EMAIL;
-const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
 test.describe("Desktop scan-session status persistence", { tag: "@desktop" }, () => {
-  test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
+  test.skip(!EMAIL, "E2E_TEST_EMAIL not configured");
+  test.use({ storageState: "e2e/.auth/user.json" });
 
   // The scan-session is desktop-only (lg+). Runs under the desktop-chrome
   // project (@desktop tag); the explicit viewport keeps the exact dimensions.
   test.use({ viewport: { width: 1280, height: 900 } });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/E-mail/i).fill(EMAIL!);
-    await page.getByLabel(/Adgangskode/i).fill(PASSWORD!);
-    await page.getByRole("button", { name: /^Log ind$/ }).click();
-    await page.waitForURL(/\/players$/);
+    await page.goto("/players");
   });
 
   test("marking 'Tilføjet → næste' persists across a reload", async ({ page }) => {

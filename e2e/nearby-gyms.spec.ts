@@ -2,10 +2,10 @@ import { test, expect } from "@playwright/test";
 
 // Requires an existing test account with a profile already created.
 const EMAIL = process.env.E2E_TEST_EMAIL;
-const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
 test.describe("Nearby gym suggestions (raid form)", () => {
-  test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
+  test.skip(!EMAIL, "E2E_TEST_EMAIL not configured");
+  test.use({ storageState: "e2e/.auth/user.json" });
 
   // Mobile viewport (the raid form is the same component at all widths) with
   // the geolocation permission pre-granted at a position in central
@@ -14,14 +14,6 @@ test.describe("Nearby gym suggestions (raid form)", () => {
     viewport: { width: 390, height: 844 },
     geolocation: { latitude: 55.8396, longitude: 12.0689 },
     permissions: ["geolocation"],
-  });
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/E-mail/i).fill(EMAIL!);
-    await page.getByLabel(/Adgangskode/i).fill(PASSWORD!);
-    await page.getByRole("button", { name: /^Log ind$/ }).click();
-    await page.waitForURL(/\/players$/);
   });
 
   // IMPORTANT: this spec never submits the form — it only exercises the gym

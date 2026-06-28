@@ -11,18 +11,10 @@ import { test, expect } from "@playwright/test";
 // Requires a test account with a profile and at least one active raid (same
 // seeded-raid assumption as the other raid specs).
 const EMAIL = process.env.E2E_TEST_EMAIL;
-const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
 test.describe("Raid detail — back navigation", () => {
-  test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/E-mail/i).fill(EMAIL!);
-    await page.getByLabel(/Adgangskode/i).fill(PASSWORD!);
-    await page.getByRole("button", { name: /^Log ind$/ }).click();
-    await page.waitForURL(/\/players$/);
-  });
+  test.skip(!EMAIL, "E2E_TEST_EMAIL not configured");
+  test.use({ storageState: "e2e/.auth/user.json" });
 
   test("back arrow reaches /raids even with no in-app history (notification-opened)", async ({ page }) => {
     // Discover a real raid id from the list, then drop the history by loading
