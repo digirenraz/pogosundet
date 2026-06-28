@@ -2,10 +2,10 @@ import { test, expect } from "@playwright/test";
 
 // Requires an existing test account with a profile already created.
 const EMAIL = process.env.E2E_TEST_EMAIL;
-const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
 test.describe("Bug report (Rapportér en fejl)", () => {
-  test.skip(!EMAIL || !PASSWORD, "E2E_TEST_EMAIL / E2E_TEST_PASSWORD not configured");
+  test.skip(!EMAIL, "E2E_TEST_EMAIL not configured");
+  test.use({ storageState: "e2e/.auth/user.json" });
 
   // The hamburger menu is mobile-only (lg:hidden), and the bug this spec
   // guards against (send button painted over by the fixed BottomNav — found
@@ -14,11 +14,7 @@ test.describe("Bug report (Rapportér en fejl)", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/E-mail/i).fill(EMAIL!);
-    await page.getByLabel(/Adgangskode/i).fill(PASSWORD!);
-    await page.getByRole("button", { name: /^Log ind$/ }).click();
-    await page.waitForURL(/\/players$/);
+    await page.goto("/players");
   });
 
   test("submits a bug report from the hamburger menu (API stubbed)", async ({ page }) => {
