@@ -34,10 +34,16 @@ test.describe("Player detail deck", () => {
     await expect(page.getByText(friendCode).last()).toBeVisible();
     await expect(page.locator("svg").first()).toBeVisible();
 
-    // Copy the code — use force:true to bypass any residual pointer-event
-    // overlay that may still be transitioning (the z-40 action sheet from a
-    // prior test, etc.). first() because the deck keeps all cards in DOM.
-    await page.getByRole("button", { name: /Kopier kode/ }).first().click({ force: true });
+    // Copy the code — the button is inside an overflow-y:auto card within an
+    // overflow-hidden h-screen deck. Playwright's click() can't scroll into it
+    // (the outer container is overflow:hidden so window scroll doesn't reach it).
+    // Use evaluate to scroll the inner container and then invoke click() directly.
+    // first() because the deck keeps all cards in DOM simultaneously.
+    const copyBtn = page.getByRole("button", { name: /Kopier kode/ }).first();
+    await copyBtn.evaluate((el) => {
+      el.scrollIntoView({ block: "center" });
+      (el as HTMLElement).click();
+    });
     await expect(page.getByRole("button", { name: /Kopieret!/ })).toBeVisible();
 
     // Pagination starts at "1 / N"

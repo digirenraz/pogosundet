@@ -51,16 +51,21 @@ test.describe("Direct messages", () => {
     await page.reload();
     const reloadedBubble = page.getByRole("button", { name: body });
     await expect(reloadedBubble).toBeVisible();
-    await reloadedBubble.click();
+    // Use evaluate(el.click()) rather than Playwright's click() to avoid a
+    // race: Playwright's click dispatches mousedown then mouseup separately.
+    // The action sheet backdrop (absolute inset-0) can render between them
+    // and intercept the mouseup, immediately closing the sheet.
+    await reloadedBubble.evaluate((el) => (el as HTMLElement).click());
 
     // React 👍 from the action sheet.
     await expect(page.getByRole("button", { name: "Svar" })).toBeVisible();
-    await page.getByRole("button", { name: "👍" }).first().click();
+    const thumbsUpDm = page.locator('button').filter({ hasText: '👍' }).first();
+    await thumbsUpDm.evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByRole("button", { name: /👍\s*1/ })).toBeVisible();
 
-    // Reply to the same message.
-    await page.getByRole("button", { name: body }).click();
-    await page.getByRole("button", { name: "Svar" }).click();
+    // Reply to the same message — same evaluate pattern to keep sheet open.
+    await page.getByRole("button", { name: body }).evaluate((el) => (el as HTMLElement).click());
+    await page.getByRole("button", { name: "Svar" }).evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByText(/Svarer/)).toBeVisible();
     const reply = `e2e-dm-reply ${Date.now()}`;
     await page.getByRole("textbox", { name: /Skriv et svar/ }).fill(reply);

@@ -18,17 +18,19 @@ test.describe("Chat — reactions + replies", () => {
 
     const bubble = page.getByRole("button", { name: body });
     await expect(bubble).toBeVisible();
-    await bubble.click();
+    // Use evaluate(el.click()) rather than Playwright's click() to avoid a
+    // race: Playwright's click dispatches mousedown then mouseup as separate
+    // events. If the action sheet's backdrop button (absolute inset-0) renders
+    // between mousedown and mouseup, it intercepts the mouseup, firing onClose
+    // and immediately dismissing the sheet before we can click an emoji.
+    // el.click() dispatches a single synthetic click with no separate mouse events.
+    await bubble.evaluate((el) => (el as HTMLElement).click());
 
-    // Wait for the action sheet to render before clicking the emoji.
-    // The sheet is a fixed z-40 overlay; wait for the quick-reaction row.
-    // Use a text-content locator — emoji accessible names can vary by browser.
-    // force: true bypasses pointer-event actionability checks (the sheet
-    // backdrop button is absolute inset-0 and can intercept pointer events
-    // during the opening animation).
+    // Action sheet is now open — click 👍 via evaluate for the same reason.
+    // The quick-reaction buttons have text-content "👍" (no aria-label).
     const thumbsUp = page.locator('button').filter({ hasText: '👍' }).first();
     await thumbsUp.waitFor({ state: "visible", timeout: 10000 });
-    await thumbsUp.click({ force: true });
+    await thumbsUp.evaluate((el) => (el as HTMLElement).click());
 
     // Sheet closes; chip with the emoji and count 1 appears.
     await expect(page.getByRole("button", { name: "Svar" })).toHaveCount(0);
@@ -49,12 +51,13 @@ test.describe("Chat — reactions + replies", () => {
 
     // Open sheet, tap Svar — banner appears.
     // "Svar" is only available for other users' messages; skip if own-message action sheet.
-    await originalBubble.click();
+    // Use evaluate(el.click()) to avoid the backdrop race (see test 1 comment).
+    await originalBubble.evaluate((el) => (el as HTMLElement).click());
     const svarBtn = page.getByRole("button", { name: "Svar" });
     if (!(await svarBtn.isVisible({ timeout: 3000 }).catch(() => false))) {
       test.skip(true, "Svar not in action sheet for own messages — needs a second user's message");
     }
-    await svarBtn.click();
+    await svarBtn.evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByText(/Svarer/)).toBeVisible();
 
     // Send reply.
