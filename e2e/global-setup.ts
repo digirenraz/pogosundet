@@ -143,6 +143,20 @@ async function globalSetup() {
       );
     }
 
+    // Dismiss the Amplitude consent banner if present. It's a fixed z-50 overlay
+    // that intercepts pointer events, so any test that clicks anything will time
+    // out unless consent was already answered. Dismissing here saves the choice
+    // in localStorage via storageState, so all tests start with it gone.
+    const consentBanner = page.getByRole("dialog", { name: /Samtykke til analyse/ });
+    try {
+      await consentBanner.waitFor({ state: "visible", timeout: 5000 });
+      await page.getByRole("button", { name: /Afvis/ }).click();
+      await consentBanner.waitFor({ state: "hidden", timeout: 5000 });
+      console.log("[global-setup] Consent banner dismissed");
+    } catch {
+      console.log("[global-setup] No consent banner — skipping dismissal");
+    }
+
     await context.storageState({ path: AUTH_FILE });
     console.log(`[global-setup] Auth state saved to ${AUTH_FILE}`);
   } catch (e) {
