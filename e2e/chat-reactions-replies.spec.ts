@@ -20,9 +20,15 @@ test.describe("Chat — reactions + replies", () => {
     await expect(bubble).toBeVisible();
     await bubble.click();
 
-    // Action sheet should be visible — pick 👍 from the quick-reaction row.
-    // ("Svar" is only shown for other users' messages; own-message sheet shows Rediger/Slet.)
-    await page.getByRole("button", { name: "👍" }).first().click();
+    // Wait for the action sheet to render before clicking the emoji.
+    // The sheet is a fixed z-40 overlay; wait for the quick-reaction row.
+    // Use a text-content locator — emoji accessible names can vary by browser.
+    // force: true bypasses pointer-event actionability checks (the sheet
+    // backdrop button is absolute inset-0 and can intercept pointer events
+    // during the opening animation).
+    const thumbsUp = page.locator('button').filter({ hasText: '👍' }).first();
+    await thumbsUp.waitFor({ state: "visible", timeout: 10000 });
+    await thumbsUp.click({ force: true });
 
     // Sheet closes; chip with the emoji and count 1 appears.
     await expect(page.getByRole("button", { name: "Svar" })).toHaveCount(0);

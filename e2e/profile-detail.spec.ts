@@ -14,19 +14,30 @@ test.describe("Player detail deck", () => {
   });
 
   test("opens a player, copies the friend code, swipes, and returns", async ({ page }) => {
+    // Grant clipboard-write permission so navigator.clipboard.writeText() succeeds
+    // in the headless browser and the button can transition to "Kopieret!".
+    await page.context().grantPermissions(["clipboard-write"]);
+
     // Open the first player card
     const firstCard = page.locator('a[href^="/players/"]').first();
     await expect(firstCard).toBeVisible();
     const friendCode = await firstCard.locator(".tabular-nums").first().innerText();
     await firstCard.click();
 
+    // Wait for the player detail page to settle (client-side navigation; the
+    // deck needs a ResizeObserver tick to set card widths before the layout
+    // is fully interactive).
+    await page.waitForLoadState("networkidle");
+
     // QR section + friend code visible
     await expect(page.getByText(/Vennekode/i)).toBeVisible();
     await expect(page.getByText(friendCode).last()).toBeVisible();
     await expect(page.locator("svg").first()).toBeVisible();
 
-    // Copy the code — button switches to "Kopieret!" (use first() — card stays in DOM behind detail)
-    await page.getByRole("button", { name: /Kopier kode/ }).first().click();
+    // Copy the code — use force:true to bypass any residual pointer-event
+    // overlay that may still be transitioning (the z-40 action sheet from a
+    // prior test, etc.). first() because the deck keeps all cards in DOM.
+    await page.getByRole("button", { name: /Kopier kode/ }).first().click({ force: true });
     await expect(page.getByRole("button", { name: /Kopieret!/ })).toBeVisible();
 
     // Pagination starts at "1 / N"

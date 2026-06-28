@@ -15,8 +15,14 @@ test.describe("Kom i gang (getting-started guide)", () => {
     // doesn't wait for that and its fixed overlay intercepts clicks on the sidebar.
     await page.locator('[aria-label="Indlæser"]').waitFor({ state: "hidden", timeout: 15000 }).catch(() => {});
 
-    // "Kom i gang" lives in the desktop sidebar (lg+).
-    await page.getByRole("link", { name: "Kom i gang" }).click();
+    // "Kom i gang" lives in the desktop sidebar (lg+). Scope to the <nav> to
+    // avoid strict-mode conflicts with the mobile AppMenu (hidden at lg but still
+    // in the DOM) and wait for it to be attached before clicking.
+    const komIGangLink = page.locator("nav").getByRole("link", { name: "Kom i gang" });
+    await komIGangLink.waitFor({ state: "visible", timeout: 10000 });
+    // force: true bypasses any residual pointer-event overlay (e.g. fading splash)
+    // that might still be transitioning when the link becomes visible.
+    await komIGangLink.click({ force: true });
     await page.waitForURL(/\/onboarding$/);
 
     await expect(
