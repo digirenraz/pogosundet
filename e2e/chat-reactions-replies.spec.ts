@@ -45,7 +45,8 @@ test.describe("Chat — reactions + replies", () => {
 
     // Sheet closes; chip with the emoji and count 1 appears.
     await expect(page.getByRole("button", { name: "Svar" })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /👍\s*1/ })).toBeVisible();
+    // Multiple prior runs accumulate "👍 1" chips — use .first() to avoid strict-mode violations.
+    await expect(page.getByRole("button", { name: /👍\s*1/ }).first()).toBeVisible();
   });
 
   test("tap a message → Svar → composer banner → send reply → quoted preview", async ({ page }) => {

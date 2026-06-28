@@ -63,7 +63,8 @@ test.describe("Direct messages", () => {
     const thumbsUpDm = page.locator('button').filter({ hasText: /^👍$/ }).first();
     await thumbsUpDm.evaluate((el) => (el as HTMLElement).click());
     // Reaction chip may take several seconds to appear in CI (Supabase write + Realtime).
-    await expect(page.getByRole("button", { name: /👍\s*1/ })).toBeVisible({ timeout: 15000 });
+    // Multiple prior runs accumulate "👍 1" chips — use .first() to avoid strict-mode violations.
+    await expect(page.getByRole("button", { name: /👍\s*1/ }).first()).toBeVisible({ timeout: 15000 });
 
     // Reply to the same message — same evaluate pattern to keep sheet open.
     await page.getByRole("button", { name: body }).evaluate((el) => (el as HTMLElement).click());
