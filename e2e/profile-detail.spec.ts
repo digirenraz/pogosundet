@@ -25,8 +25,8 @@ test.describe("Player detail deck", () => {
     await expect(page.getByText(friendCode).last()).toBeVisible();
     await expect(page.locator("svg").first()).toBeVisible();
 
-    // Copy the code — button switches to "Kopieret!"
-    await page.getByRole("button", { name: /Kopier kode/ }).click();
+    // Copy the code — button switches to "Kopieret!" (use first() — card stays in DOM behind detail)
+    await page.getByRole("button", { name: /Kopier kode/ }).first().click();
     await expect(page.getByRole("button", { name: /Kopieret!/ })).toBeVisible();
 
     // Pagination starts at "1 / N"

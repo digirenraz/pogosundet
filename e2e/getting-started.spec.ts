@@ -11,6 +11,9 @@ test.describe("Kom i gang (getting-started guide)", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/players");
     await page.waitForLoadState("networkidle");
+    // Loading screen stays in DOM until its CSS animation finishes — networkidle
+    // doesn't wait for that and its fixed overlay intercepts clicks on the sidebar.
+    await page.locator('[aria-label="Indlæser"]').waitFor({ state: "hidden", timeout: 15000 }).catch(() => {});
 
     // "Kom i gang" lives in the desktop sidebar (lg+).
     await page.getByRole("link", { name: "Kom i gang" }).click();

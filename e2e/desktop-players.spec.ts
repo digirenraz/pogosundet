@@ -17,8 +17,12 @@ test.describe("Desktop player overview (scan-session)", () => {
   test("shows the sidebar + scan-session and advances the queue", { tag: "@desktop" }, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
+    // Wait for loading screen to dismiss — it stays in DOM until its animation
+    // completes, which networkidle doesn't guarantee.
+    await page.locator('[aria-label="Indlæser"]').waitFor({ state: "hidden", timeout: 15000 }).catch(() => {});
+
     // Desktop sidebar brand + the scan-session heading render.
-    await expect(page.getByText("PoGoSundet")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "PoGoSundet" })).toBeVisible();
     await expect(page.getByText("Scan-session")).toBeVisible();
 
     // The big QR is on screen (FriendCodeQR renders an SVG).
