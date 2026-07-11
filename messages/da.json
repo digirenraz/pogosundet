@@ -379,13 +379,14 @@
     "you_lowercase": "dig",
     "dmSectionTitle": "Direkte beskeder",
     "dmSectionEmpty": "Ingen samtaler endnu",
-    "dmSectionHint": "Tryk på en træner i Online nu for at starte en ny samtale.",
+    "dmSectionHint": "Tryk på ✎-ikonet øverst for at starte en ny samtale.",
     "dmIntroLine": "Direkte besked · kun jer to kan se den",
     "dmConversations": "{n, plural, =1 {# samtale} other {# samtaler}}",
     "dmUnread": "{n} ulæste",
     "dmTypingShort": "skriver…",
     "longPressHint": "Hold en besked nede for at svare, reagere eller kopiere",
-    "hintDismiss": "Skjul tip"
+    "hintDismiss": "Skjul tip",
+    "newMessage": "Ny besked"
   },
   "ProfileEdit": {
     "headerTitle": "Rediger profil",

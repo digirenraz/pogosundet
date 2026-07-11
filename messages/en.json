@@ -311,7 +311,8 @@
     "closeSheet": "Close",
     "you_lowercase": "you",
     "longPressHint": "Hold a message down to reply, react, or copy",
-    "hintDismiss": "Dismiss hint"
+    "hintDismiss": "Dismiss hint",
+    "newMessage": "New message"
   },
   "ProfileEdit": {
     "headerTitle": "Edit profile",

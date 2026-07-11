@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-07-11',
+    text: 'Rettet: Du kan nu starte en ny samtale med enhver spiller — også dem der ikke er online lige nu. Tryk på det nye besked-ikon øverst på Chat-siden.',
+  },
+  {
     date: '2026-06-23',
     text: 'Når du tilføjer venner via QR-scanning på computeren, husker appen nu hvem du allerede har markeret som tilføjet — også efter du genindlæser eller kommer tilbage senere. Spillere du har tilføjet, får et lille "Allerede tilføjet"-mærke. Det er kun synligt for dig.',
   },

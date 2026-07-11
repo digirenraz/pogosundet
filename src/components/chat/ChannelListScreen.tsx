@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { MessageCirclePlus } from 'lucide-react';
 import { usePresence } from '@/lib/profile/use-presence';
 import { useChannelUnread, type UnreadCounts } from '@/lib/chat/use-channel-unread';
 import { useChannelListTyping } from '@/lib/chat/use-channel-list-typing';
@@ -11,6 +12,7 @@ import { useDMListRealtime } from '@/lib/dm/use-dm-list-realtime';
 import { useDMListTyping } from '@/lib/dm/use-dm-list-typing';
 import { AppHeader } from '@/components/AppHeader';
 import { OnlineStrip, type OnlineStripProfile } from './OnlineStrip';
+import { MembersSheet } from './MembersSheet';
 import { TypingDots } from './TypingDots';
 import { DMRow, type DMRowEntry } from './DMRow';
 import { relTime } from '@/lib/chat/time';
@@ -47,6 +49,7 @@ export function ChannelListScreen({
 }: ChannelListScreenProps) {
   const t = useTranslations('Chat');
   const router = useRouter();
+  const [newDmOpen, setNewDmOpen] = useState(false);
   const onlineIds = usePresence(currentUserId);
   const { counts, clearChannel, latestByChannel } = useChannelUnread({
     userId: currentUserId,
@@ -127,12 +130,32 @@ export function ChannelListScreen({
     <div className="min-h-screen bg-background">
       {/* Mobile: branded header (icon + wordmark + large title). */}
       <div className="lg:hidden">
-        <AppHeader title={t('listTitle')} />
+        <AppHeader
+          title={t('listTitle')}
+          action={
+            <button
+              type="button"
+              onClick={() => setNewDmOpen(true)}
+              aria-label={t('newMessage')}
+              className="bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center shadow-[0_3px_8px_rgba(0,176,159,0.30)]"
+            >
+              <MessageCirclePlus size={20} />
+            </button>
+          }
+        />
       </div>
 
       {/* Desktop: the sidebar (DesktopShell) brands the screen — keep the simple header. */}
-      <div className="hidden lg:flex fixed top-0 left-0 right-0 z-10 bg-card border-b border-border px-4 h-[60px] items-center">
+      <div className="hidden lg:flex fixed top-0 left-0 right-0 z-10 bg-card border-b border-border px-4 h-[60px] items-center justify-between">
         <h1 className="text-[18px] font-bold text-card-foreground">{t('listTitle')}</h1>
+        <button
+          type="button"
+          onClick={() => setNewDmOpen(true)}
+          aria-label={t('newMessage')}
+          className="bg-primary text-primary-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-[0_3px_8px_rgba(0,176,159,0.30)]"
+        >
+          <MessageCirclePlus size={18} />
+        </button>
       </div>
 
       <main className="pt-[116px] lg:pt-[76px] pb-[80px] px-3 flex flex-col gap-5">
@@ -222,6 +245,15 @@ export function ChannelListScreen({
           )}
         </section>
       </main>
+
+      <MembersSheet
+        open={newDmOpen}
+        onClose={() => setNewDmOpen(false)}
+        profiles={profiles}
+        onlineIds={onlineIds}
+        currentUserId={currentUserId}
+        onOpenDM={(partnerId) => router.push(`/chat/dm/${partnerId}`)}
+      />
     </div>
   );
 }
