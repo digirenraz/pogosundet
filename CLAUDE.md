@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This file is read automatically at the start of every Claude Code session.
 Do not delete it. Update it at the end of each session if any decisions changed.
 
-For first-time environment setup (Supabase project, env vars, Google OAuth), see `docs/setup.md`. The required env vars are templated in `.env.local.example` — copy to `.env.local` and fill in. Pre-launch operational tasks (env vars, push debugging runbook, PWA icon replacement, etc.) live in [`docs/launch-checklist.md`](docs/launch-checklist.md).
+For first-time environment setup (Supabase project, env vars, Google OAuth), see `docs/setup.md`. The required env vars are templated in `.env.local.example` — copy to `.env.local` and fill in. Pre-launch operational tasks (env vars, push debugging runbook, PWA icon replacement, etc.) live in [`docs/launch-checklist.md`](docs/launch-checklist.md). A standalone new-developer primer covering the same ground as this file (stack, repo layout, testing, CI/CD, git workflow) lives in [`docs/onboarding.md`](docs/onboarding.md) — this file (`CLAUDE.md`) is still the source of truth; keep the two in sync when either changes. Gym-data seeding instructions (non-technical, Supabase SQL editor only) live in [`docs/gyms-seeding.md`](docs/gyms-seeding.md).
 
 ---
 
@@ -105,7 +105,7 @@ SQL migrations live in `supabase/migrations/` as reference files. No runner — 
 
 **Apply-before-merge ordering (non-negotiable).** As of 2026-06-26 preview runs on a **separate** Supabase project (`pogosundet-preview`), so the two no longer share a DB — but there is still **no migration runner**, and merging a PR deploys it to **prod**. So any migration whose new columns/tables are referenced by a query that ships in the PR must be applied **manually to the prod project's SQL editor before the PR merges**, or prod errors for every user the moment the code deploys (also apply it to `pogosundet-preview` so Preview builds work). Migrations that only add constraints/indexes not referenced by a query (e.g. `019`) can be applied after. Precedent: `015`/`017`/`018`/`020` were all applied before their PR merged.
 
-Migrations `001`–`021` exist in `supabase/migrations/` (filenames are self-describing — run `ls supabase/migrations/` for the full list). **Applied through `021`** (all migrations are applied — there is no pending one). Status of the recent ones:
+Migrations `001`–`022` exist in `supabase/migrations/` (filenames are self-describing — run `ls supabase/migrations/` for the full list). **Applied through `022`** (all migrations are applied — there is no pending one). Status of the recent ones:
 
 | # | Applied? | Ordering | Note |
 |---|----------|----------|------|
@@ -113,6 +113,7 @@ Migrations `001`–`021` exist in `supabase/migrations/` (filenames are self-des
 | `019_input_length_limits` | ✅ 2026-06-12 | after PR #139 | CHECK constraints only (not query-referenced), security review Finding 2 |
 | `020_hide_friend_code` | ✅ 2026-06-12 | before PR #141 | `profiles.hide_friend_code` (issue #101) |
 | `021_friend_scan_status` | ✅ 2026-06-23 | before PR #164 | `friend_scan_status` (per-user, RLS); `/players` reads it + scan-session upserts into it |
+| `022_friend_code_column_security` | ✅ 2026-06-27 | before PR #191 | `REVOKE SELECT (friend_code)` + `get_own_profile()` RPC (report #18, security review Finding 3) |
 
 Edge Functions (`supabase/functions/`): `notify-raid`, `notify-dm`, `notify-raid-message`, `notify-raid-join` — **all four deployed with their DB webhooks wired** (`notify-raid-join` verified on prod 2026-06-09).
 
@@ -212,7 +213,6 @@ When building any feature that touches personal data, verify GDPR compliance.
 ## Testing strategy
 
 **Unit / logic tests — Vitest**
-- TDD: write the test first, confirm it fails, then implement
 - Scope: pure functions and Supabase helpers (validation, filters, server-helpers)
 - Co-located with the code they test
 
