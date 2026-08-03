@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-08-03',
+    text: 'Nu kan du starte en ny direkte besked til enhver træner — ikke kun dem du allerede snakker med. Tryk på "Send besked" på en spillers profil eller i spilleroversigten, eller brug den nye "Ny besked"-knap under Chat.',
+  },
+  {
     date: '2026-06-23',
     text: 'Når du tilføjer venner via QR-scanning på computeren, husker appen nu hvem du allerede har markeret som tilføjet — også efter du genindlæser eller kommer tilbage senere. Spillere du har tilføjet, får et lille "Allerede tilføjet"-mærke. Det er kun synligt for dig.',
   },

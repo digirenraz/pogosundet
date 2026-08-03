@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Copy, Check, EyeOff, UserCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Copy, Check, EyeOff, UserCheck, MessageCirclePlus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
 import { lastSeenRelative } from '@/lib/profile/time';
@@ -19,7 +20,14 @@ interface PlayerCardProps {
 export function PlayerCard({ profile, online = false, added = false }: PlayerCardProps) {
   const t = useTranslations('PlayerDirectory');
   const tFc = useTranslations('FriendCode');
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
+
+  function handleSendMessage(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/chat/dm/${profile.user_id}`);
+  }
 
   async function handleCopy(e: React.MouseEvent) {
     e.preventDefault();
@@ -116,6 +124,15 @@ export function PlayerCard({ profile, online = false, added = false }: PlayerCar
           </button>
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={handleSendMessage}
+        className="w-full h-10 rounded-md border border-border bg-input flex items-center justify-center gap-1.5 text-[13px] font-semibold text-card-foreground"
+      >
+        <MessageCirclePlus size={15} />
+        {t('sendMessageButton')}
+      </button>
     </Link>
   );
 }

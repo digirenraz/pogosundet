@@ -34,7 +34,7 @@ test.describe("Bug report (Rapportér en fejl)", () => {
     // Sheet: heading + form. The send button stays disabled until both
     // fields are valid.
     await expect(page.getByRole("heading", { name: "Rapportér en fejl" })).toBeVisible();
-    const send = page.getByRole("button", { name: "Send" });
+    const send = page.getByRole("button", { name: "Send", exact: true });
     await expect(send).toBeDisabled();
 
     await page.getByLabel("Titel").fill("E2E-testrapport");

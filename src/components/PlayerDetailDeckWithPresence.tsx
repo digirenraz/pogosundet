@@ -28,6 +28,7 @@ export function PlayerDetailDeckWithPresence({ profiles, startIndex, currentUser
       profiles={profiles}
       startIndex={startIndex}
       onlineUserIds={onlineUserIds}
+      currentUserId={currentUserId}
     />
   );
 }

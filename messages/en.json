@@ -122,7 +122,8 @@
     "filterInstinct": "Instinct",
     "countLabel": "{count} trainers · tap to see friend code",
     "onlineLabel": "online now",
-    "alreadyAdded": "Already added"
+    "alreadyAdded": "Already added",
+    "sendMessageButton": "Send message"
   },
   "DesktopPlayers": {
     "scanTitle": "Scan session",
@@ -146,7 +147,8 @@
     "swipeHint": "Swipe to see the next trainer",
     "onlineLabel": "Online now",
     "levelChip": "Level {level}",
-    "bioLabel": "Mini bio"
+    "bioLabel": "Mini bio",
+    "sendMessageButton": "Send message"
   },
   "ProfileTab": {
     "headerTitle": "My profile",
@@ -310,6 +312,7 @@
     "cancelReply": "Cancel reply",
     "closeSheet": "Close",
     "you_lowercase": "you",
+    "newMessageButton": "New message",
     "longPressHint": "Hold a message down to reply, react, or copy",
     "hintDismiss": "Dismiss hint"
   },

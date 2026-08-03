@@ -2,7 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronLeft, ChevronRight, ChevronsLeftRight, Check, Copy } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeftRight,
+  Check,
+  Copy,
+  MessageCirclePlus,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Profile } from '@/lib/profile/helpers';
 import { lastSeenRelative } from '@/lib/profile/time';
@@ -24,12 +32,13 @@ interface PlayerDetailDeckProps {
   profiles: Profile[];
   startIndex: number;
   onlineUserIds: Set<string>;
+  currentUserId: string;
 }
 
 // Swipe-deck of player detail cards. Touch + mouse drag, side chevrons, dots.
 // Server stays the source of truth for the profile data; only navigation /
 // drag state lives here.
-export function PlayerDetailDeck({ profiles, startIndex, onlineUserIds }: PlayerDetailDeckProps) {
+export function PlayerDetailDeck({ profiles, startIndex, onlineUserIds, currentUserId }: PlayerDetailDeckProps) {
   const t = useTranslations('PlayerDetail');
   const router = useRouter();
 
@@ -132,6 +141,7 @@ export function PlayerDetailDeck({ profiles, startIndex, onlineUserIds }: Player
                 online={onlineUserIds.has(p.user_id)}
                 copied={copied}
                 onCopy={() => copyCode(p.friend_code)}
+                isSelf={p.user_id === currentUserId}
               />
             </div>
           ))}
@@ -182,10 +192,12 @@ interface PlayerDetailCardProps {
   online: boolean;
   copied: boolean;
   onCopy: () => void;
+  isSelf: boolean;
 }
 
-function PlayerDetailCard({ profile, online, copied, onCopy }: PlayerDetailCardProps) {
+function PlayerDetailCard({ profile, online, copied, onCopy, isSelf }: PlayerDetailCardProps) {
   const t = useTranslations('PlayerDetail');
+  const router = useRouter();
   const team = (profile.team ?? 'none') as AvatarTeam;
   const teamMeta = TEAMS[team];
 
@@ -260,6 +272,17 @@ function PlayerDetailCard({ profile, online, copied, onCopy }: PlayerDetailCardP
           </span>
         )}
       </div>
+
+      {!isSelf && (
+        <button
+          type="button"
+          onClick={() => router.push(`/chat/dm/${profile.user_id}`)}
+          className="w-full h-11 rounded-md bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-1.5 text-[14px]"
+        >
+          <MessageCirclePlus size={16} />
+          {t('sendMessageButton')}
+        </button>
+      )}
 
       {/* QR */}
       <div className="bg-background border border-border rounded-2xl p-4 flex flex-col items-center gap-3">
