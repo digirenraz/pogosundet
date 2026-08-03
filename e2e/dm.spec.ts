@@ -84,4 +84,59 @@ test.describe("Direct messages", () => {
     await expect(page.getByText(/Direkte beskeder/)).toBeVisible();
     await expect(page.getByText(new RegExp(`Du:.*${reply.split(" ")[0]}`))).toBeVisible();
   });
+
+  // Issue #201: previously the only way to start a NEW conversation was via
+  // the Online-nu strip (online users only) or a channel's Members sheet —
+  // nothing in the player directory/detail, and no "start fresh" affordance
+  // on /chat itself. These three specs cover the added entry points.
+
+  test("start a new DM from a player card in the directory", async ({ page }) => {
+    await page.goto("/players");
+    await page.waitForLoadState("networkidle");
+
+    const sendMessageButton = page.getByRole("button", { name: /^Send besked$/ }).first();
+    if ((await sendMessageButton.count()) === 0) {
+      test.skip(true, "No other players in the directory — need at least 1 other user");
+      return;
+    }
+    await sendMessageButton.click();
+    await expect(page).toHaveURL(/\/chat\/dm\/[0-9a-f-]+/);
+    await expect(page.getByText(/Direkte besked/).first()).toBeVisible();
+  });
+
+  test("start a new DM from the player detail page", async ({ page }) => {
+    await page.goto("/players");
+    await page.waitForLoadState("networkidle");
+
+    const firstCard = page.locator('a[href^="/players/"]').first();
+    if ((await firstCard.count()) === 0) {
+      test.skip(true, "No other players in the directory — need at least 1 other user");
+      return;
+    }
+    await firstCard.click();
+    await page.waitForLoadState("networkidle");
+
+    const sendMessageButton = page.getByRole("button", { name: /^Send besked$/ }).first();
+    await expect(sendMessageButton).toBeVisible();
+    await sendMessageButton.evaluate((el) => (el as HTMLElement).click());
+    await expect(page).toHaveURL(/\/chat\/dm\/[0-9a-f-]+/);
+    await expect(page.getByText(/Direkte besked/).first()).toBeVisible();
+  });
+
+  test("start a new DM via the 'Ny besked' picker on /chat", async ({ page }) => {
+    await page.goto("/chat");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("button", { name: /Ny besked/ }).click();
+    await expect(page.getByText(/Online — |Offline — /).first()).toBeVisible();
+
+    // Same "first tappable non-self row" pattern as the Members-sheet test above.
+    const firstMember = page.getByRole("button").filter({ hasText: /Online$|Offline$/ }).first();
+    if ((await firstMember.count()) === 0) {
+      test.skip(true, "No other members visible — need at least 2 users in the preview DB");
+      return;
+    }
+    await firstMember.click();
+    await expect(page).toHaveURL(/\/chat\/dm\/[0-9a-f-]+/);
+  });
 });

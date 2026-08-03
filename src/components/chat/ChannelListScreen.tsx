@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { MessageCirclePlus } from 'lucide-react';
 import { usePresence } from '@/lib/profile/use-presence';
 import { useChannelUnread, type UnreadCounts } from '@/lib/chat/use-channel-unread';
 import { useChannelListTyping } from '@/lib/chat/use-channel-list-typing';
@@ -11,6 +12,7 @@ import { useDMListRealtime } from '@/lib/dm/use-dm-list-realtime';
 import { useDMListTyping } from '@/lib/dm/use-dm-list-typing';
 import { AppHeader } from '@/components/AppHeader';
 import { OnlineStrip, type OnlineStripProfile } from './OnlineStrip';
+import { MembersSheet } from './MembersSheet';
 import { TypingDots } from './TypingDots';
 import { DMRow, type DMRowEntry } from './DMRow';
 import { relTime } from '@/lib/chat/time';
@@ -48,6 +50,7 @@ export function ChannelListScreen({
   const t = useTranslations('Chat');
   const router = useRouter();
   const onlineIds = usePresence(currentUserId);
+  const [newMessageOpen, setNewMessageOpen] = useState(false);
   const { counts, clearChannel, latestByChannel } = useChannelUnread({
     userId: currentUserId,
     initialCounts: initialUnreadCounts,
@@ -188,11 +191,21 @@ export function ChannelListScreen({
             <span className="text-[13px] font-bold text-card-foreground uppercase tracking-wider whitespace-nowrap">
               {t('dmSectionTitle')}
             </span>
-            {liveDmEntries.length > 0 && (
-              <span className="text-[12px] font-semibold text-muted-foreground whitespace-nowrap">
-                {t('dmConversations', { n: liveDmEntries.length })}
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {liveDmEntries.length > 0 && (
+                <span className="text-[12px] font-semibold text-muted-foreground whitespace-nowrap">
+                  {t('dmConversations', { n: liveDmEntries.length })}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setNewMessageOpen(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground text-[12px] font-bold whitespace-nowrap"
+              >
+                <MessageCirclePlus size={14} />
+                {t('newMessageButton')}
+              </button>
+            </div>
           </div>
           {liveDmEntries.length === 0 ? (
             <div className="flex flex-col gap-1 px-1">
@@ -222,6 +235,15 @@ export function ChannelListScreen({
           )}
         </section>
       </main>
+
+      <MembersSheet
+        open={newMessageOpen}
+        onClose={() => setNewMessageOpen(false)}
+        profiles={profiles}
+        onlineIds={onlineIds}
+        currentUserId={currentUserId}
+        onOpenDM={(partnerId) => router.push(`/chat/dm/${partnerId}`)}
+      />
     </div>
   );
 }

@@ -124,7 +124,8 @@
     "filterInstinct": "Instinct",
     "countLabel": "{count} trænere · tryk for at se vennekode",
     "onlineLabel": "online nu",
-    "alreadyAdded": "Allerede tilføjet"
+    "alreadyAdded": "Allerede tilføjet",
+    "sendMessageButton": "Send besked"
   },
   "DesktopPlayers": {
     "scanTitle": "Scan-session",
@@ -148,7 +149,8 @@
     "swipeHint": "Stryg for at se næste træner",
     "onlineLabel": "Online nu",
     "levelChip": "Level {level}",
-    "bioLabel": "Mini bio"
+    "bioLabel": "Mini bio",
+    "sendMessageButton": "Send besked"
   },
   "ProfileTab": {
     "headerTitle": "Min profil",
@@ -378,8 +380,9 @@
     "closeSheet": "Luk",
     "you_lowercase": "dig",
     "dmSectionTitle": "Direkte beskeder",
+    "newMessageButton": "Ny besked",
     "dmSectionEmpty": "Ingen samtaler endnu",
-    "dmSectionHint": "Tryk på en træner i Online nu for at starte en ny samtale.",
+    "dmSectionHint": "Tryk på \"Ny besked\" for at starte en samtale.",
     "dmIntroLine": "Direkte besked · kun jer to kan se den",
     "dmConversations": "{n, plural, =1 {# samtale} other {# samtaler}}",
     "dmUnread": "{n} ulæste",

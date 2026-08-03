@@ -1,9 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { PlayerCard } from './PlayerCard';
 import type { Profile } from '@/lib/profile/helpers';
 import daMessages from '../../messages/da.json';
+
+const push = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+}));
 
 function renderCard(profile: Profile, props: { added?: boolean } = {}) {
   return render(
@@ -44,5 +49,15 @@ describe('PlayerCard "already added" hint (scan-session persistence)', () => {
   it('hides the hint by default', () => {
     renderCard({ ...base, hide_friend_code: false });
     expect(screen.queryByText('Allerede tilføjet')).not.toBeInTheDocument();
+  });
+});
+
+describe('PlayerCard send-message button (issue #201)', () => {
+  it('navigates to the DM route by user_id, not the card link', () => {
+    push.mockClear();
+    renderCard({ ...base, hide_friend_code: false });
+    const button = screen.getByRole('button', { name: /Send besked/ });
+    fireEvent.click(button);
+    expect(push).toHaveBeenCalledWith('/chat/dm/u1');
   });
 });
