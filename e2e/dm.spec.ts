@@ -131,7 +131,8 @@ test.describe("Direct messages", () => {
     await expect(page.getByText(/Online — |Offline — /).first()).toBeVisible();
 
     // Same "first tappable non-self row" pattern as the Members-sheet test above.
-    const firstMember = page.getByRole("button").filter({ hasText: /Online$|Offline$/ }).first();
+    // Online rows render "Online nu" (Chat.online), not "Online" — match both.
+    const firstMember = page.getByRole("button").filter({ hasText: /Online nu$|Offline$/ }).first();
     if ((await firstMember.count()) === 0) {
       test.skip(true, "No other members visible — need at least 2 users in the preview DB");
       return;
