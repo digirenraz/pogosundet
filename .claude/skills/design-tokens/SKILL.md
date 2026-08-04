@@ -1,3 +1,8 @@
+---
+name: design-tokens
+description: Approved PoGoSundet colour palette, typography, and component patterns (buttons, cards, badges, forms) extracted from the Banani designs. Load before building or styling any UI component so it matches the approved design exactly.
+---
+
 # PoGoSundet — Design Tokens & UI Patterns
 
 Extracted from Banani designs (April 2026).

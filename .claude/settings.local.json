@@ -1,4 +1,7 @@
 {
+  "enabledPlugins": {
+    "supabase@claude-plugins-official": false
+  },
   "permissions": {
     "allow": [
       "Bash(git init:*)",
