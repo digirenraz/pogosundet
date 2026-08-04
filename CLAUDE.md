@@ -11,7 +11,7 @@ For first-time environment setup (Supabase project, env vars, Google OAuth), see
 
 ## Commands
 
-Commands are the standard `npm run <script>` for each entry in `package.json`'s `scripts` block. A few non-`npm run` invocations that aren't in that list: `npx vitest run <path>` (single unit test file), `npx playwright test <path>` (single e2e file), `npx supabase functions deploy <name>` (deploy an Edge Function) — see `docs/onboarding.md`'s Commands section for the full list.
+Commands are the standard `npm run <script>` for each entry in `package.json`'s `scripts` block. A few non-`npm run` invocations that aren't in that list: `npx vitest run <path>` (single unit test file), `npx playwright test <path>` (single e2e file), `npx supabase functions deploy <name>` (deploy an Edge Function) — see `docs/onboarding.md` (Local development / Testing strategy / CI/CD sections) for the full list.
 
 `npm run typecheck` (`tsc --noEmit`) is the fast standalone type check; `npm run build` is the fuller gate (Next.js fails the build on TS errors AND catches build-time failures `tsc` misses — RSC boundaries, route config, bundling). **As of 2026-06-24 CI runs both** (Lint → Typecheck → Build → Vitest → Playwright), so the type gate is no longer build-only or CI-absent.
 
