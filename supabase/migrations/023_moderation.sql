@@ -431,6 +431,21 @@ CREATE POLICY "Authenticated users can insert raids"
 -- events carry only the primary key under the default REPLICA IDENTITY, which
 -- is exactly what the clients need to drop a moderated message from view — and
 -- means no message content is broadcast by a deletion.
+--
+-- REPLICA IDENTITY is deliberately LEFT AT THE DEFAULT on all three message
+-- tables, including direct_messages. Two facts from the Supabase Realtime docs
+-- drive that (raised in review on the moderation PR, worth recording):
+--
+--   1. "RLS policies are not applied to DELETE statements, because there is no
+--      way for Postgres to verify that a user has access to a deleted record."
+--      So a DELETE event is delivered to every subscriber regardless of the
+--      table's SELECT policy. direct_messages' participant-scoped policy does
+--      NOT suppress delete events — the live-removal path works as written.
+--
+--   2. Setting REPLICA IDENTITY FULL is what puts the full old row in the
+--      payload. Combined with (1), that would broadcast the deleted DM's body
+--      to every subscriber with no RLS check — the exact leak the PK-only
+--      default avoids. It would make privacy worse, not delivery better.
 -- ---------------------------------------------------------------------------
 
 DO $$

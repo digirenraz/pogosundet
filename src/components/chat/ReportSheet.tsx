@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { reportMessage } from '@/lib/moderation/helpers';
+import { validateReport } from '@/lib/moderation/validation';
 import {
   REPORT_NOTE_MAX_LENGTH,
   REPORT_REASONS,
@@ -68,8 +69,30 @@ export function ReportSheet({ message, surface, onClose }: ReportSheetProps) {
     e.preventDefault();
     if (!message || status === 'sending') return;
 
+    // Validate before hitting the network. The RPC enforces all of this again
+    // server-side (CHECK constraints + RAISE EXCEPTION) — this pass just turns
+    // the cases we can detect locally, most usefully an optimistic `opt-` id
+    // that has no server-side row yet, into an inline error instead of a
+    // round trip that fails.
+    const validation = validateReport({
+      surface,
+      messageId: message.id,
+      reason,
+      note,
+    });
+    if (!validation.ok) {
+      setErrorKind(validation.error === 'messageId' ? 'not_found' : 'generic');
+      setStatus('error');
+      return;
+    }
+
     setStatus('sending');
-    const result = await reportMessage(surface, message.id, reason, note.trim() || null);
+    const result = await reportMessage(
+      validation.surface,
+      validation.messageId,
+      validation.reason,
+      validation.note
+    );
     if (result.ok) {
       setStatus('success');
       return;
