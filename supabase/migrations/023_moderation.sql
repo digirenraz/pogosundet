@@ -29,8 +29,11 @@
 -- 1. Profile columns
 -- ---------------------------------------------------------------------------
 
--- Moderator flag. Set manually via SQL (see header) — deliberately NOT
--- editable from the app, so there is no in-app path to privilege escalation.
+-- Moderator flag. Set manually via SQL (see header). Users cannot write it
+-- themselves — that is enforced by the column-level GRANTs further down, NOT
+-- by the app simply choosing not to expose it. The distinction matters: RLS is
+-- row-scoped, so "our TypeScript never sets this column" is worth nothing
+-- against a direct PostgREST call. See the CRITICAL block below.
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS is_admin boolean NOT NULL DEFAULT false;
 
