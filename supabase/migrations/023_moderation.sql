@@ -43,8 +43,15 @@ ALTER TABLE public.profiles
 -- them is a separate, explicit moderator action.
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS banned_at timestamptz;
+-- 1000 to match MODERATOR_NOTE_MAX_LENGTH (src/lib/moderation/types.ts), which
+-- caps the single textarea that feeds BOTH the warning DM and the ban reason,
+-- and which message_reports.moderator_note below also uses. These must stay
+-- equal: a lower cap here doesn't reject the input, it lets validateModeration()
+-- and the textarea accept a longer reason and then explodes inside
+-- moderate_report()'s UPDATE, which surfaces as an unexplained 500 and a ban
+-- that silently didn't happen.
 ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS banned_reason text CHECK (length(banned_reason) <= 500);
+  ADD COLUMN IF NOT EXISTS banned_reason text CHECK (length(banned_reason) <= 1000);
 
 -- The reason text is written by the moderator and may quote what the user did,
 -- so it is not public. Column-level REVOKE (same technique as migration 022's
