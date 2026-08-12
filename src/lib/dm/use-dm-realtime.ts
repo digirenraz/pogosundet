@@ -17,7 +17,8 @@ const TYPING_IDLE_MS = 3000;
 export function useDMRealtime(
   currentUserId: string | null,
   partnerId: string | null,
-  onMessageInsert?: (row: DirectMessageRow) => void
+  onMessageInsert?: (row: DirectMessageRow) => void,
+  onMessageDelete?: (messageId: string) => void
 ): {
   typingUserIds: Set<string>;
   broadcastTyping: () => void;
@@ -30,6 +31,11 @@ export function useDMRealtime(
   useEffect(() => {
     onMessageInsertRef.current = onMessageInsert;
   }, [onMessageInsert]);
+
+  const onMessageDeleteRef = useRef(onMessageDelete);
+  useEffect(() => {
+    onMessageDeleteRef.current = onMessageDelete;
+  }, [onMessageDelete]);
 
   const broadcastFnRef = useRef<() => void>(() => {});
   const lastBroadcastRef = useRef<number>(0);
@@ -86,6 +92,22 @@ export function useDMRealtime(
           const row = payload.new as DirectMessageRow;
           if (row.sender_id !== partnerId) return;
           if (onMessageInsertRef.current) onMessageInsertRef.current(row);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'direct_messages',
+          // Unfiltered on purpose — a DELETE payload carries only the primary
+          // key, so recipient_id isn't available to filter on. The consumer
+          // only removes ids already in its own (participant-only) list, and
+          // the payload itself contains no message content.
+        },
+        (payload) => {
+          const id = (payload.old as { id?: string } | undefined)?.id;
+          if (id && onMessageDeleteRef.current) onMessageDeleteRef.current(id);
         }
       )
       .subscribe();

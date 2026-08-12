@@ -73,7 +73,7 @@
   },
   "Privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: 2026-06-12",
+    "lastUpdated": "Last updated: 2026-08-12",
     "backLink": "Back",
     "s1Title": "1. Data Controller",
     "s1Body": "René Rasmussen is the data controller for PoGoSundet. Contact: renraz@gmail.com",
@@ -99,7 +99,9 @@
     "s11Title": "11. Push notifications",
     "s11Body": "If you choose to receive push notifications, we store your browser's push subscription (endpoint and encryption keys) in our database. This data is used solely to notify you of new raids, of new messages in raid chats you've joined, of new direct messages sent to you, and when a new player joins a raid you're attending. A direct-message or raid-chat-message notification contains only the sender's name (and, for raid chats, the raid's boss or gym — already visible in the app) — never the message content itself. A new-participant notification contains only the player's trainer name, which is already visible in the app. You can unsubscribe at any time via your browser or device settings — the subscription is deleted automatically.",
     "s12Title": "12. Community chat",
-    "s12Body": "When you post in the shared channels (#generelt and #app-feedback), we store your message together with your user id and timestamp. Messages are visible to all signed-in users of PoGoSundet and are kept indefinitely. When you delete your account, all your chat messages are deleted automatically along with your profile."
+    "s12Body": "When you post in the shared channels (#generelt and #app-feedback), we store your message together with your user id and timestamp. Messages are visible to all signed-in users of PoGoSundet and are kept indefinitely. When you delete your account, all your chat messages are deleted automatically along with your profile.",
+    "s14Title": "14. Reports and moderation",
+    "s14Body": "If you report a message, we store a copy of the reported message, your trainer name as the reporter, the sender's trainer name, the reason you select, and any comment you add. The copy is kept because the report would otherwise be useless once the message is deleted. Reports can only be read by the app administrator — not by other users. If you report a private message, only that single reported message is shared with the administrator, never the rest of the conversation. The administrator can delete the reported message, message you or the sender, and ban an account from posting. If your account is banned we store the time and a reason, which is shown to you. Reports and bans are kept while your account is active and are deleted along with the account."
   },
   "Header": {
     "appName": "PoGoSundet",
@@ -314,7 +316,8 @@
     "you_lowercase": "you",
     "newMessageButton": "New message",
     "longPressHint": "Hold a message down to reply, react, or copy",
-    "hintDismiss": "Dismiss hint"
+    "hintDismiss": "Dismiss hint",
+    "actionAnmeld": "Report"
   },
   "ProfileEdit": {
     "headerTitle": "Edit profile",
@@ -410,5 +413,72 @@
     "privacyLink": "privacy policy",
     "decline": "Decline",
     "accept": "Accept"
+  },
+  "Report": {
+    "sheetTitle": "Report message",
+    "reasonLabel": "Why are you reporting this message?",
+    "reason_harassment": "Harassment or bullying",
+    "reason_hate": "Hate speech or discrimination",
+    "reason_inappropriate": "Inappropriate content",
+    "reason_spam": "Spam or advertising",
+    "reason_other": "Something else",
+    "noteLabel": "Add details (optional)",
+    "notePlaceholder": "Briefly describe what's wrong — it helps us assess the case.",
+    "disclaimer": "The message and your trainer name are sent to the app administrator for review. When reporting a private message, only the reported message is shared — not the rest of the conversation.",
+    "send": "Send report",
+    "sending": "Sending…",
+    "successTitle": "Thanks for your report",
+    "successBody": "We'll look at it as soon as possible. You'll only hear from us if we need more information.",
+    "errorGeneric": "The report could not be sent. Please try again later.",
+    "errorGone": "That message no longer exists — it has already been deleted.",
+    "close": "Close"
+  },
+  "Moderation": {
+    "menuItem": "Moderation",
+    "title": "Moderation",
+    "tabPending": "Pending",
+    "tabHistory": "History",
+    "emptyPending": "No reports right now",
+    "emptyPendingHint": "When someone reports a message it shows up here — and you get a notification on your phone.",
+    "emptyHistory": "No handled reports yet",
+    "reportedBy": "Reported by {name} · {surface}",
+    "reporterNote": "Details",
+    "openContext": "View in context",
+    "outcome": "Handled",
+    "bannedBadge": "Banned",
+    "surface_channel": "Channel",
+    "surface_raid": "Raid chat",
+    "surface_dm": "Direct message",
+    "reason_harassment": "Harassment",
+    "reason_hate": "Hate speech",
+    "reason_inappropriate": "Inappropriate",
+    "reason_spam": "Spam",
+    "reason_other": "Other",
+    "actionDelete": "Delete message",
+    "actionBan": "Ban user",
+    "actionUnban": "Lift ban",
+    "actionWarn": "Warn user",
+    "actionDismiss": "Dismiss",
+    "resolution_deleted": "Message deleted",
+    "resolution_banned": "User banned",
+    "resolution_unbanned": "Ban lifted",
+    "resolution_warned": "User warned",
+    "resolution_dismissed": "Report dismissed",
+    "warnTitle": "Warn {name}",
+    "warnHint": "The warning is sent as a direct message from your own account, so the user can reply to you.",
+    "warnPlaceholder": "e.g. Keep it civil in chat — next time we'll ban your account.",
+    "banTitle": "Ban {name}",
+    "banHint": "The user cannot post messages or create raids until you lift the ban. Existing messages are not deleted. The reason is shown to the user.",
+    "banPlaceholder": "Reason (optional) — shown to the user.",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "errorGeneric": "The action could not be completed. Please try again."
+  },
+  "Banned": {
+    "title": "Your account is banned",
+    "body": "An administrator has banned your account from PoGoSundet. You cannot post messages or create raids.",
+    "reasonLabel": "Reason",
+    "since": "Banned on {date}",
+    "appeal": "Think this is a mistake? Contact the administrator in the Frederikssund community."
   }
 }

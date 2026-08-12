@@ -4,7 +4,7 @@ Authoritative list of every push / system notification PoGoSundet sends.
 **Keep this in sync with the code whenever notification triggers change** (there
 is a Claude memory rule enforcing this).
 
-Last reviewed: 2026-06-09.
+Last reviewed: 2026-08-12.
 
 ---
 
@@ -92,6 +92,18 @@ silent-in-background.
 | **Body** | `<trainer_name> er med i raidet` (fallback `En ny spiller er med i raidet` if the name is missing). The joining player's trainer name is already public throughout the app, so this leaks no new personal data. |
 | **Tap action** | Opens `/raids/<raid_id>`. |
 | **Delivery** | Self-hosted web-push (VAPID) via the `web-push` library. Subscriptions returning HTTP 410 (Gone) are deleted. **Does not** touch the home-screen app-icon badge or the Raids-tab unread count — a join is a transient announcement (`type: 'raid-join'`, like `'raid'`), not an unread message. The poster's own auto-join on raid creation produces zero recipients (they're the only attendee), so it never fires. |
+
+### 5. New content report (moderators only)
+
+| | |
+|---|---|
+| **Trigger** | Supabase Database Webhook on `INSERT` into `public.message_reports` → Edge Function `notify-report` (`supabase/functions/notify-report/index.ts`). |
+| **Recipients** | Every user with `profiles.is_admin = true` and a `push_subscriptions` row, **except** the reporter (who may themselves be a moderator). Today that is a single person. |
+| **Title** | `Ny anmeldelse` (fixed). |
+| **Body** | `En besked er blevet anmeldt` (fixed). |
+| **Tap action** | Opens `/admin`. |
+| **Delivery** | Self-hosted web-push (VAPID). Subscriptions returning HTTP 410 (Gone) are deleted. **Does not** touch the app-icon badge — the pending count is shown on the Moderation row in the app menu instead. |
+| **Privacy** | Deliberately content-free and name-free: the payload names neither the reported message, the reporter, nor the reported user. A moderation alert on a lock screen must not accuse anyone; the moderator opens `/admin` to see the report. This is stricter than the DM notification, which does carry the sender's (already public) trainer name. |
 
 That is the complete list. No other event sends a notification.
 

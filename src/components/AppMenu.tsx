@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import type { ChangelogEntry } from '@/lib/changelog/entries';
 import type { HelpEntry } from '@/lib/help/entries';
 import { BugReportSheet } from '@/components/BugReportSheet';
+import { ModerationMenuEntry } from '@/components/moderation/ModerationMenuEntry';
 
 // ---------------------------------------------------------------------------
 // ChangelogSheet — bottom sheet listing the user-facing changelog ("Nyheder").
@@ -283,6 +284,11 @@ export function AppMenu() {
             <Bug size={18} className="text-muted-foreground" />
             {tBug('menuItem')}
           </button>
+          {/* Renders nothing unless the signed-in user is a moderator. */}
+          <ModerationMenuEntry
+            enabled={menuOpen}
+            onNavigate={() => setMenuOpen(false)}
+          />
         </div>
       )}
 

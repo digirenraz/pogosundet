@@ -31,6 +31,7 @@ import { Composer } from './Composer';
 import { MembersSheet } from './MembersSheet';
 import { MessageActionSheet } from './MessageActionSheet';
 import { MessageGroupView } from './MessageGroup';
+import { ReportSheet } from './ReportSheet';
 import { TypingDots } from './TypingDots';
 
 // Re-exported for backward compatibility — the type lives in `@/lib/chat/types`
@@ -90,6 +91,9 @@ export function ChannelScreen({
   // Reply / action-sheet state — slice 13.
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [actionMsgId, setActionMsgId] = useState<string | null>(null);
+  // Message currently being reported — drives ReportSheet. Held separately
+  // from actionMsgId because the action sheet closes as the report sheet opens.
+  const [reportMsgId, setReportMsgId] = useState<string | null>(null);
   // Sparse overlay: messageId → grouped reactions. Wins over messages[i].reactions
   // when present. Set via realtime + optimistic toggles.
   const [reactionOverrides, setReactionOverrides] = useState<
@@ -149,6 +153,11 @@ export function ChannelScreen({
         if (prev.some((m) => m.id === row.id)) return prev;
         return [...prev, msg];
       });
+    },
+    // A moderator deleted this message — drop it for everyone who has the
+    // channel open, without a full page refetch.
+    (messageId: string) => {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
     }
   );
 
@@ -297,6 +306,11 @@ export function ChannelScreen({
     if (target && typeof navigator !== 'undefined' && navigator.clipboard) {
       void navigator.clipboard.writeText(target.body);
     }
+    setActionMsgId(null);
+  }
+
+  function handleSheetReport() {
+    setReportMsgId(actionMsgId);
     setActionMsgId(null);
   }
 
@@ -505,6 +519,13 @@ export function ChannelScreen({
         onReact={handleSheetReact}
         onReply={handleSheetReply}
         onCopy={handleSheetCopy}
+        onReport={handleSheetReport}
+      />
+
+      <ReportSheet
+        message={reportMsgId ? messagesById[reportMsgId] ?? null : null}
+        surface="channel"
+        onClose={() => setReportMsgId(null)}
       />
     </div>
   );

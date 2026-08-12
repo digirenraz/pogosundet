@@ -10,15 +10,17 @@ const TYPING_IDLE_MS = 3000;
 
 // Subscribes to Supabase Realtime for a single chat channel.
 // - INSERT events on channel_messages (server-side filter) → onMessageInsert callback
+// - DELETE events on channel_messages → onMessageDelete callback (moderation)
 // - broadcast 'typing' events → typingUserIds set (auto-expires after 3s)
 // Returns broadcastTyping() to call from the composer (throttled ≤ once/2s).
 //
-// onMessageInsert is stored in a ref so the subscription effect doesn't
+// The callbacks are stored in refs so the subscription effect doesn't
 // re-run on every render — matches the pattern in use-raids-realtime.ts.
 export function useChannelRealtime(
   channelId: ChannelId,
   currentUserId: string | null,
-  onMessageInsert?: (row: ChannelMessageRow) => void
+  onMessageInsert?: (row: ChannelMessageRow) => void,
+  onMessageDelete?: (messageId: string) => void
 ): {
   typingUserIds: Set<string>;
   broadcastTyping: () => void;
@@ -31,6 +33,11 @@ export function useChannelRealtime(
   useEffect(() => {
     onMessageInsertRef.current = onMessageInsert;
   }, [onMessageInsert]);
+
+  const onMessageDeleteRef = useRef(onMessageDelete);
+  useEffect(() => {
+    onMessageDeleteRef.current = onMessageDelete;
+  }, [onMessageDelete]);
 
   const broadcastFnRef = useRef<() => void>(() => {});
   const lastBroadcastRef = useRef<number>(0);
@@ -67,6 +74,22 @@ export function useChannelRealtime(
           if (onMessageInsertRef.current) {
             onMessageInsertRef.current(payload.new as ChannelMessageRow);
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'channel_messages',
+          // NO filter here, unlike the INSERT above: a DELETE payload carries
+          // only the primary key (default REPLICA IDENTITY), so `channel` is
+          // absent and a channel filter would never match. The consumer drops
+          // the id from its own list, which is inherently channel-scoped.
+        },
+        (payload) => {
+          const id = (payload.old as { id?: string } | undefined)?.id;
+          if (id && onMessageDeleteRef.current) onMessageDeleteRef.current(id);
         }
       )
       .on('broadcast', { event: 'typing' }, (payload) => {

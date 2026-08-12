@@ -25,6 +25,7 @@ import { Composer } from './Composer';
 import { DMHeader } from './DMHeader';
 import { MessageActionSheet } from './MessageActionSheet';
 import { MessageGroupView } from './MessageGroup';
+import { ReportSheet } from './ReportSheet';
 import { TypingDots } from './TypingDots';
 
 interface DMScreenProps {
@@ -107,6 +108,9 @@ export function DMScreen({
 
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [actionMsgId, setActionMsgId] = useState<string | null>(null);
+  // Message currently being reported — drives ReportSheet. Reporting a DM only
+  // ever exposes the single reported message to the moderator, never the thread.
+  const [reportMsgId, setReportMsgId] = useState<string | null>(null);
   const [reactionOverrides, setReactionOverrides] = useState<
     Record<string, Record<string, string[]>>
   >({});
@@ -138,6 +142,10 @@ export function DMScreen({
         if (prev.some((m) => m.id === row.id)) return prev;
         return [...prev, msg];
       });
+    },
+    // A moderator deleted this message — drop it from the open conversation.
+    (messageId: string) => {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
     }
   );
 
@@ -274,6 +282,11 @@ export function DMScreen({
     if (target && typeof navigator !== 'undefined' && navigator.clipboard) {
       void navigator.clipboard.writeText(target.body);
     }
+    setActionMsgId(null);
+  }
+
+  function handleSheetReport() {
+    setReportMsgId(actionMsgId);
     setActionMsgId(null);
   }
 
@@ -422,6 +435,13 @@ export function DMScreen({
         onReact={handleSheetReact}
         onReply={handleSheetReply}
         onCopy={handleSheetCopy}
+        onReport={handleSheetReport}
+      />
+
+      <ReportSheet
+        message={reportMsgId ? messagesById[reportMsgId] ?? null : null}
+        surface="dm"
+        onClose={() => setReportMsgId(null)}
       />
     </div>
   );

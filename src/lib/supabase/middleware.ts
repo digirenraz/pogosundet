@@ -25,6 +25,24 @@ const PROFILE_GUARD_SKIPLIST = new Set<string>([
 // from a previous account never matches and the guard re-checks.
 const PROFILE_GUARD_COOKIE = "pogo-profile-ok";
 
+// Cookie that caches a negative ban check, so the `banned_at` lookup runs at
+// most once per BAN_GUARD_MAX_AGE per user instead of on every navigation.
+//
+// Deliberately SHORT-lived where the profile cookie is long-lived: profile
+// existence is a one-way transition, but a ban can be applied (or lifted) at
+// any moment by a moderator with no way to invalidate the user's cookie. Five
+// minutes bounds how long a just-banned user keeps seeing the normal UI.
+//
+// This redirect is UX, not the security boundary — a banned user is blocked
+// from actually posting by the RLS policies in migration 023, which consult
+// the database on every single insert and cannot be cached around.
+const BAN_GUARD_COOKIE = "pogo-ban-ok";
+const BAN_GUARD_MAX_AGE = 60 * 5;
+
+// Locale-stripped path of the "you are banned" screen. Excluded from the ban
+// redirect itself, or a banned user would bounce in an infinite loop.
+const BANNED_PATH = "/udelukket";
+
 // Strip a leading `/<locale>` segment if present, so the skiplist check works
 // regardless of whether next-intl prefixed the URL.
 function stripLocale(pathname: string): string {
@@ -106,6 +124,43 @@ export async function updateSession(request: NextRequest) {
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+
+    // Ban guard. Runs on the same paths as the profile guard (plus the banned
+    // screen itself, which is skipped) and re-checks at most every five
+    // minutes — see BAN_GUARD_COOKIE.
+    const banProven =
+      request.cookies.get(BAN_GUARD_COOKIE)?.value === user.id;
+    if (
+      !PROFILE_GUARD_SKIPLIST.has(path) &&
+      path !== BANNED_PATH &&
+      !banProven
+    ) {
+      const { data: banRow } = await supabase
+        .from("profiles")
+        .select("banned_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (banRow?.banned_at) {
+        const url = request.nextUrl.clone();
+        url.pathname = BANNED_PATH;
+        url.search = "";
+        const redirectResponse = NextResponse.redirect(url);
+        supabaseResponse.cookies.getAll().forEach((cookie) =>
+          redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+        );
+        return redirectResponse;
+      }
+
+      // Not banned — remember that briefly. Same "set it only HERE" caveat as
+      // the profile cookie above: supabaseResponse may have been reassigned.
+      supabaseResponse.cookies.set(BAN_GUARD_COOKIE, user.id, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: BAN_GUARD_MAX_AGE,
       });
     }
   }
