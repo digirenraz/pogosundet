@@ -15,6 +15,8 @@
 -- What this migration adds:
 --   1. profiles.is_admin  — who may moderate
 --      profiles.banned_at / banned_reason — who is blocked from posting
+--      ...plus column-level GRANTs so users cannot write those three
+--      themselves (RLS is row-scoped, not column-scoped — see section 1)
 --   2. is_admin() / is_banned() SECURITY DEFINER helpers used by RLS policies
 --   3. message_reports — one row per (message, reporter), with a snapshot of the
 --      message body so the incident survives the message being deleted
@@ -48,6 +50,53 @@ ALTER TABLE public.profiles
 -- the service-role admin client. `banned_at` itself stays readable — it is a
 -- plain state flag with no free text in it.
 REVOKE SELECT (banned_reason) ON public.profiles FROM anon, authenticated;
+
+-- CRITICAL: lock down WRITES to the three privileged columns.
+--
+-- Without this, the feature's central premise ("nobody is a moderator by
+-- default") is trivially bypassable. Supabase grants `authenticated` a
+-- table-level INSERT/UPDATE on public tables and relies on RLS for
+-- authorisation — but RLS is ROW-scoped, not COLUMN-scoped. The policy from
+-- migration 001 is:
+--
+--   create policy "Users can update their own profile"
+--     on public.profiles for update using (auth.uid() = user_id);
+--
+-- which permits updating ANY column of your own row. So any signed-in user
+-- could go straight to PostgREST with the public anon key and their own JWT:
+--
+--   PATCH /rest/v1/profiles?user_id=eq.<own-id>   {"is_admin": true}
+--
+-- self-granting moderator rights (read every report, delete any message, ban
+-- anyone), or clear their own ban with {"banned_at": null}. No app code is
+-- involved, so no amount of care in the TypeScript layer prevents it.
+--
+-- The fix is column-level GRANTs. We drop the table-wide INSERT/UPDATE and
+-- grant back exactly the columns a user legitimately edits — this form is
+-- unconditionally effective, whereas a bare `REVOKE UPDATE (col)` leaves a
+-- pre-existing table-level grant in place on some Postgres versions.
+--
+-- The granted lists are derived from the only three write paths in the app:
+-- createProfile() and updateProfile() (src/lib/profile/helpers.ts, whose input
+-- is ProfileInput) and the last_seen_at ping (src/lib/profile/use-presence.ts).
+-- Adding a new user-editable profile field means adding it here too, or the
+-- write will fail with "permission denied for column".
+--
+-- service_role (the admin client) and the postgres owner are NOT affected, so
+-- account deletion, the cached player directory, moderate_report()'s ban
+-- writes, and the manual `is_admin = true` bootstrap all keep working.
+REVOKE INSERT, UPDATE ON public.profiles FROM anon, authenticated;
+
+GRANT INSERT (
+  user_id, trainer_name, friend_code, first_name, bio,
+  avatar_url, team, level, hide_friend_code
+) ON public.profiles TO authenticated;
+
+GRANT UPDATE (
+  trainer_name, friend_code, first_name, bio,
+  avatar_url, team, level, hide_friend_code,
+  last_seen_at, updated_at
+) ON public.profiles TO authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 2. Helper functions
