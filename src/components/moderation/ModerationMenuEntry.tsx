@@ -40,16 +40,12 @@ export function ModerationMenuEntry({
     (async () => {
       try {
         const supabase = createClient();
-        const { data: claims } = await supabase.auth.getClaims();
-        const userId = claims?.claims?.sub;
-        if (!userId || cancelled) return;
 
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('user_id', userId)
-          .maybeSingle();
-        if (cancelled || profile?.is_admin !== true) return;
+        // is_admin() over a column select: migration 023 revokes SELECT on
+        // profiles.is_admin, and the RPC takes no argument, so it can only
+        // report on the caller.
+        const { data: admin } = await supabase.rpc('is_admin');
+        if (cancelled || admin !== true) return;
         setIsAdmin(true);
 
         const { count } = await supabase

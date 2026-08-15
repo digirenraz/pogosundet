@@ -3,6 +3,7 @@
 // reports" RLS policy is what actually keeps the queue private, not this code.
 // Do NOT import from client components.
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { MessageReport } from './types';
 
 // Shape returned by the embedded select below, before flattening.
@@ -23,7 +24,7 @@ interface ReportRow {
   reviewed_at: string | null;
   created_at: string;
   reporter: { trainer_name: string } | null;
-  reported: { trainer_name: string; banned_at: string | null } | null;
+  reported: { trainer_name: string } | null;
 }
 
 // message_reports has TWO FKs into profiles, so each embed must name its
@@ -33,10 +34,13 @@ const REPORT_SELECT = `
   reason, note, message_body, message_sent_at,
   status, resolution, moderator_note, reviewed_at, created_at,
   reporter:profiles!message_reports_reporter_profile_fk(trainer_name),
-  reported:profiles!message_reports_reported_profile_fk(trainer_name, banned_at)
+  reported:profiles!message_reports_reported_profile_fk(trainer_name)
 `;
 
-function toMessageReport(row: ReportRow): MessageReport {
+function toMessageReport(
+  row: ReportRow,
+  bannedUserIds: Set<string>
+): MessageReport {
   return {
     id: row.id,
     surface: row.surface,
@@ -55,7 +59,7 @@ function toMessageReport(row: ReportRow): MessageReport {
     created_at: row.created_at,
     reporter_name: row.reporter?.trainer_name ?? '—',
     reported_user_name: row.reported?.trainer_name ?? '—',
-    reported_user_banned: row.reported?.banned_at != null,
+    reported_user_banned: bannedUserIds.has(row.reported_user_id),
   };
 }
 
@@ -67,18 +71,15 @@ function toMessageReport(row: ReportRow): MessageReport {
 // moderation screen exists at all.
 export async function isCurrentUserAdmin(): Promise<boolean> {
   const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims.sub;
-  if (!userId) return false;
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error || !data) return false;
-  return data.is_admin === true;
+  // Via the RPC rather than a column select: migration 023 revokes SELECT on
+  // profiles.is_admin from `authenticated` (so nobody can look up who the
+  // moderator is), and is_admin() takes no argument, so it can only ever
+  // answer about the caller. Returns false when signed out — callers treat
+  // that as "not a moderator" and 404 the route.
+  const { data, error } = await supabase.rpc('is_admin');
+  if (error) return false;
+  return data === true;
 }
 
 // The moderation queue. Pending reports first (that's the work), then the most
@@ -113,13 +114,38 @@ export async function getReports(historyLimit = 30): Promise<{
     });
   }
 
+  const pendingRows = (pendingResult.data ?? []) as unknown as ReportRow[];
+  const historyRows = (historyResult.data ?? []) as unknown as ReportRow[];
+
+  // Ban state is fetched separately, through the ADMIN client, because
+  // migration 023 revokes SELECT on profiles.banned_at from `authenticated` —
+  // otherwise any member could enumerate who is banned. It can't come from the
+  // embedded join above for the same reason. Scoped to just the users who
+  // actually appear in the queue, and only reached after the /admin page has
+  // already verified the caller is a moderator.
+  const reportedIds = Array.from(
+    new Set([...pendingRows, ...historyRows].map((r) => r.reported_user_id))
+  );
+
+  const bannedUserIds = new Set<string>();
+  if (reportedIds.length > 0) {
+    const admin = createAdminClient();
+    const { data: banRows, error: banError } = await admin
+      .from('profiles')
+      .select('user_id, banned_at')
+      .in('user_id', reportedIds)
+      .not('banned_at', 'is', null);
+    if (banError) {
+      // Non-fatal: the queue still renders, just without the "Udelukket"
+      // badge. Losing a badge is much better than losing the whole screen.
+      console.error('Moderation: failed to load ban state', banError.message);
+    }
+    for (const row of banRows ?? []) bannedUserIds.add(row.user_id as string);
+  }
+
   return {
-    pending: ((pendingResult.data ?? []) as unknown as ReportRow[]).map(
-      toMessageReport
-    ),
-    history: ((historyResult.data ?? []) as unknown as ReportRow[]).map(
-      toMessageReport
-    ),
+    pending: pendingRows.map((row) => toMessageReport(row, bannedUserIds)),
+    history: historyRows.map((row) => toMessageReport(row, bannedUserIds)),
   };
 }
 

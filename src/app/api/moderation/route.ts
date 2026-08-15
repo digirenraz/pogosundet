@@ -29,12 +29,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (!profile?.is_admin) {
+  // is_admin() is argument-less and SECURITY DEFINER — it answers only about
+  // the caller, and profiles.is_admin is not directly selectable (migration 023).
+  const { data: isAdmin } = await supabase.rpc('is_admin');
+  if (isAdmin !== true) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 

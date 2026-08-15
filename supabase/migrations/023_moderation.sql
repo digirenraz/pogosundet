@@ -53,13 +53,24 @@ ALTER TABLE public.profiles
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS banned_reason text CHECK (length(banned_reason) <= 1000);
 
--- The reason text is written by the moderator and may quote what the user did,
--- so it is not public. Column-level REVOKE (same technique as migration 022's
--- friend_code): the banned user reads their own reason through the existing
--- get_own_profile() SECURITY DEFINER RPC, and the moderator reads it through
--- the service-role admin client. `banned_at` itself stays readable — it is a
--- plain state flag with no free text in it.
-REVOKE SELECT (banned_reason) ON public.profiles FROM anon, authenticated;
+-- None of the three are public. Column-level REVOKE, same technique as
+-- migration 022's friend_code — `profiles` has a permissive `USING (true)`
+-- SELECT policy, so without this any signed-in user could ask PostgREST
+-- directly for `is_admin` or `banned_at` of ANY profile and learn who the
+-- moderator is, or enumerate who is currently banned. Row-level policies
+-- can't express "this column, but only for yourself"; column privileges can.
+--
+-- Read paths that survive the revoke:
+--   • your own flags  → the is_admin() / is_banned() RPCs below (SECURITY
+--                       DEFINER, and argument-less so they can only ever
+--                       answer about the caller)
+--   • your own ban reason → get_own_profile() (migration 022), likewise
+--                       SECURITY DEFINER, so a banned user can still be told
+--                       why on /udelukket
+--   • the moderator's view of others → the service-role admin client, which
+--                       column privileges do not apply to
+REVOKE SELECT (is_admin, banned_at, banned_reason)
+  ON public.profiles FROM anon, authenticated;
 
 -- CRITICAL: lock down WRITES to the three privileged columns.
 --
@@ -117,7 +128,16 @@ GRANT UPDATE (
 -- STABLE so Postgres can cache the result within a single statement.
 -- ---------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION public.is_admin(uid uuid DEFAULT auth.uid())
+-- Both take NO argument, deliberately. An earlier draft had
+-- `is_admin(uid uuid DEFAULT auth.uid())`, which reads harmlessly but is
+-- granted to `authenticated` *with* the parameter — so any signed-in user
+-- could call is_admin('<somebody-else>') and get an answer. A SECURITY DEFINER
+-- function is a hole punched through RLS, so its parameters are part of its
+-- attack surface: with no argument to pass, these can only ever answer about
+-- the caller, which is all any caller legitimately needs. (The moderation
+-- queue's cross-user ban lookup goes through the service-role admin client
+-- instead — see getReports() in src/lib/moderation/server-helpers.ts.)
+CREATE OR REPLACE FUNCTION public.is_admin()
   RETURNS boolean
   LANGUAGE sql
   SECURITY DEFINER
@@ -125,12 +145,12 @@ CREATE OR REPLACE FUNCTION public.is_admin(uid uuid DEFAULT auth.uid())
   SET search_path = ''
 AS $$
   SELECT COALESCE(
-    (SELECT p.is_admin FROM public.profiles p WHERE p.user_id = uid),
+    (SELECT p.is_admin FROM public.profiles p WHERE p.user_id = auth.uid()),
     false
   );
 $$;
 
-CREATE OR REPLACE FUNCTION public.is_banned(uid uuid DEFAULT auth.uid())
+CREATE OR REPLACE FUNCTION public.is_banned()
   RETURNS boolean
   LANGUAGE sql
   SECURITY DEFINER
@@ -139,12 +159,12 @@ CREATE OR REPLACE FUNCTION public.is_banned(uid uuid DEFAULT auth.uid())
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles p
-    WHERE p.user_id = uid AND p.banned_at IS NOT NULL
+    WHERE p.user_id = auth.uid() AND p.banned_at IS NOT NULL
   );
 $$;
 
-GRANT EXECUTE ON FUNCTION public.is_admin(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.is_banned(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_banned() TO authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 3. message_reports
@@ -358,7 +378,7 @@ DECLARE
   v_admin  uuid := auth.uid();
   v_report public.message_reports%ROWTYPE;
 BEGIN
-  IF NOT public.is_admin(v_admin) THEN
+  IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'not_authorized';
   END IF;
 

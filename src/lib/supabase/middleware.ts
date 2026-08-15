@@ -137,13 +137,12 @@ export async function updateSession(request: NextRequest) {
       path !== BANNED_PATH &&
       !banProven
     ) {
-      const { data: banRow } = await supabase
-        .from("profiles")
-        .select("banned_at")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      // is_banned() rather than a `banned_at` column select: migration 023
+      // revokes SELECT on that column so members can't enumerate who is
+      // banned, and the RPC takes no argument so it only answers for the caller.
+      const { data: banned } = await supabase.rpc("is_banned");
 
-      if (banRow?.banned_at) {
+      if (banned === true) {
         const url = request.nextUrl.clone();
         url.pathname = BANNED_PATH;
         url.search = "";
