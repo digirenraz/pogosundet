@@ -46,25 +46,46 @@ export function isPostableType(event: ScrapedDuckEvent): boolean {
   return POSTABLE.has(event.eventType);
 }
 
+/** Has this event already finished? */
+export function hasEnded(event: ScrapedDuckEvent, now: number): boolean {
+  const end = toInstant(event.end);
+  return end !== null && end < now;
+}
+
 /**
- * Should this event be announced, ignoring whether we've seen it before?
+ * Is this further out than we announce?
  *
- * Drops: wrong type, already finished, and too far out to be interesting.
+ * TRANSIENT — unlike the other filters, this stops being true as the date
+ * approaches. That distinction is load-bearing; see `isPermanentlySkippable`.
+ */
+export function isTooFarOut(event: ScrapedDuckEvent, now: number): boolean {
+  const start = toInstant(event.start);
+  if (start === null) return false;
+  return start - now > MAX_LEAD_DAYS * 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Should this event be announced right now?
+ *
  * An event with no start date is allowed through — the feed does that for
  * open-ended things, and the formatter handles a missing window.
  */
 export function isAnnounceable(event: ScrapedDuckEvent, now: number): boolean {
-  if (!isPostableType(event)) return false;
+  return isPostableType(event) && !hasEnded(event, now) && !isTooFarOut(event, now);
+}
 
-  const end = toInstant(event.end);
-  if (end !== null && end < now) return false;
-
-  const start = toInstant(event.start);
-  if (start !== null && start - now > MAX_LEAD_DAYS * 24 * 60 * 60 * 1000) {
-    return false;
-  }
-
-  return true;
+/**
+ * Will this event NEVER become announceable?
+ *
+ * Only these are safe to write into the ledger without posting. Getting this
+ * wrong silently eats announcements: an event recorded as "handled" is filtered
+ * out before `isAnnounceable` ever runs again, so if it were merely *early*
+ * rather than permanently uninteresting, it could never post once its date came
+ * within range. The feed carries raid days two months out, so that is a real
+ * case, not a hypothetical.
+ */
+export function isPermanentlySkippable(event: ScrapedDuckEvent, now: number): boolean {
+  return !isPostableType(event) || hasEnded(event, now);
 }
 
 export interface EventSelection {
@@ -112,14 +133,15 @@ export function selectNewEvents(
 
   const toPost = announceable.slice(0, MAX_POSTS_PER_RUN);
 
-  // Anything unseen we are NOT posting gets recorded so it doesn't get
-  // re-considered on every future poll. The overflow beyond the per-run cap is
-  // deliberately excluded — it should post on the next run, not be swallowed.
-  const posting = new Set(toPost.map((event) => event.eventID));
-  const overflow = new Set(announceable.slice(MAX_POSTS_PER_RUN).map((e) => e.eventID));
+  // Only record events that can never become announceable — wrong type, or
+  // already over. Recording anything else silently eats it.
+  //
+  // Two cases are deliberately left unrecorded so they come back on a later run:
+  //   - overflow beyond the per-run cap (posts next run)
+  //   - events still outside the lead-time window (post when the date nears)
   const toSeedOnly = unseen
-    .map((event) => event.eventID)
-    .filter((id) => !posting.has(id) && !overflow.has(id));
+    .filter((event) => isPermanentlySkippable(event, now))
+    .map((event) => event.eventID);
 
   return { toPost, toSeedOnly, seeding: false };
 }

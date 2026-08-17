@@ -1,8 +1,13 @@
-// Slice 11: hard-coded channel enum. Adding a channel requires editing this list
-// AND extending the CHECK constraints on channel_messages.channel and
-// channel_reads.channel (008/009, most recently widened in migration 023) AND
-// the hard-coded channel literals in use-channel-unread.ts and
-// use-channel-list-typing.ts.
+// Slice 11: hard-coded channel enum. Adding a channel requires exactly two
+// things: an entry in this list, and a migration extending the CHECK constraint
+// on BOTH channel_messages.channel and channel_reads.channel (008/009, most
+// recently widened in migration 023).
+//
+// Everything else derives from CHANNELS — use-channel-unread.ts and
+// use-channel-list-typing.ts build their per-channel state from this array, so
+// they need no edit. `Record<ChannelId, …>` means TypeScript will flag anything
+// that still hard-codes the set.
+//
 // Descriptions live here (not i18n) — the channel slugs are the language already.
 
 export type ChannelId = 'generelt' | 'feedback' | 'events';

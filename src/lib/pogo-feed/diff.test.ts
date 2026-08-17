@@ -121,7 +121,9 @@ describe('selectNewEvents', () => {
     expect(second.toPost).toEqual([]);
   });
 
-  it('records filtered-out events so they are not re-evaluated forever', () => {
+  it('records permanently-uninteresting events so they are not re-evaluated forever', () => {
+    // Wrong type and already-ended can never become announceable, so recording
+    // them is safe and stops them being re-checked every 20 minutes.
     const feed = [
       event({ eventID: 'wrong-type', eventType: 'community-day' }),
       event({ eventID: 'ended', start: naive(-2 * DAY), end: naive(-1 * DAY) }),
@@ -131,6 +133,44 @@ describe('selectNewEvents', () => {
 
     expect(result.toPost).toEqual([]);
     expect(result.toSeedOnly.sort()).toEqual(['ended', 'wrong-type']);
+  });
+
+  it('does NOT record an event that is merely too far out', () => {
+    // Regression: recording it would mark it handled forever, so when its date
+    // finally came within the window it would be filtered out as "already seen"
+    // and could never post. The feed really does carry raid days two months out.
+    const feed = [
+      event({
+        eventID: 'far-future-raid-day',
+        eventType: 'raid-day',
+        start: naive(60 * DAY),
+        end: naive(60 * DAY + 6 * 3600_000),
+      }),
+    ];
+
+    const result = selectNewEvents(feed, new Set(['seed']), NOW);
+
+    expect(result.toPost).toEqual([]);
+    expect(result.toSeedOnly).toEqual([]);
+  });
+
+  it('announces a far-future event once its date comes within range', () => {
+    const far = event({
+      eventID: 'raid-day-later',
+      eventType: 'raid-day',
+      start: naive(60 * DAY),
+      end: naive(60 * DAY + 6 * 3600_000),
+    });
+    const ledger = new Set(['seed']);
+
+    // Poll today: too far out, nothing posted, nothing recorded.
+    const first = selectNewEvents([far], ledger, NOW);
+    expect(first.toPost).toEqual([]);
+    for (const id of first.toSeedOnly) ledger.add(id);
+
+    // Poll again 45 days later: now inside the 30-day window.
+    const second = selectNewEvents([far], ledger, NOW + 45 * DAY);
+    expect(second.toPost.map((e) => e.eventID)).toEqual(['raid-day-later']);
   });
 
   it(`caps a burst at ${MAX_POSTS_PER_RUN} posts and leaves the rest for next run`, () => {
