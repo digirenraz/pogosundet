@@ -225,13 +225,21 @@ the test in `diff.test.ts` that pins the list. The feed carries ~14 types.
 online strip, the channel members sheet, the DM picker and the "X medlemmer"
 badge.
 
-One subtlety: server-rendered messages resolve their author through the
-PostgREST embed on `channel_messages_profile_fk`, but a **Realtime INSERT carries
-no join** — the client resolves it from the profile snapshot, which excludes the
-bot. So `getBotProfiles()` is fetched separately and passed to `ChannelScreen` as
-`botProfiles`, merged into the author lookup **only** — never into the `profiles`
-list that the strip and sheet render from. Without it, a live-arriving bot
-message shows "—" and a "?" avatar until the next page load.
+One subtlety, and it bites in **two** places: server-rendered messages resolve
+their author through the PostgREST embed on `channel_messages_profile_fk`, but a
+**Realtime INSERT carries no join** — the client resolves it from the profile
+snapshot, which excludes the bot. So `getBotProfiles()` is fetched separately and
+merged into the author lookup **only**, never into the `profiles` list the strip,
+members sheet and member count render from:
+
+- `ChannelScreen` (`botProfiles` → `profileById`) — inside a channel; without it
+  a live bot message shows "—" and a "?" avatar.
+- `ChannelListScreen` (`botProfiles` → `nameById`) — the `/chat` row preview;
+  without it the row reads "—: ⚔️ Groudon …".
+
+Anything else that resolves an author name from `getAllProfiles()` needs the same
+treatment. Both are covered by component tests that assert the dash-fallback
+failure explicitly, so the two can't drift apart again.
 
 ## Troubleshooting
 
