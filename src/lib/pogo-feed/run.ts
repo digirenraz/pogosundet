@@ -168,15 +168,27 @@ async function pollRaidRotation(summary: RunSummary): Promise<void> {
     return;
   }
 
-  // Fingerprint first, for the same reason events are recorded first.
-  await setState(STATE_KEY_RAID_FINGERPRINT, diff.fingerprint);
-
+  // Post FIRST, then record — the opposite order to events, deliberately.
+  //
+  // Events are claimed before posting because there are many of them and a
+  // duplicate is spam. A rotation is a single message and the bot's headline
+  // job, so the trade-off inverts: recording first means a failed post loses the
+  // announcement until the line-up changes *again*, which can be a fortnight of
+  // silence with nothing to indicate anything went wrong. Posting first risks
+  // one duplicate if the process dies in the gap between these two awaits —
+  // visible, self-limiting, and far preferable to a silent two-week gap.
   const { error } = await postAsBot(BOT_CHANNEL, formatRaidRotationMessage(result.data));
+
   if (error) {
+    // Leave BOTH the fingerprint and the ETag untouched, so the next poll
+    // re-fetches, re-detects the same change and retries. Writing the ETag here
+    // would earn a 304 next run and strand the retry — the same trap the events
+    // poll avoids by not sending If-None-Match at all.
     summary.notes.push('rotation_post_failed');
-  } else {
-    summary.rotationPosted = true;
+    return;
   }
 
+  summary.rotationPosted = true;
+  await setState(STATE_KEY_RAID_FINGERPRINT, diff.fingerprint);
   if (result.etag) await setState(STATE_KEY_RAIDS_ETAG, result.etag);
 }

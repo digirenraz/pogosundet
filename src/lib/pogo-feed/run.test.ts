@@ -289,6 +289,47 @@ describe('runFeedPoll', () => {
     expect(postAsBot).not.toHaveBeenCalled();
   });
 
+  it('retries the rotation next run when the post failed', async () => {
+    // The rotation is the bot's headline message and fires only when the lineup
+    // changes, so a lost one means up to a fortnight of silence. Neither the
+    // fingerprint nor the ETag may be written on the failure path — the ETag
+    // especially, since a 304 next run would strand the retry.
+    setup({ raidFingerprint: 'stale' });
+    vi.mocked(fetchEvents).mockResolvedValue({ status: 'unchanged' });
+    vi.mocked(postAsBot).mockResolvedValue({ error: 'boom' });
+
+    const failed = await runFeedPoll(NOW);
+
+    expect(failed.rotationPosted).toBe(false);
+    expect(failed.notes).toContain('rotation_post_failed');
+    expect(setState).not.toHaveBeenCalledWith('raid_lineup_fingerprint', expect.anything());
+    expect(setState).not.toHaveBeenCalledWith('raids_etag', expect.anything());
+
+    // Next poll: same unchanged lineup, but it still counts as a change because
+    // the fingerprint was never recorded — so it posts.
+    vi.mocked(postAsBot).mockResolvedValue({ error: null });
+    const retried = await runFeedPoll(NOW);
+
+    expect(retried.rotationPosted).toBe(true);
+  });
+
+  it('records the fingerprint only after a successful rotation post', async () => {
+    setup({ raidFingerprint: 'stale' });
+    vi.mocked(fetchEvents).mockResolvedValue({ status: 'unchanged' });
+    const order: string[] = [];
+    vi.mocked(postAsBot).mockImplementation(async () => {
+      order.push('post');
+      return { error: null };
+    });
+    vi.mocked(setState).mockImplementation(async (key: string) => {
+      if (key === 'raid_lineup_fingerprint') order.push('fingerprint');
+    });
+
+    await runFeedPoll(NOW);
+
+    expect(order).toEqual(['post', 'fingerprint']);
+  });
+
   it('ignores an empty raid lineup rather than posting a blank rotation', async () => {
     // An empty array means a bad scrape upstream, not "no raids today".
     setup({ bosses: [] });

@@ -200,6 +200,14 @@ new — a bug that would first appear years from now. Cold-start detection uses 
 separate `head: true` count, because "none of these 40 are known" is not the same
 as "the ledger is empty".
 
+**The two write orders are deliberately opposite.** Events are *claimed before*
+posting: there are many of them and a duplicate is spam, so losing one is the
+better failure. The rotation is *posted before* recording: it is a single
+message, it only fires when the line-up changes, and recording first would mean a
+failed post loses the announcement until the next change — potentially a
+fortnight of silence with nothing indicating a problem. On a failed rotation post
+neither the fingerprint nor the ETag is written, so the next poll retries.
+
 **Claiming is a plain INSERT, not an upsert.** The primary-key violation is the
 point: it makes the ledger row a lock, so if two runs ever overlap, exactly one
 wins the claim and posts. `markEventsPosted` (the batch seed path) still uses
