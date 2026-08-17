@@ -1,0 +1,57 @@
+name: PoGo event feed
+
+# Triggers the event bot's poll of the ScrapedDuck feed (LeekDuck data,
+# republished with permission). The work happens in the app —
+# POST /api/cron/pogo-feed — this workflow is only the clock.
+#
+# Why GitHub Actions and not Vercel Cron: the Vercel Hobby plan is limited to
+# ONE cron run per day, and a `*/20` expression fails at deploy time. Actions is
+# free on a public repo and its logs are visible in the Actions tab.
+#
+# Two caveats that come with that choice:
+#   1. GitHub's scheduled runs are best-effort and often 5-15 minutes late. Fine
+#      here — the feed itself only re-scrapes every 10 minutes, and
+#      raw.githubusercontent caches for 5, so there is nothing to gain from
+#      precise timing.
+#   2. GitHub disables scheduled workflows after 60 days with no commits to the
+#      repo. It emails first. If the bot goes quiet, check that before debugging
+#      anything else.
+#
+# Run it by hand from the Actions tab (workflow_dispatch) to test.
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+
+# Never let a slow run overlap the next scheduled one.
+concurrency:
+  group: pogo-feed
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Skip cleanly on a fork or before the secrets are set, rather than failing
+    # every 20 minutes and emailing about it.
+    env:
+      HAS_CRON_SECRETS: ${{ secrets.POGO_CRON_SECRET != '' && secrets.POGO_CRON_URL != '' }}
+    steps:
+      - name: Trigger the feed poll
+        if: env.HAS_CRON_SECRETS == 'true'
+        env:
+          CRON_URL: ${{ secrets.POGO_CRON_URL }}
+          CRON_SECRET: ${{ secrets.POGO_CRON_SECRET }}
+        # --fail-with-body so a non-2xx exits non-zero but still prints the JSON
+        # error slug. The secret goes in via an env var and is never echoed;
+        # --retry covers a cold Vercel function or a transient 5xx.
+        run: |
+          curl --silent --show-error --fail-with-body \
+               --retry 2 --retry-delay 10 --max-time 60 \
+               -X POST "$CRON_URL/api/cron/pogo-feed" \
+               -H "x-cron-secret: $CRON_SECRET"
+
+      - name: Report missing configuration
+        if: env.HAS_CRON_SECRETS != 'true'
+        run: echo "POGO_CRON_SECRET / POGO_CRON_URL not set — skipping."

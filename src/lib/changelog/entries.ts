@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-08-16',
+    text: 'Ny kanal: #events. Her lægger appen automatisk besked op, når der kommer nye raid-events, og når raid-bosserne skifter — så du ikke selv skal holde øje. Data kommer fra LeekDuck.com. Beskeder med links kan nu trykkes direkte, og linjeskift bliver vist som de skal i alle chats.',
+  },
+  {
     date: '2026-08-03',
     text: 'Nu kan du starte en ny direkte besked til enhver træner — ikke kun dem du allerede snakker med. Tryk på "Send besked" på en spillers profil eller i spilleroversigten, eller brug den nye "Ny besked"-knap under Chat.',
   },

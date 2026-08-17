@@ -42,6 +42,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# supabase cli local state — machine-specific (linked project ref, versions) and
+# pooler-url contains a Postgres connection string WITH the password. This repo
+# is public; never commit it.
+supabase/.temp/
+
 # sentry
 .sentryclirc
 .env.sentry-build-plugin
