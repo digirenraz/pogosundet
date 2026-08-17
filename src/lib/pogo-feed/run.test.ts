@@ -11,8 +11,10 @@ vi.mock('./feed', () => ({
 vi.mock('./state', () => ({
   getState: vi.fn(),
   setState: vi.fn(),
+  countPostedEvents: vi.fn(),
   getPostedEventIds: vi.fn(),
   markEventsPosted: vi.fn(),
+  claimEvent: vi.fn(),
 }));
 
 vi.mock('./post', () => ({
@@ -22,7 +24,14 @@ vi.mock('./post', () => ({
 
 import { runFeedPoll } from './run';
 import { fetchEvents, fetchRaidBosses } from './feed';
-import { getState, setState, getPostedEventIds, markEventsPosted } from './state';
+import {
+  getState,
+  setState,
+  countPostedEvents,
+  getPostedEventIds,
+  markEventsPosted,
+  claimEvent,
+} from './state';
 import { postAsBot } from './post';
 
 const NOW = new Date('2026-08-16T10:00:00.000Z');
@@ -63,7 +72,10 @@ function setup(options: {
     data: options.bosses ?? BOSSES,
     etag: '"raids-etag"',
   });
-  vi.mocked(getPostedEventIds).mockResolvedValue(new Set(options.postedIds ?? ['seed']));
+  const posted = options.postedIds ?? ['seed'];
+  vi.mocked(countPostedEvents).mockResolvedValue(posted.length);
+  vi.mocked(getPostedEventIds).mockResolvedValue(new Set(posted));
+  vi.mocked(claimEvent).mockResolvedValue({ claimed: true });
   vi.mocked(getState).mockImplementation(async (key: string) =>
     key === 'raid_lineup_fingerprint' ? (options.raidFingerprint ?? null) : null
   );
@@ -94,14 +106,14 @@ describe('runFeedPoll', () => {
     expect(postedBodies()[0]).toContain('Event fresh');
   });
 
-  it('records an event BEFORE posting it', async () => {
-    // Ordering matters: if the post succeeds but the ledger write hasn't
-    // happened, a crash would repeat the message on the next poll.
+  it('claims an event BEFORE posting it', async () => {
+    // Ordering matters: if the post succeeds but the claim hasn't landed, a
+    // crash would repeat the message on the next poll.
     setup({ events: [event('fresh')] });
     const order: string[] = [];
-    vi.mocked(markEventsPosted).mockImplementation(async () => {
-      order.push('mark');
-      return { error: null };
+    vi.mocked(claimEvent).mockImplementation(async () => {
+      order.push('claim');
+      return { claimed: true };
     });
     vi.mocked(postAsBot).mockImplementation(async () => {
       order.push('post');
@@ -110,7 +122,58 @@ describe('runFeedPoll', () => {
 
     await runFeedPoll(NOW);
 
-    expect(order.indexOf('mark')).toBeLessThan(order.indexOf('post'));
+    expect(order.indexOf('claim')).toBeLessThan(order.indexOf('post'));
+  });
+
+  it('does not post an event another run already claimed', async () => {
+    // The claim is a plain INSERT, so the primary-key violation is what makes
+    // it a lock: two overlapping runs cannot both post the same event.
+    setup({ events: [event('contested')] });
+    vi.mocked(fetchRaidBosses).mockResolvedValue({ status: 'unchanged' });
+    vi.mocked(claimEvent).mockResolvedValue({ claimed: false });
+
+    const summary = await runFeedPoll(NOW);
+
+    expect(postAsBot).not.toHaveBeenCalled();
+    expect(summary.eventsPosted).toBe(0);
+    expect(summary.notes).toContain('skip_contested_unclaimed');
+  });
+
+  it('reads the ledger scoped to the current feed, not the whole table', async () => {
+    // Unbounded selects hit PostgREST's 1000-row cap once the ledger grows,
+    // silently dropping rows and re-posting old events.
+    setup({ events: [event('a'), event('b')] });
+    vi.mocked(fetchRaidBosses).mockResolvedValue({ status: 'unchanged' });
+
+    await runFeedPoll(NOW);
+
+    expect(getPostedEventIds).toHaveBeenCalledWith(['a', 'b']);
+  });
+
+  it('skips the events half when the ledger cannot be read', async () => {
+    // Treating a read failure as "nothing posted yet" would re-announce the
+    // entire feed.
+    setup({ events: [event('fresh')] });
+    vi.mocked(fetchRaidBosses).mockResolvedValue({ status: 'unchanged' });
+    vi.mocked(getPostedEventIds).mockRejectedValue(new Error('db down'));
+
+    const summary = await runFeedPoll(NOW);
+
+    expect(postAsBot).not.toHaveBeenCalled();
+    expect(summary.notes).toContain('events_ledger_read_failed');
+  });
+
+  it('does not mistake a failed count for a cold start', async () => {
+    // Re-seeding would mark the whole feed handled and suppress real posts.
+    setup({ events: [event('fresh')] });
+    vi.mocked(fetchRaidBosses).mockResolvedValue({ status: 'unchanged' });
+    vi.mocked(countPostedEvents).mockResolvedValue(-1);
+
+    const summary = await runFeedPoll(NOW);
+
+    expect(markEventsPosted).not.toHaveBeenCalled();
+    expect(postAsBot).not.toHaveBeenCalled();
+    expect(summary.notes).toContain('events_ledger_unreadable');
   });
 
   it('does not post when the event has already been recorded', async () => {
@@ -185,10 +248,12 @@ describe('runFeedPoll', () => {
 
     setup({ events: feed });
     vi.mocked(fetchRaidBosses).mockResolvedValue({ status: 'unchanged' });
+    vi.mocked(countPostedEvents).mockImplementation(async () => ledger.size);
     vi.mocked(getPostedEventIds).mockImplementation(async () => new Set(ledger));
-    vi.mocked(markEventsPosted).mockImplementation(async (rows) => {
-      for (const row of rows) ledger.add(row.eventID);
-      return { error: null };
+    vi.mocked(claimEvent).mockImplementation(async (e) => {
+      if (ledger.has(e.eventID)) return { claimed: false };
+      ledger.add(e.eventID);
+      return { claimed: true };
     });
 
     const first = await runFeedPoll(NOW);
@@ -247,14 +312,14 @@ describe('runFeedPoll', () => {
     expect(summary.notes).toContain('post_failed_fresh');
   });
 
-  it('skips an event whose ledger write failed, rather than risking a repeat', async () => {
+  it('skips an event whose claim failed, rather than risking a repeat', async () => {
     setup({ events: [event('fresh')] });
     vi.mocked(fetchRaidBosses).mockResolvedValue({ status: 'unchanged' });
-    vi.mocked(markEventsPosted).mockResolvedValue({ error: 'db down' });
+    vi.mocked(claimEvent).mockResolvedValue({ claimed: false });
 
     const summary = await runFeedPoll(NOW);
 
     expect(postAsBot).not.toHaveBeenCalled();
-    expect(summary.notes).toContain('skip_fresh_unrecorded');
+    expect(summary.notes).toContain('skip_fresh_unclaimed');
   });
 });

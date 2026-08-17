@@ -9,7 +9,14 @@
 import { fetchEvents, fetchRaidBosses } from './feed';
 import { selectNewEvents, diffRaidLineup } from './diff';
 import { formatEventMessage, formatRaidRotationMessage } from './format';
-import { getState, setState, getPostedEventIds, markEventsPosted } from './state';
+import {
+  getState,
+  setState,
+  countPostedEvents,
+  getPostedEventIds,
+  markEventsPosted,
+  claimEvent,
+} from './state';
 import { postAsBot } from './post';
 import { STATE_KEY_RAID_FINGERPRINT, STATE_KEY_RAIDS_ETAG } from './types';
 
@@ -68,8 +75,31 @@ async function pollEvents(now: Date, summary: RunSummary): Promise<void> {
     return;
   }
 
-  const postedIds = await getPostedEventIds();
-  const selection = selectNewEvents(result.data, postedIds, now.getTime());
+  // A cold start is "the ledger is empty", which is a property of the table —
+  // not of how many of the current feed's events we happen to know about.
+  const ledgerSize = await countPostedEvents();
+  if (ledgerSize < 0) {
+    // Count failed. Treating that as a cold start would re-seed and suppress
+    // real announcements, so skip the events half of this run entirely.
+    summary.notes.push('events_ledger_unreadable');
+    return;
+  }
+
+  let postedIds: Set<string>;
+  try {
+    postedIds = await getPostedEventIds(result.data.map((event) => event.eventID));
+  } catch {
+    // A failed read would make every event look new and post the whole feed.
+    summary.notes.push('events_ledger_read_failed');
+    return;
+  }
+
+  const selection = selectNewEvents(
+    result.data,
+    postedIds,
+    now.getTime(),
+    ledgerSize > 0
+  );
 
   // Record the cold-start seed and the filtered-out events together — neither
   // gets posted, both should stop being re-evaluated every 20 minutes.
@@ -90,11 +120,12 @@ async function pollEvents(now: Date, summary: RunSummary): Promise<void> {
   }
 
   for (const event of selection.toPost) {
-    // Record before posting: a crash here loses an announcement rather than
-    // repeating one on the next poll.
-    const { error: markError } = await markEventsPosted([event]);
-    if (markError) {
-      summary.notes.push(`skip_${event.eventID}_unrecorded`);
+    // Claim before posting. The insert is a lock: a crash between claim and post
+    // loses an announcement rather than repeating one, and if a second run is
+    // somehow in flight, only one of them wins the claim and posts.
+    const { claimed } = await claimEvent(event);
+    if (!claimed) {
+      summary.notes.push(`skip_${event.eventID}_unclaimed`);
       continue;
     }
 

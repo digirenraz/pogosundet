@@ -81,7 +81,7 @@ describe('selectNewEvents', () => {
     // otherwise dump the whole LeekDuck calendar into chat at once.
     const feed = [event({ eventID: 'a' }), event({ eventID: 'b' }), event({ eventID: 'c' })];
 
-    const result = selectNewEvents(feed, new Set(), NOW);
+    const result = selectNewEvents(feed, new Set(), NOW, false);
 
     expect(result.seeding).toBe(true);
     expect(result.toPost).toEqual([]);
@@ -91,7 +91,7 @@ describe('selectNewEvents', () => {
   it('posts an event that has not been seen before', () => {
     const feed = [event({ eventID: 'known' }), event({ eventID: 'fresh' })];
 
-    const result = selectNewEvents(feed, new Set(['known']), NOW);
+    const result = selectNewEvents(feed, new Set(['known']), NOW, true);
 
     expect(result.seeding).toBe(false);
     expect(result.toPost.map((e) => e.eventID)).toEqual(['fresh']);
@@ -101,7 +101,7 @@ describe('selectNewEvents', () => {
     const feed = [event({ eventID: 'a' }), event({ eventID: 'b' })];
     const seen = new Set(['a', 'b']);
 
-    const result = selectNewEvents(feed, seen, NOW);
+    const result = selectNewEvents(feed, seen, NOW, true);
 
     expect(result.toPost).toEqual([]);
     expect(result.toSeedOnly).toEqual([]);
@@ -111,12 +111,12 @@ describe('selectNewEvents', () => {
     const feed = [event({ eventID: 'a' })];
     const seen = new Set(['seed']);
 
-    const first = selectNewEvents(feed, seen, NOW);
+    const first = selectNewEvents(feed, seen, NOW, true);
     expect(first.toPost.map((e) => e.eventID)).toEqual(['a']);
 
     // Simulate the ledger write the runner performs, then poll again.
     for (const e of first.toPost) seen.add(e.eventID);
-    const second = selectNewEvents(feed, seen, NOW);
+    const second = selectNewEvents(feed, seen, NOW, true);
 
     expect(second.toPost).toEqual([]);
   });
@@ -129,7 +129,7 @@ describe('selectNewEvents', () => {
       event({ eventID: 'ended', start: naive(-2 * DAY), end: naive(-1 * DAY) }),
     ];
 
-    const result = selectNewEvents(feed, new Set(['seed']), NOW);
+    const result = selectNewEvents(feed, new Set(['seed']), NOW, true);
 
     expect(result.toPost).toEqual([]);
     expect(result.toSeedOnly.sort()).toEqual(['ended', 'wrong-type']);
@@ -148,7 +148,7 @@ describe('selectNewEvents', () => {
       }),
     ];
 
-    const result = selectNewEvents(feed, new Set(['seed']), NOW);
+    const result = selectNewEvents(feed, new Set(['seed']), NOW, true);
 
     expect(result.toPost).toEqual([]);
     expect(result.toSeedOnly).toEqual([]);
@@ -164,12 +164,12 @@ describe('selectNewEvents', () => {
     const ledger = new Set(['seed']);
 
     // Poll today: too far out, nothing posted, nothing recorded.
-    const first = selectNewEvents([far], ledger, NOW);
+    const first = selectNewEvents([far], ledger, NOW, true);
     expect(first.toPost).toEqual([]);
     for (const id of first.toSeedOnly) ledger.add(id);
 
     // Poll again 45 days later: now inside the 30-day window.
-    const second = selectNewEvents([far], ledger, NOW + 45 * DAY);
+    const second = selectNewEvents([far], ledger, NOW + 45 * DAY, true);
     expect(second.toPost.map((e) => e.eventID)).toEqual(['raid-day-later']);
   });
 
@@ -178,7 +178,7 @@ describe('selectNewEvents', () => {
       event({ eventID: `e${i}`, start: naive((i + 1) * 3600_000) })
     );
 
-    const result = selectNewEvents(feed, new Set(['seed']), NOW);
+    const result = selectNewEvents(feed, new Set(['seed']), NOW, true);
 
     expect(result.toPost).toHaveLength(MAX_POSTS_PER_RUN);
     // The overflow must NOT be seeded — otherwise it would be silently swallowed
@@ -192,7 +192,7 @@ describe('selectNewEvents', () => {
       event({ eventID: 'sooner', start: naive(1 * DAY) }),
     ];
 
-    const result = selectNewEvents(feed, new Set(['seed']), NOW);
+    const result = selectNewEvents(feed, new Set(['seed']), NOW, true);
 
     expect(result.toPost.map((e) => e.eventID)).toEqual(['sooner', 'later']);
   });

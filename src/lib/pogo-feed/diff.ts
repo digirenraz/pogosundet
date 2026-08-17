@@ -110,14 +110,21 @@ export interface EventSelection {
  * LeekDuck calendar into chat as the bot's opening act. So the first run records
  * everything silently and posts nothing; from then on only genuinely new IDs are
  * candidates.
+ *
+ * `hasSeeded` is passed in rather than inferred from `postedIds.size`, because
+ * `postedIds` is now scoped to the current feed (see getPostedEventIds) — an
+ * empty set means "none of these 40 are known", which is not the same as "the
+ * ledger is empty". Inferring it would let a feed turnover masquerade as a cold
+ * start and silently suppress a whole batch of announcements.
  */
 export function selectNewEvents(
   feed: ScrapedDuckEvent[],
   postedIds: ReadonlySet<string>,
-  now: number
+  now: number,
+  hasSeeded: boolean
 ): EventSelection {
   // Cold start: remember everything, say nothing.
-  if (postedIds.size === 0) {
+  if (!hasSeeded) {
     return {
       toPost: [],
       toSeedOnly: feed.map((event) => event.eventID),

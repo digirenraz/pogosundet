@@ -183,8 +183,27 @@ All in `src/lib/pogo-feed/diff.ts`, all unit-tested:
 | Ended events skipped | — | The feed keeps recently-finished events |
 | Rotation posts on change only | fingerprint | Not once per poll |
 
-Overflow beyond the per-run cap is deliberately **not** recorded, so it posts on
-the next run rather than being silently swallowed.
+Only events that can **never** become announceable — wrong type, or already
+over — are written to the ledger without posting. Two cases are deliberately
+left unrecorded so they come back later:
+
+- overflow beyond the per-run cap (posts next run)
+- events still outside the 30-day window (post when the date nears)
+
+Recording either would mark it handled forever and silently eat the
+announcement. The feed carries raid days two months out, so that is a real case.
+
+**The ledger read is scoped to the current feed** (`getPostedEventIds` takes the
+feed's event IDs and uses `.in(...)`). An unbounded select would eventually cross
+PostgREST's default 1000-row cap and start dropping rows, making old events look
+new — a bug that would first appear years from now. Cold-start detection uses a
+separate `head: true` count, because "none of these 40 are known" is not the same
+as "the ledger is empty".
+
+**Claiming is a plain INSERT, not an upsert.** The primary-key violation is the
+point: it makes the ledger row a lock, so if two runs ever overlap, exactly one
+wins the claim and posts. `markEventsPosted` (the batch seed path) still uses
+`ignoreDuplicates`, since nothing is posted there.
 
 ## Which events get posted
 
