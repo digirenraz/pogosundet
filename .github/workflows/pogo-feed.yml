@@ -24,6 +24,12 @@ on:
     - cron: '*/20 * * * *'
   workflow_dispatch:
 
+# No GITHUB_TOKEN access of any kind: this job checks out nothing and touches no
+# GitHub API. Its only action is an outbound curl to the app. Flagged by CodeQL
+# ("Workflow does not contain permissions") when left implicit, which defaults to
+# far more than this needs.
+permissions: {}
+
 # Never let a slow run overlap the next scheduled one.
 concurrency:
   group: pogo-feed
