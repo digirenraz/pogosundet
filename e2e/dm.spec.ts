@@ -82,7 +82,13 @@ test.describe("Direct messages", () => {
     await page.getByRole("button", { name: /^Tilbage$/ }).click();
     await expect(page).toHaveURL(/\/chat$/);
     await expect(page.getByText(/Direkte beskeder/)).toBeVisible();
-    await expect(page.getByText(new RegExp(`Du:.*${reply.split(" ")[0]}`))).toBeVisible();
+    // .first() because the preview DB accumulates conversations across runs, so
+    // more than one row can match a "Du: e2e-…" prefix (same reason the reaction
+    // chip and reply-banner assertions use it). The list is ordered by latest
+    // message, and we just replied, so the conversation under test is first.
+    await expect(
+      page.getByText(new RegExp(`Du:.*${reply.split(" ")[0]}`)).first()
+    ).toBeVisible();
   });
 
   // Issue #201: previously the only way to start a NEW conversation was via
