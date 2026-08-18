@@ -8,17 +8,41 @@ import type { Profile } from './helpers';
 // Uses the admin client (no cookies) so unstable_cache can safely store the result
 // across requests. Profile creates/edits are reflected within one TTL cycle;
 // account deletions call revalidateTag('profiles') immediately via the delete route.
+//
+// Excludes bot accounts (migration 023). The event bot needs a real profiles row
+// because channel_messages.user_id FKs to profiles(user_id), but it is not a
+// member — without this filter it shows up as a player card in /players, in the
+// online strip, in the channel members sheet and in the DM picker.
 export const getAllProfiles = unstable_cache(
   async () => {
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
+      .eq('is_bot', false)
       .order('created_at', { ascending: false });
     return { data: (data as Profile[]) ?? [], error };
   },
   ['all-profiles'],
   { revalidate: 60, tags: ['profiles'] }
+);
+
+// Bot profiles, kept separate from getAllProfiles so they can be used to render
+// a message author WITHOUT appearing anywhere a member list is drawn.
+//
+// Why this is needed: server-rendered messages resolve their author through the
+// PostgREST embed on channel_messages_profile_fk, but a Realtime INSERT carries
+// no join — the client resolves it from the profile snapshot instead. Since the
+// bot is (correctly) absent from that snapshot, a live-arriving bot message
+// would render as "—" with a "?" avatar until the next page load.
+export const getBotProfiles = unstable_cache(
+  async () => {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase.from('profiles').select('*').eq('is_bot', true);
+    return { data: (data as Profile[]) ?? [], error };
+  },
+  ['bot-profiles'],
+  { revalidate: 3600, tags: ['profiles'] }
 );
 
 // Withhold the friend code from users who shouldn't see it (issue #101).

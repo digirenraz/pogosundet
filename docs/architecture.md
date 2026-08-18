@@ -31,13 +31,14 @@ This file documents the contents of `src/lib/` in detail. Update it when a new h
 **FK gotcha:** `raid_attendees.user_id` and `raid_messages.user_id` both FK to `profiles.user_id` (unique), **not** `profiles.id`. Required for embedded Supabase queries `profiles(trainer_name)` to work.
 
 ### `src/lib/chat/`
-- `channels.ts` — hard-coded channel set: `#generelt`, `#app-feedback`. Adding a third channel requires both a constant edit and a migration to extend the DB CHECK
+- `channels.ts` — hard-coded channel set: `#generelt`, `#app-feedback`, `#events`. Adding a channel requires a constant edit AND a migration extending the CHECK on both `channel_messages.channel` and `channel_reads.channel` (most recently migration 023)
+- `linkify.tsx` + `linkify.test.tsx` — turns bare http(s) URLs in a message body into anchors; React text nodes only, never `dangerouslySetInnerHTML`
 - `helpers.ts` — client: `sendMessage`
 - `server-helpers.ts` — `getMessagesForChannel`
 - `read-helpers.ts` — mark-as-read UPSERT, unread counts
 - `time.ts` + `time.test.ts` — relative-time formatter
 - `use-channel-realtime.ts` — per-channel messages + typing broadcast
-- `use-channel-unread.ts` — BottomNav badge subscriber across both channels
+- `use-channel-unread.ts` — BottomNav badge subscriber across all channels (zero-state and total derived from `CHANNELS`, so a new channel needs no edit here)
 - `use-channel-list-typing.ts` — channel-list "X skriver…" preview
 - `use-channel-reactions-realtime.ts` — INSERT/DELETE on `channel_message_reactions`; filters client-side by live `messageIdSet`
 
@@ -63,6 +64,17 @@ This file documents the contents of `src/lib/` in detail. Update it when a new h
 
 ### `src/lib/account/`
 - `server-helpers.ts` — account deletion using admin client (service role key). The `profiles` row cascades automatically from the auth user delete.
+
+### `src/lib/pogo-feed/`
+The `#events` bot. Polled by `POST /api/cron/pogo-feed`, which is triggered every 20 minutes by `.github/workflows/pogo-feed.yml` (Vercel Hobby caps crons at once per day, so Actions is the clock). Full runbook: [`docs/plans/pogo-event-bot.md`](plans/pogo-event-bot.md).
+- `types.ts` — feed row shapes, the two endpoint URLs (they live on ScrapedDuck's `data` **branch**, not `main/data/`), and `POSTABLE_EVENT_TYPES` (raids only)
+- `feed.ts` — conditional GETs with `If-None-Match`; returns a `FeedResult` union and **never throws**, so a feed outage skips a run instead of failing the route
+- `diff.ts` — **pure**: what to post. Owns every anti-spam rule (cold-start seeds silently, 5-post cap, 30-day lead limit, ended-events skipped) and the `(tier, name)` fingerprint used to detect a rotation change — `raids.json` has no ID field
+- `format.ts` — **pure**: the Danish message text. Also the timezone handling: the feed mixes naive local-wall-clock timestamps with `Z`-suffixed global instants, and handing a naive one to `new Date()` parses it as server-local (UTC on Vercel), shifting Danish events by two hours
+- `state.ts` / `post.ts` — service-role only (`pogo_feed_state`, `pogo_feed_posted_events`, and the bot's `channel_messages` insert). Never import from a client component
+- `run.ts` — one poll cycle; records an event in the ledger **before** posting it, so a crash loses a message rather than repeating one
+
+The bot has a real `profiles` row (required by the dual FK on `channel_messages.user_id`) flagged `is_bot`, which `getAllProfiles` and `getMemberCount` filter out. Because that filter also removes it from the client-side profile snapshot, `getBotProfiles()` is passed to `ChannelScreen` as `botProfiles` and merged into author-resolution only — otherwise Realtime-arriving bot messages render as `—` with a `?` avatar.
 
 ### `src/i18n/`
 - `routing.ts` and `request.ts` — next-intl config (locales, default locale `da`, `localePrefix: 'as-needed'`). Imported by `proxy.ts` and the App Router locale layout.

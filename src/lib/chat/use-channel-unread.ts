@@ -9,8 +9,15 @@ import type { ChannelMessageRow } from './helpers';
 export type UnreadCounts = Record<ChannelId, number>;
 export type LatestByChannel = Record<ChannelId, ChannelMessageRow | null>;
 
-const ZERO: UnreadCounts = { generelt: 0, feedback: 0 };
-const NO_LATEST: LatestByChannel = { generelt: null, feedback: null };
+// Derived from CHANNELS rather than written out, so adding a channel doesn't
+// need a matching edit here (it used to, and was easy to miss).
+const ZERO: UnreadCounts = Object.fromEntries(
+  CHANNELS.map((channel) => [channel.id, 0])
+) as UnreadCounts;
+
+const NO_LATEST: LatestByChannel = Object.fromEntries(
+  CHANNELS.map((channel) => [channel.id, null])
+) as LatestByChannel;
 
 interface Options {
   userId: string | null | undefined;
@@ -110,6 +117,7 @@ export function useChannelUnread({ userId, initialCounts }: Options): {
     setCounts((prev) => (prev[channel] === 0 ? prev : { ...prev, [channel]: 0 }));
   }, []);
 
-  const total = counts.generelt + counts.feedback;
+  // Sum across every channel, so a new channel is included automatically.
+  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
   return { counts, total, clearChannel, latestByChannel };
 }

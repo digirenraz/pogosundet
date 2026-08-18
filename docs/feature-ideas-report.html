@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PoGoSundet — Feature Ideas Report</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+    :root {
+      --teal: #2BBFAA;
+      --teal-dark: #1fa090;
+      --teal-light: #e8faf7;
+      --teal-mid: #b2ede5;
+      --navy: #0a222b;
+      --navy-mid: #164155;
+      --navy-light: #1f5068;
+      --ink: #0a1f27;
+      --muted: #5a7a85;
+      --border: #d4eae6;
+      --bg: #f5fafa;
+      --card: #ffffff;
+      --shadow-card: 0 2px 12px rgba(10, 34, 43, 0.08), 0 1px 3px rgba(10, 34, 43, 0.05);
+      --shadow-section: 0 4px 24px rgba(10, 34, 43, 0.10);
+      --radius: 14px;
+      --radius-sm: 8px;
+      --radius-chip: 999px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── HEADER ── */
+    .hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, #1a6b7a 100%);
+      color: #fff;
+      padding: 56px 24px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 30%, rgba(43, 191, 170, 0.18) 0%, transparent 65%),
+                  radial-gradient(ellipse at 20% 80%, rgba(43, 191, 170, 0.10) 0%, transparent 55%);
+    }
+    .hero-inner { position: relative; max-width: 760px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(43, 191, 170, 0.18);
+      border: 1px solid rgba(43, 191, 170, 0.35);
+      border-radius: var(--radius-chip);
+      padding: 5px 14px; font-size: 12px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--teal); margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 800; line-height: 1.15;
+      letter-spacing: -0.02em; margin-bottom: 12px;
+    }
+    .hero h1 span { color: var(--teal); }
+    .hero p {
+      font-size: 17px; color: rgba(255,255,255,0.72);
+      max-width: 540px; margin: 0 auto 20px;
+    }
+    .hero-meta {
+      display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;
+      font-size: 13px; color: rgba(255,255,255,0.55);
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 20px 80px; }
+
+    /* ── INTRO ── */
+    .intro-section {
+      margin: 40px 0 32px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      box-shadow: var(--shadow-card);
+    }
+    .intro-section h2 {
+      font-size: 18px; font-weight: 700; color: var(--navy);
+      margin-bottom: 10px;
+    }
+    .intro-section p {
+      font-size: 15px; color: var(--muted); line-height: 1.7;
+    }
+    .method-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px; margin-top: 16px;
+    }
+    .method-pill {
+      background: var(--teal-light);
+      border: 1px solid var(--teal-mid);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px; font-weight: 600; color: var(--teal-dark);
+    }
+
+    /* ── COMPETITIVE LANDSCAPE ── */
+    .landscape-section {
+      margin-bottom: 40px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      box-shadow: var(--shadow-card);
+    }
+    .landscape-section h2 {
+      font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 20px;
+    }
+    .landscape-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .landscape-card {
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      border: 1px solid transparent;
+    }
+    .landscape-card.discord { background: #f0f0ff; border-color: #c5c5f5; }
+    .landscape-card.facebook { background: #eef3ff; border-color: #b8caf8; }
+    .landscape-card.campfire { background: #fff5e8; border-color: #f5c98a; }
+    .landscape-card.pogosundet { background: var(--teal-light); border-color: var(--teal-mid); }
+    .landscape-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .landscape-card.discord h3 { color: #5865F2; }
+    .landscape-card.facebook h3 { color: #1877F2; }
+    .landscape-card.campfire h3 { color: #d97706; }
+    .landscape-card.pogosundet h3 { color: var(--teal-dark); }
+    .lc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; opacity: 0.6; }
+    .landscape-card ul { padding-left: 14px; font-size: 13px; color: var(--muted); }
+    .landscape-card li { margin-bottom: 4px; }
+    .gap-tag {
+      display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 600;
+      background: rgba(0,0,0,0.07); border-radius: 4px; padding: 2px 8px;
+      color: #555;
+    }
+    .landscape-card.pogosundet .gap-tag { background: var(--teal); color: #fff; }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; align-items: center; gap: 14px;
+      margin: 40px 0 18px;
+    }
+    .section-icon {
+      width: 42px; height: 42px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .section-header h2 {
+      font-size: 22px; font-weight: 800; color: var(--navy);
+      letter-spacing: -0.01em;
+    }
+    .section-header p { font-size: 14px; color: var(--muted); margin-top: 2px; }
+
+    /* ── CARD GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── FEATURE CARD ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: var(--shadow-card);
+      display: flex; flex-direction: column; gap: 12px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(10, 34, 43, 0.12);
+    }
+    .card-top {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    }
+    .card-title { font-size: 16px; font-weight: 700; color: var(--navy); line-height: 1.3; }
+    .card-number {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+      background: var(--teal-light); border: 1.5px solid var(--teal-mid);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--teal-dark);
+    }
+    .card-desc { font-size: 14px; color: #333; line-height: 1.55; }
+    .card-insight {
+      font-size: 13px; color: var(--muted); line-height: 1.5;
+      padding: 10px 12px;
+      background: var(--teal-light);
+      border-left: 3px solid var(--teal);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .card-insight strong { color: var(--teal-dark); }
+    .card-chips {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px;
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; border-radius: var(--radius-chip);
+      padding: 4px 10px; border: 1px solid transparent;
+    }
+    .chip-label { opacity: 0.65; font-weight: 500; }
+
+    /* Effort chips */
+    .effort-low  { background: #e8fff5; border-color: #7de8c0; color: #0a7a50; }
+    .effort-med  { background: #fff8e8; border-color: #f5d87a; color: #7a5a00; }
+    .effort-high { background: #fff0f0; border-color: #f5a0a0; color: #8a1010; }
+
+    /* Impact chips */
+    .impact-low  { background: #f0f0f0; border-color: #ccc; color: #555; }
+    .impact-med  { background: #f0f0ff; border-color: #c0c0f5; color: #3030a0; }
+    .impact-high { background: #f5f0ff; border-color: #c8b0f0; color: #5a20c0; }
+
+    /* ── SUMMARY TABLE ── */
+    .summary-section {
+      margin-top: 56px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      box-shadow: var(--shadow-card);
+    }
+    .summary-section h2 { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 18px; }
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .summary-table th {
+      text-align: left; padding: 10px 12px;
+      background: var(--teal-light); color: var(--teal-dark);
+      font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 2px solid var(--teal-mid);
+    }
+    .summary-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .summary-table tr:hover td { background: var(--teal-light); }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; padding: 32px 20px;
+      font-size: 13px; color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* Color accents per section */
+    .section-raids .section-icon { background: #fff0f0; }
+    .section-social .section-icon { background: #f0f5ff; }
+    .section-discovery .section-icon { background: #f0fff5; }
+    .section-gamification .section-icon { background: #fff8e8; }
+    .section-qol .section-icon { background: #f5f0ff; }
+
+    @media (max-width: 600px) {
+      .hero { padding: 40px 16px 36px; }
+      .intro-section, .landscape-section { padding: 20px; }
+      .landscape-grid { grid-template-columns: 1fr 1fr; }
+      .cards-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ──────────────── HERO ──────────────── -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">🎯 Research Report</div>
+    <h1>Feature Ideas for <span>PoGoSundet</span></h1>
+    <p>Community-driven features rooted in real Pokémon GO player behavior, local coordination needs, and gaps in existing tools.</p>
+    <div class="hero-meta">
+      <span>📅 30. juni 2026</span>
+      <span>🔍 Primary research + web surveys</span>
+      <span>💡 23 feature ideas</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ──────────────── INTRO ──────────────── -->
+  <div class="intro-section">
+    <h2>Methodology</h2>
+    <p>This report synthesizes insights from Pokémon GO community forums (Reddit r/TheSilphRoad, r/pokemongo), Discord server patterns across 300 000+ member communities, Niantic's own Campfire app analysis, player coordination guides from Pokémon GO Hub, and general mobile gaming community research. Feature ideas are filtered against the existing PoGoSundet feature set to avoid duplication, and against the deliberate out-of-scope items (remote raid lobby codes, recurring raids, raid history/stats, filters/search, admin/moderation).</p>
+    <div class="method-grid">
+      <div class="method-pill">🗣️ Discord community patterns</div>
+      <div class="method-pill">📱 Campfire app gaps</div>
+      <div class="method-pill">📆 Event coordination research</div>
+      <div class="method-pill">🔄 TheSilphRoad / PGO Hub</div>
+      <div class="method-pill">🇩🇰 Local-community angle</div>
+    </div>
+  </div>
+
+  <!-- ──────────────── COMPETITIVE LANDSCAPE ──────────────── -->
+  <div class="landscape-section">
+    <h2>Competitive Landscape — What's Missing</h2>
+    <div class="landscape-grid">
+
+      <div class="landscape-card discord">
+        <div class="lc-label">Discord</div>
+        <h3>Discord</h3>
+        <ul>
+          <li>Raid channels + @here pings</li>
+          <li>Trading announcements</li>
+          <li>PvP discussions</li>
+          <li>Event news bots</li>
+        </ul>
+        <span class="gap-tag">❌ Not local-first · Too noisy · No PGO context</span>
+      </div>
+
+      <div class="landscape-card facebook">
+        <div class="lc-label">Facebook Groups</div>
+        <h3>Facebook Groups</h3>
+        <ul>
+          <li>Photo sharing (shinies)</li>
+          <li>Event coordination posts</li>
+          <li>Older player demographics</li>
+        </ul>
+        <span class="gap-tag">❌ No real-time · Cluttered · Slow notifications</span>
+      </div>
+
+      <div class="landscape-card campfire">
+        <div class="lc-label">Niantic Campfire</div>
+        <h3>Campfire</h3>
+        <ul>
+          <li>Flare Chat per gym</li>
+          <li>Team Up (5-player groups)</li>
+          <li>Meetup scheduling</li>
+          <li>Nearby player discovery</li>
+        </ul>
+        <span class="gap-tag">❌ US-centric · Weak EU rollout · No community memory</span>
+      </div>
+
+      <div class="landscape-card pogosundet">
+        <div class="lc-label">PoGoSundet — Our Gap</div>
+        <h3>PoGoSundet</h3>
+        <ul>
+          <li>Frederikssund-only focus</li>
+          <li>Danish-language first</li>
+          <li>Persistent profiles + bonds</li>
+          <li>Push notifications (working!)</li>
+        </ul>
+        <span class="gap-tag">✅ Trusted local identity layer</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- SECTION 1: RAID & EVENTS                       -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section-header section-raids">
+    <div class="section-icon">⚔️</div>
+    <div>
+      <h2>Raid &amp; Events</h2>
+      <p>Features that make coordinating raids and in-game events smoother</p>
+    </div>
+  </div>
+  <div class="cards-grid">
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Raid RSVP Scheduler</div>
+        <div class="card-number">1</div>
+      </div>
+      <div class="card-desc">Let a player schedule a future raid (e.g. "T5 raid at Frederikssund Kirke at 18:00") and collect RSVPs before heading out — with a push reminder 15 min before.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Niantic's own Campfire is building an RSVP planner for exactly this reason — players waste trips to gyms when no one shows. Local communities already improvise this via Messenger group threads.</div>
+      <div class="card-chips">
+        <span class="chip effort-med"><span class="chip-label">Effort</span> Medium</span>
+        <span class="chip impact-high"><span class="chip-label">Impact</span> High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Community Day Event Page</div>
+        <div class="card-number">2</div>
+      </div>
+      <div class="card-desc">A dedicated page per Community Day showing the featured Pokémon, shiny odds (1-in-25), exclusive move, 3-hour countdown, and a "Where are we meeting?" poll for local hotspots.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Community Day is the most social event in PGO — players actively look for where others are gathering. In small towns, the meetup spot decision is the biggest coordination need.</div>
+      <div class="card-chips">
+        <span class="chip effort-med"><span class="chip-label">Effort</span> Medium</span>
+        <span class="chip impact-high"><span class="chip-label">Impact</span> High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Event Calendar</div>
+        <div class="card-number">3</div>
+      </div>
+      <div class="card-desc">A simple monthly calendar of Niantic events (Spotlight Hours, Raid Days, GO Fest, Community Days) with local coordination threads attached to each event.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Discord communities dedicate entire channels to event scheduling. Players constantly ask "when is the next CD?" in group chats. A calendar with local context removes that friction.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Raid Boss Info Cards</div>
+        <div class="card-number">4</div>
+      </div>
+      <div class="card-desc">When viewing a posted raid, show a compact info panel: raid boss type, recommended counter types (e.g. "Water/Ice strong"), and minimum recommended player count.</div>
+      <div class="card-insight"><strong>Research insight:</strong> New and casual players frequently ask "can we duo this?" or "what do I bring?" in Discord channels. Embedding the answer in the raid card reduces barrier to joining.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Raid Outcome / Debrief</div>
+        <div class="card-number">5</div>
+      </div>
+      <div class="card-desc">After the host marks a raid complete, prompt them to log the outcome: caught / fled, any shinies in the group, any hundos — shared as a mini post in the raid chat.</div>
+      <div class="card-insight"><strong>Research insight:</strong> "Did anyone get a shiny?" is asked in every post-raid group. Formalizing the debrief creates a moment of community celebration and helps others know whether to re-try.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+  </div><!-- /cards-grid -->
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- SECTION 2: SOCIAL & COMMUNITY                  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section-header section-social">
+    <div class="section-icon">🤝</div>
+    <div>
+      <h2>Social &amp; Community</h2>
+      <p>Strengthen bonds between local players and surface shared context</p>
+    </div>
+  </div>
+  <div class="cards-grid">
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Shiny &amp; Hundo Celebration Feed</div>
+        <div class="card-number">6</div>
+      </div>
+      <div class="card-desc">A lightweight "I got it!" post type — player selects a Pokémon from a list, picks shiny/hundo/lucky, and it appears in a community celebration feed with 🎉 reactions.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Facebook groups and Discord #shiny-catches channels are among the most active in PGO communities. People love to share and celebrate — it's a core social loop that PoGoSundet currently has no outlet for.</div>
+      <div class="card-chips">
+        <span class="chip effort-med"><span class="chip-label">Effort</span> Medium</span>
+        <span class="chip impact-high"><span class="chip-label">Impact</span> High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Trade Board</div>
+        <div class="card-number">7</div>
+      </div>
+      <div class="card-desc">A bulletin-board style section where players post "Have: shiny Machamp · Want: shiny Gengar" — listings expire after 48 hours and allow direct replies/DMs.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Trading coordination is one of the top requested features in PGO Discord servers. The 100-meter proximity requirement means finding a local trade partner is the key bottleneck — a local trade board solves this perfectly.</div>
+      <div class="card-chips">
+        <span class="chip effort-med"><span class="chip-label">Effort</span> Medium</span>
+        <span class="chip impact-high"><span class="chip-label">Impact</span> High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Lucky Friends Tracker</div>
+        <div class="card-number">8</div>
+      </div>
+      <div class="card-desc">Let players mark which community members they're currently "Lucky Friends" with in-game, so both parties know to meet up for a Lucky Trade before the status is lost.</div>
+      <div class="card-insight"><strong>Research insight:</strong> "Forgetting to use Lucky Friends before it expires" is a top frustration cited by experienced players. Lucky Friend status can appear at any daily interaction — a quick flag to coordinate a meetup is highly valued.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Away / Inactive Status</div>
+        <div class="card-number">9</div>
+      </div>
+      <div class="card-desc">A profile field where players can set "Back on July 15" or "Playing daily" — visible on player cards in the directory so others know who's currently available for raids and trades.</div>
+      <div class="card-insight"><strong>Research insight:</strong> In small, tight-knit communities, players track each other's schedules informally. Formalizing an "away" status reduces futile DMs and lets players know who to reach out to during an event.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">PvP Challenge Board</div>
+        <div class="card-number">10</div>
+      </div>
+      <div class="card-desc">A dedicated space to post local PvP challenge invites — "Great League, Frederikssund Torv, Saturday 14:00" — with RSVP and DM-based matchup coordination.</div>
+      <div class="card-insight"><strong>Research insight:</strong> GO Battle League is fully remote, but face-to-face Trainer Battles are a distinct social experience many players want. Local battle events are coordinated ad-hoc via Discord; a structured invitation system fills the gap.</div>
+      <div class="card-chips">
+        <span class="chip effort-med"><span class="chip-label">Effort</span> Medium</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Trainer Specialty Tags</div>
+        <div class="card-number">11</div>
+      </div>
+      <div class="card-desc">Optional self-selected tags on a player's profile: "PvP competitive", "Trade collector", "Shiny hunter", "Casual player" — visible on the player directory to help others find the right contact.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Discord communities are self-segmented into channels by play style. Local communities benefit from knowing at a glance who the hardcore PvP players are vs. casual daily players when planning events.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- SECTION 3: DISCOVERY & MAPS                    -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section-header section-discovery">
+    <div class="section-icon">🗺️</div>
+    <div>
+      <h2>Discovery &amp; Maps</h2>
+      <p>Help players find Pokémon, spots, and each other in the physical world</p>
+    </div>
+  </div>
+  <div class="cards-grid">
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Spawn Nest Community Log</div>
+        <div class="card-number">12</div>
+      </div>
+      <div class="card-desc">A community-editable log of known Pokémon nests in Frederikssund — players confirm or update entries when nests rotate (every two weeks), linked to a map pin.</div>
+      <div class="card-insight"><strong>Research insight:</strong> The Silph Road's nest map was the single most-used community resource before it was sunset — its absence is still lamented. Local nest knowledge is hyperlocal and not covered by any current tool.</div>
+      <div class="card-chips">
+        <span class="chip effort-high"><span class="chip-label">Effort</span> High</span>
+        <span class="chip impact-high"><span class="chip-label">Impact</span> High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Community Day Meetup Spot Poll</div>
+        <div class="card-number">13</div>
+      </div>
+      <div class="card-desc">Before a Community Day, a poll appears in the app: "Where should we gather?" — players vote between known local hotspots (e.g. Skibby Park, Frederikssund Havn) and the winner is pinned.</div>
+      <div class="card-insight"><strong>Research insight:</strong> The #1 Community Day question in every local Discord is "where are you all going?" A structured poll resolves this without a 50-message thread, and the result is actionable for everyone.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-high"><span class="chip-label">Impact</span> High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Gym Badge Community Map</div>
+        <div class="card-number">14</div>
+      </div>
+      <div class="card-desc">Let players optionally log which gym badge level they have at local gyms (Gold/Silver/Bronze). The gym list page shows how many community members have Gold at each gym.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Gold badge holders get extra raid balls — raid leaders often want to know who the "Gold regulars" are at a given gym when assembling a team. Surfaces this useful data socially.</div>
+      <div class="card-chips">
+        <span class="chip effort-med"><span class="chip-label">Effort</span> Medium</span>
+        <span class="chip impact-low"><span class="chip-label">Impact</span> Low</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Weather Boost Awareness Card</div>
+        <div class="card-number">15</div>
+      </div>
+      <div class="card-desc">A card on the home screen or raid view showing the current in-game weather in Frederikssund and which Pokémon types are boosted — no GPS manipulation, just local weather API.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Weather-boosted Pokémon have higher CP/IV floors and are specifically sought by PvP players and hundo hunters. Players constantly ask "is it raining there?" before traveling to a raid.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- SECTION 4: GAMIFICATION                        -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section-header section-gamification">
+    <div class="section-icon">🏆</div>
+    <div>
+      <h2>Gamification</h2>
+      <p>Recognition, streaks, and friendly competition within the local group</p>
+    </div>
+  </div>
+  <div class="cards-grid">
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Community Activity Badges</div>
+        <div class="card-number">16</div>
+      </div>
+      <div class="card-desc">Earnable badges on player profiles for community participation: "10 raids joined", "Community Day veteran × 5", "First to post a raid" — displayed on the player card.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Small community recognition is a powerful retention mechanic. Players who feel publicly acknowledged for showing up reliably become the community's core. Badges cost nothing to implement and add significant social value.</div>
+      <div class="card-chips">
+        <span class="chip effort-med"><span class="chip-label">Effort</span> Medium</span>
+        <span class="chip impact-high"><span class="chip-label">Impact</span> High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Monthly Local Leaderboard</div>
+        <div class="card-number">17</div>
+      </div>
+      <div class="card-desc">A monthly reset leaderboard visible to community members: most raids joined, most raids posted, most DMs sent — friendly, not competitive, resets each month.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Community metrics drive participation. Monthly reset prevents "rich get richer" staleness and gives every player a fresh chance to top the board — a pattern proven in Discord engagement bots.</div>
+      <div class="card-chips">
+        <span class="chip effort-med"><span class="chip-label">Effort</span> Medium</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Team Statistics Dashboard</div>
+        <div class="card-number">18</div>
+      </div>
+      <div class="card-desc">A community-level stats page: how many Instinct/Mystic/Valor players, total raids this month, most active time of day — pure aggregate data, no individual rankings.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Community transparency builds belonging. Knowing "we completed 47 raids this month as a group" creates shared pride. Team rivalry (Instinct vs. Mystic vs. Valor) is a core PGO identity mechanic.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- SECTION 5: QUALITY OF LIFE                     -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section-header section-qol">
+    <div class="section-icon">✨</div>
+    <div>
+      <h2>Quality of Life</h2>
+      <p>Small improvements that reduce daily friction for active players</p>
+    </div>
+  </div>
+  <div class="cards-grid">
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Trade Scheduling (1:1)</div>
+        <div class="card-number">19</div>
+      </div>
+      <div class="card-desc">A lightweight "schedule a trade" flow: pick a player, propose a time and place, both confirm — both get a push notification reminder 30 min before.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Coordinating timing for trades is cited as one of the top pain points: players need to agree on exact minutes, and timing errors cause wasted trips. A structured ping-and-confirm flow solves this.</div>
+      <div class="card-chips">
+        <span class="chip effort-med"><span class="chip-label">Effort</span> Medium</span>
+        <span class="chip impact-high"><span class="chip-label">Impact</span> High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Spotlight Hour Reminders</div>
+        <div class="card-number">20</div>
+      </div>
+      <div class="card-desc">Optional push notification 30 minutes before each weekly Spotlight Hour, showing the featured Pokémon and bonus (e.g. "2× Catch Candy") — opt-in per user in notification settings.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Spotlight Hours run every Tuesday 18:00–19:00 local time. Players frequently miss them — the 1-hour window is unforgiving. A simple reminder is among the most-requested Discord bot features in local PGO servers.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-high"><span class="chip-label">Impact</span> High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Friendship Level Milestone Nudge</div>
+        <div class="card-number">21</div>
+      </div>
+      <div class="card-desc">When a player reaches "Best Friends" with another community member, show a celebratory in-app notification with a prompt to DM them — turning a background metric into a social moment.</div>
+      <div class="card-insight"><strong>Research insight:</strong> Best Friends gives a significant XP and damage bonus — but the game's notification is easy to miss. A community-level "🎉 You're Best Friends with [Trainer]!" moment reinforces local bonds.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Trainer Availability Preferences</div>
+        <div class="card-number">22</div>
+      </div>
+      <div class="card-desc">A simple profile section: "I usually play" → checkboxes for morning/afternoon/evening/weekend. Shown on player cards so raid leaders know who to ping for a 7am legendary.</div>
+      <div class="card-insight"><strong>Research insight:</strong> In small communities, knowing someone's play schedule is as valuable as their trainer level when organizing a raid. Currently this knowledge is entirely informal ("ask in the group chat").</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Pokédex Wishlist</div>
+        <div class="card-number">23</div>
+      </div>
+      <div class="card-desc">A simple list on a player's profile: "I'm looking for: [Shiny Gengar, Hundo Machamp, Regional Heracross]" — visible to others when browsing the player directory or opening a DM.</div>
+      <div class="card-insight"><strong>Research insight:</strong> "Who has X that I can trade for?" is one of the most frequent questions in PGO communities. A public wishlist surfaces trade opportunities passively, without requiring players to post repeatedly to a group.</div>
+      <div class="card-chips">
+        <span class="chip effort-low"><span class="chip-label">Effort</span> Low</span>
+        <span class="chip impact-med"><span class="chip-label">Impact</span> Medium</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ──────────────── SUMMARY TABLE ──────────────── -->
+  <div class="summary-section">
+    <h2>Quick-Scan Summary — All 23 Ideas</h2>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Feature</th>
+          <th>Section</th>
+          <th>Effort</th>
+          <th>Impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Raid RSVP Scheduler</td><td>Raid &amp; Events</td><td><span class="chip effort-med">Medium</span></td><td><span class="chip impact-high">High</span></td></tr>
+        <tr><td>2</td><td>Community Day Event Page</td><td>Raid &amp; Events</td><td><span class="chip effort-med">Medium</span></td><td><span class="chip impact-high">High</span></td></tr>
+        <tr><td>3</td><td>Event Calendar</td><td>Raid &amp; Events</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>4</td><td>Raid Boss Info Cards</td><td>Raid &amp; Events</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>5</td><td>Raid Outcome / Debrief</td><td>Raid &amp; Events</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>6</td><td>Shiny &amp; Hundo Celebration Feed</td><td>Social &amp; Community</td><td><span class="chip effort-med">Medium</span></td><td><span class="chip impact-high">High</span></td></tr>
+        <tr><td>7</td><td>Trade Board</td><td>Social &amp; Community</td><td><span class="chip effort-med">Medium</span></td><td><span class="chip impact-high">High</span></td></tr>
+        <tr><td>8</td><td>Lucky Friends Tracker</td><td>Social &amp; Community</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>9</td><td>Away / Inactive Status</td><td>Social &amp; Community</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>10</td><td>PvP Challenge Board</td><td>Social &amp; Community</td><td><span class="chip effort-med">Medium</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>11</td><td>Trainer Specialty Tags</td><td>Social &amp; Community</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>12</td><td>Spawn Nest Community Log</td><td>Discovery &amp; Maps</td><td><span class="chip effort-high">High</span></td><td><span class="chip impact-high">High</span></td></tr>
+        <tr><td>13</td><td>Community Day Meetup Spot Poll</td><td>Discovery &amp; Maps</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-high">High</span></td></tr>
+        <tr><td>14</td><td>Gym Badge Community Map</td><td>Discovery &amp; Maps</td><td><span class="chip effort-med">Medium</span></td><td><span class="chip impact-low">Low</span></td></tr>
+        <tr><td>15</td><td>Weather Boost Awareness Card</td><td>Discovery &amp; Maps</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>16</td><td>Community Activity Badges</td><td>Gamification</td><td><span class="chip effort-med">Medium</span></td><td><span class="chip impact-high">High</span></td></tr>
+        <tr><td>17</td><td>Monthly Local Leaderboard</td><td>Gamification</td><td><span class="chip effort-med">Medium</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>18</td><td>Team Statistics Dashboard</td><td>Gamification</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>19</td><td>Trade Scheduling (1:1)</td><td>Quality of Life</td><td><span class="chip effort-med">Medium</span></td><td><span class="chip impact-high">High</span></td></tr>
+        <tr><td>20</td><td>Spotlight Hour Reminders</td><td>Quality of Life</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-high">High</span></td></tr>
+        <tr><td>21</td><td>Friendship Level Milestone Nudge</td><td>Quality of Life</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>22</td><td>Trainer Availability Preferences</td><td>Quality of Life</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+        <tr><td>23</td><td>Pokédex Wishlist</td><td>Quality of Life</td><td><span class="chip effort-low">Low</span></td><td><span class="chip impact-med">Medium</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  PoGoSundet Feature Ideas Report · 30. juni 2026 · For internal use by the product team · Not for public distribution
+</footer>
+
+</body>
+</html>

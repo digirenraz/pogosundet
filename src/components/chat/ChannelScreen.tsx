@@ -41,6 +41,9 @@ interface ChannelScreenProps {
   channel: Channel;
   initialMessages: ChannelMessage[];
   profiles: OnlineStripProfile[];
+  // Bot authors. Used ONLY to resolve a message's display name/avatar — kept out
+  // of `profiles` so bots never appear in the online strip or members sheet.
+  botProfiles?: OnlineStripProfile[];
   memberCount: number;
   currentUserId: string;
   currentUserName: string;
@@ -71,6 +74,7 @@ export function ChannelScreen({
   channel,
   initialMessages,
   profiles,
+  botProfiles,
   memberCount,
   currentUserId,
   currentUserName,
@@ -104,8 +108,11 @@ export function ChannelScreen({
   const profileById = useMemo(() => {
     const map = new Map<string, OnlineStripProfile>();
     for (const p of profiles) map.set(p.user_id, p);
+    // Bots are author-resolvable but not members, so they go into this lookup
+    // only — never into the `profiles` list the strip and sheet render from.
+    for (const p of botProfiles ?? []) map.set(p.user_id, p);
     return map;
-  }, [profiles]);
+  }, [profiles, botProfiles]);
 
   const { typingUserIds, broadcastTyping } = useChannelRealtime(
     channel.id,

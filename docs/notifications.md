@@ -99,7 +99,8 @@ That is the complete list. No other event sends a notification.
 
 ## NOT sent (deliberately, as of today)
 
-- Channel chat messages (`#generelt`, `#app-feedback`)
+- Channel chat messages (`#generelt`, `#app-feedback`, `#events`)
+- **Event-bot posts in `#events`** — the bot (see [`docs/plans/pogo-event-bot.md`](plans/pogo-event-bot.md)) posts new raid events and raid-boss rotations, but sends **no push**: it writes an ordinary `channel_messages` row, and channel messages don't push. Members get the in-app badge only. This is deliberate — an automated feed is exactly the thing that would cause notification fatigue. Don't "fix" it without deciding that explicitly.
 - Replies or reactions (raid chat **or** channel chat)
 - Someone **leaving** a raid you posted/attend (joining now notifies — see "Currently sent" entry #4)
 - Account / profile events

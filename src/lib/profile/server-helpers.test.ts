@@ -18,6 +18,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 function mockSupabase(response: { data: unknown; error: unknown }) {
   const chain = {
     select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
     order: vi.fn().mockResolvedValue(response),
   };
   return { from: vi.fn().mockReturnValue(chain), chain };
@@ -41,6 +42,17 @@ describe('getAllProfiles', () => {
     expect(supabase.chain.order).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(result.data).toEqual(fakeProfiles);
     expect(result.error).toBeNull();
+  });
+
+  it('excludes bot accounts from the member directory', async () => {
+    // The event bot needs a profiles row (FK) but is not a member — without
+    // this filter it renders as a player card in /players.
+    const supabase = mockSupabase({ data: fakeProfiles, error: null });
+    vi.mocked(createAdminClient).mockReturnValue(supabase as never);
+
+    await getAllProfiles();
+
+    expect(supabase.chain.eq).toHaveBeenCalledWith('is_bot', false);
   });
 
   it('returns empty array when no profiles exist', async () => {

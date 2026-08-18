@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getAllProfiles } from '@/lib/profile/server-helpers';
+import { getAllProfiles, getBotProfiles } from '@/lib/profile/server-helpers';
 import { CHANNELS } from '@/lib/chat/channels';
 import { getLatestMessageForChannel } from '@/lib/chat/server-helpers';
 import { getUnreadCountsForUser, markChannelsSeen } from '@/lib/chat/read-helpers';
@@ -23,16 +23,33 @@ export default async function ChatPage() {
   if (!userId) redirect('/login');
 
   const channelIds = CHANNELS.map((c) => c.id);
-  const [initialUnreadCounts, , profilesResult, dmConversations, ...latestPerChannel] =
-    await Promise.all([
-      getUnreadCountsForUser(userId),
-      markChannelsSeen(userId, channelIds),
-      getAllProfiles(),
-      getDMConversations(userId),
-      ...CHANNELS.map((c) => getLatestMessageForChannel(c.id)),
-    ]);
+  const [
+    initialUnreadCounts,
+    ,
+    profilesResult,
+    dmConversations,
+    botProfilesResult,
+    ...latestPerChannel
+  ] = await Promise.all([
+    getUnreadCountsForUser(userId),
+    markChannelsSeen(userId, channelIds),
+    getAllProfiles(),
+    getDMConversations(userId),
+    getBotProfiles(),
+    ...CHANNELS.map((c) => getLatestMessageForChannel(c.id)),
+  ]);
 
   const profiles: OnlineStripProfile[] = profilesResult.data.map((p) => ({
+    user_id: p.user_id,
+    trainer_name: p.trainer_name,
+    avatar_url: p.avatar_url ?? null,
+    team: (p.team as Team | undefined) ?? null,
+    level: p.level ?? null,
+  }));
+
+  // Preview-name resolution only — deliberately NOT merged into `profiles`,
+  // which also drives the online strip, the members sheet and totalMembers.
+  const botProfiles: OnlineStripProfile[] = botProfilesResult.data.map((p) => ({
     user_id: p.user_id,
     trainer_name: p.trainer_name,
     avatar_url: p.avatar_url ?? null,
@@ -78,6 +95,7 @@ export default async function ChatPage() {
       <ChannelListScreen
         entries={entries}
         profiles={profiles}
+        botProfiles={botProfiles}
         totalMembers={profiles.length}
         currentUserId={userId}
         initialUnreadCounts={initialUnreadCounts}

@@ -31,6 +31,10 @@ export interface ChannelListEntry {
 interface ChannelListScreenProps {
   entries: ChannelListEntry[];
   profiles: OnlineStripProfile[];
+  // Bot authors. Used ONLY to resolve a message-preview name — kept out of
+  // `profiles`, which also feeds the online strip, the members sheet and the
+  // member count.
+  botProfiles?: OnlineStripProfile[];
   totalMembers: number;
   currentUserId: string;
   initialUnreadCounts: UnreadCounts;
@@ -42,6 +46,7 @@ interface ChannelListScreenProps {
 export function ChannelListScreen({
   entries,
   profiles,
+  botProfiles,
   totalMembers,
   currentUserId,
   initialUnreadCounts,
@@ -60,11 +65,16 @@ export function ChannelListScreen({
     userId: currentUserId,
   });
 
+  // Author names for the row previews. Bots are included here and nowhere else:
+  // a Realtime INSERT carries no profile join, so without them a live bot
+  // message renders as "—" until the next page load. Same fix as
+  // ChannelScreen's `profileById`.
   const nameById = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of profiles) map.set(p.user_id, p.trainer_name);
+    for (const p of botProfiles ?? []) map.set(p.user_id, p.trainer_name);
     return map;
-  }, [profiles]);
+  }, [profiles, botProfiles]);
   const now = new Date();
 
   // Merge realtime DM previews + bump unread for live arrivals. Sorting is

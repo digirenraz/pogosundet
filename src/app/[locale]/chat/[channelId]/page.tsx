@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getAllProfiles } from '@/lib/profile/server-helpers';
+import { getAllProfiles, getBotProfiles } from '@/lib/profile/server-helpers';
 import { getChannelById } from '@/lib/chat/channels';
 import { getMemberCount, getMessagesForChannel } from '@/lib/chat/server-helpers';
 import { markChannelRead } from '@/lib/chat/read-helpers';
@@ -29,9 +29,10 @@ export default async function ChannelPage({ params }: PageProps) {
 
   // Parallel fetches once we have a valid channel + user.
   // markChannelRead bumps last_read_at = NOW() so this channel renders with 0 unread.
-  const [messages, profilesResult, memberCount, meResult] = await Promise.all([
+  const [messages, profilesResult, botProfilesResult, memberCount, meResult] = await Promise.all([
     getMessagesForChannel(channel.id, 100),
     getAllProfiles(),
+    getBotProfiles(),
     getMemberCount(),
     supabase
       .from('profiles')
@@ -45,6 +46,16 @@ export default async function ChannelPage({ params }: PageProps) {
     (meResult.data as { trainer_name: string } | null)?.trainer_name ?? '';
 
   const profiles: OnlineStripProfile[] = profilesResult.data.map((p) => ({
+    user_id: p.user_id,
+    trainer_name: p.trainer_name,
+    avatar_url: p.avatar_url ?? null,
+    team: (p.team as Team | undefined) ?? null,
+    level: p.level ?? null,
+  }));
+
+  // Author-resolution only — deliberately NOT merged into `profiles`, which
+  // also feeds the online strip and the members sheet.
+  const botProfiles: OnlineStripProfile[] = botProfilesResult.data.map((p) => ({
     user_id: p.user_id,
     trainer_name: p.trainer_name,
     avatar_url: p.avatar_url ?? null,
@@ -69,6 +80,7 @@ export default async function ChannelPage({ params }: PageProps) {
         channel={channel}
         initialMessages={messages}
         profiles={profiles}
+        botProfiles={botProfiles}
         memberCount={memberCount}
         currentUserId={userId}
         currentUserName={currentUserName}

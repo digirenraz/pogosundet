@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Avatar } from '@/components/Avatar';
 import { useLongPress } from '@/lib/hooks/use-long-press';
 import { clockTime, type MessageGroup as MessageGroupType } from '@/lib/chat/time';
+import { linkify } from '@/lib/chat/linkify';
 import type { ChatMessage } from '@/lib/chat/types';
 import { Reactions } from './Reactions';
 import { ReplyQuote } from './ReplyQuote';
@@ -69,7 +70,10 @@ function MessageBubble({
       onClick={(e) => {
         if (e.detail === 0) onTap();
       }}
-      className={`px-3.5 py-2 text-[15px] leading-snug max-w-[78%] w-fit break-words text-left transition-opacity select-none [-webkit-touch-callout:none] ${
+      // `whitespace-pre-wrap` keeps intentional line breaks: without it a
+      // multi-line message (the event bot posts name / time / link on separate
+      // lines) collapses into one run-on paragraph.
+      className={`px-3.5 py-2 text-[15px] leading-snug max-w-[78%] w-fit break-words whitespace-pre-wrap text-left transition-opacity select-none [-webkit-touch-callout:none] ${
         mine ? 'bg-primary text-primary-foreground' : 'bg-input text-card-foreground'
       } ${dimmed ? 'opacity-50' : 'opacity-100'}`}
       style={{
@@ -79,7 +83,15 @@ function MessageBubble({
         borderBottomLeftRadius: radius.bottomLeft,
       }}
     >
-      {body}
+      {/*
+        Bare URLs become tappable links. Known trade-off: this nests an <a>
+        inside the bubble's <button>, which the HTML spec disallows (interactive
+        content inside a button). It works in every browser and the anchor stops
+        propagation so a link tap doesn't also open the action sheet, but the
+        clean fix is to stop making the whole bubble a button — worth doing if
+        the message bubble is ever reworked.
+      */}
+      {linkify(body)}
     </button>
   );
 }

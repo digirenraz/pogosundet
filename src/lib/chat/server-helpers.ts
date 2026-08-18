@@ -70,11 +70,14 @@ export async function getMessagesForChannel(
 
 // Count of profiles — used as the "X medlemmer" badge on the channel screen.
 // Every registered profile is a member of every channel for v1.
+// Bot accounts (migration 023) are excluded so the event bot doesn't inflate the
+// count by one — it posts to #events but is not a member.
 export async function getMemberCount(): Promise<number> {
   const supabase = await createClient();
   const { count, error } = await supabase
     .from('profiles')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact', head: true })
+    .eq('is_bot', false);
   if (error || count == null) return 0;
   return count;
 }

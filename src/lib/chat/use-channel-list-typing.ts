@@ -8,15 +8,20 @@ const TYPING_IDLE_MS = 3000;
 
 type TypingState = Record<ChannelId, Set<string>>;
 
-const EMPTY: TypingState = { generelt: new Set(), feedback: new Set() };
+// Built from CHANNELS so a new channel needs no edit here. Each call returns a
+// fresh state object — the Sets are mutable, so a shared constant would leak
+// typing users between renders.
+function emptyTypingState(): TypingState {
+  return Object.fromEntries(CHANNELS.map((channel) => [channel.id, new Set<string>()])) as TypingState;
+}
 
-// Channel-list-scoped typing tracker. Subscribes to broadcast 'typing'
-// events on both `chat:generelt` and `chat:feedback` so the channel-list
-// rows can show "X skriver…" even when the user isn't viewing that channel.
+// Channel-list-scoped typing tracker. Subscribes to the broadcast 'typing'
+// event on every channel's topic so the channel-list rows can show
+// "X skriver…" even when the user isn't viewing that channel.
 // Mirrors the per-channel pattern in use-channel-realtime.ts but folded into
 // one hook keyed by channel id.
 export function useChannelListTyping(currentUserId: string | null | undefined): TypingState {
-  const [typing, setTyping] = useState<TypingState>(EMPTY);
+  const [typing, setTyping] = useState<TypingState>(emptyTypingState);
   const lastSeenRef = useRef<Map<ChannelId, Map<string, number>>>(new Map());
   const expireTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -26,7 +31,7 @@ export function useChannelListTyping(currentUserId: string | null | undefined): 
 
     function recompute() {
       const now = Date.now();
-      const next: TypingState = { generelt: new Set(), feedback: new Set() };
+      const next: TypingState = emptyTypingState();
       let anyActive = false;
       for (const c of CHANNELS) {
         const seen = lastSeenRef.current.get(c.id);

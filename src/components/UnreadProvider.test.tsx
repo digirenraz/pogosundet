@@ -23,8 +23,8 @@ vi.mock('@/lib/chat/use-channel-unread', () => ({
   useChannelUnread: () => ({
     total: 0,
     clearChannel: mockClearChannel,
-    counts: { generelt: 0, feedback: 0 },
-    latestByChannel: { generelt: null, feedback: null },
+    counts: { generelt: 0, feedback: 0, events: 0 },
+    latestByChannel: { generelt: null, feedback: null, events: null },
   }),
 }));
 
