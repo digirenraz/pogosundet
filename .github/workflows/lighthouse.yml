@@ -1,8 +1,10 @@
 name: Lighthouse CI
 
-# Waits for "Ready in", which is what Next 16 prints ("✓ Ready in 94ms").
-# The old "Ready on" is pre-Next-13 wording and never matched, so Lighthouse ran
-# before the server was listening and every run failed with CHROME_INTERSTITIAL_ERROR.
+# Server startup lives in .lighthouserc.json (startServerCommand), NOT here:
+# treosh/lighthouse-ci-action has no `serverCommand`/`serverReadyPattern` inputs.
+# They were silently ignored — the action logs "Unexpected input(s)" — so the
+# server was never started and every run since 2026-08-03 died with
+# CHROME_INTERSTITIAL_ERROR (connection refused), not a real page problem.
 #
 # Report-only for now (all assertions use "warn", not "error") — see
 # .lighthouserc.json. Promote to a required gate once baseline scores
@@ -43,8 +45,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-      # treosh/lighthouse-ci-action starts the server (npm start), waits for
-      # it to be ready, then runs Lighthouse against each URL in .lighthouserc.json.
+      # LHCI reads .lighthouserc.json, which starts the server itself
+      # (startServerCommand) and then scans each URL listed there.
       # env vars here are inherited by the npm-start subprocess so the
       # middleware can reach Supabase and pages load correctly.
       - name: Lighthouse CI
@@ -52,8 +54,6 @@ jobs:
         uses: treosh/lighthouse-ci-action@v12
         with:
           configPath: .lighthouserc.json
-          serverCommand: npm start
-          serverReadyPattern: "Ready in"
           uploadArtifacts: true
           # temporaryPublicStorage disabled — depends on an external LHCI cloud
           # service that can be unavailable in CI; artifacts cover our needs.
