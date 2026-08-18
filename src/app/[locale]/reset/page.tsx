@@ -22,20 +22,31 @@ export default function ResetPage() {
     setError("");
     setLoading(true);
 
-    const supabase = createClient();
-    // redirectTo tells Supabase where to send the user after they click the email link.
-    // Our /auth/confirm handler then verifies the token and redirects to /reset/confirm.
-    const { error: authError } = await supabase.auth.resetPasswordForEmail(
-      email,
-      { redirectTo: `${window.location.origin}/auth/confirm` }
-    );
+    try {
+      const supabase = createClient();
+      // redirectTo tells Supabase where to send the user after they click the email link.
+      // Our /auth/confirm handler then verifies the token and redirects to /reset/confirm.
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(
+        email,
+        { redirectTo: `${window.location.origin}/auth/confirm` }
+      );
 
-    if (authError) {
+      if (authError) {
+        setError(t("errorGeneric"));
+      } else {
+        setSuccess(true);
+      }
+    } catch (err) {
+      // A transport failure — unreachable Supabase project, or a deployment
+      // missing NEXT_PUBLIC_SUPABASE_* (the client asserts those with `!`, so a
+      // missing one yields an invalid URL) — REJECTS rather than returning
+      // { error }. Without this catch the spinner ran forever with no feedback,
+      // which is what made "preview auth is flaky" so hard to diagnose.
+      console.error("Password reset request failed", err);
       setError(t("errorGeneric"));
-    } else {
-      setSuccess(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   if (success) {

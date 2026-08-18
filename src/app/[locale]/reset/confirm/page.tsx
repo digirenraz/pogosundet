@@ -36,15 +36,27 @@ export default function ResetConfirmPage() {
     }
 
     setLoading(true);
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.updateUser({ password });
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.updateUser({ password });
 
-    if (authError) {
-      setError(t("errorGeneric"));
-      setLoading(false);
-    } else {
+      if (authError) {
+        setError(t("errorGeneric"));
+        setLoading(false);
+        return;
+      }
+
       router.push("/");
       router.refresh();
+    } catch (err) {
+      // A transport failure — unreachable Supabase project, or a deployment
+      // missing NEXT_PUBLIC_SUPABASE_* (the client asserts those with `!`, so a
+      // missing one yields an invalid URL) — REJECTS rather than returning
+      // { error }. Without this catch the spinner ran forever with no feedback,
+      // which is what made "preview auth is flaky" so hard to diagnose.
+      console.error("Password update failed", err);
+      setError(t("errorGeneric"));
+      setLoading(false);
     }
   }
 

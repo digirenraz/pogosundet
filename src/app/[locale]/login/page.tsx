@@ -27,22 +27,36 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (authError) {
-      setError(
-        authError.message.includes("Invalid login credentials")
-          ? t("errorInvalidCredentials")
-          : t("errorGeneric")
-      );
-      setLoading(false);
-    } else {
+      if (authError) {
+        setError(
+          authError.message.includes("Invalid login credentials")
+            ? t("errorInvalidCredentials")
+            : t("errorGeneric")
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Deliberately no setLoading(false) on success — navigation follows, and
+      // clearing it first makes the button flicker back to its idle label.
       router.push("/");
       router.refresh();
+    } catch (err) {
+      // A transport failure — unreachable Supabase project, or a deployment
+      // missing NEXT_PUBLIC_SUPABASE_* (the client asserts those with `!`, so a
+      // missing one yields an invalid URL) — REJECTS rather than returning
+      // { error }. Without this catch the spinner ran forever with no feedback,
+      // which is what made "preview auth is flaky" so hard to diagnose.
+      console.error("Login failed", err);
+      setError(t("errorGeneric"));
+      setLoading(false);
     }
   }
 

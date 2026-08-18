@@ -30,31 +30,43 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        // Store the consent timestamp so we have a GDPR audit trail.
-        data: { gdpr_consent_at: new Date().toISOString() },
-      },
-    });
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          // Store the consent timestamp so we have a GDPR audit trail.
+          data: { gdpr_consent_at: new Date().toISOString() },
+        },
+      });
 
-    if (authError) {
-      const msg = authError.message.toLowerCase();
-      setError(
-        msg.includes("already registered") || msg.includes("user already registered")
-          ? t("errorEmailTaken")
-          : msg.includes("password")
-          ? t("errorWeakPassword")
-          : t("errorGeneric")
-      );
-      setLoading(false);
-    } else {
+      if (authError) {
+        const msg = authError.message.toLowerCase();
+        setError(
+          msg.includes("already registered") || msg.includes("user already registered")
+            ? t("errorEmailTaken")
+            : msg.includes("password")
+            ? t("errorWeakPassword")
+            : t("errorGeneric")
+        );
+        setLoading(false);
+        return;
+      }
+
       // Analytics: registration submitted successfully (no PII — email is never sent).
       track("account_created");
       // Supabase sends a confirmation email — tell the user to check their inbox.
       setSuccess(true);
+      setLoading(false);
+    } catch (err) {
+      // A transport failure — unreachable Supabase project, or a deployment
+      // missing NEXT_PUBLIC_SUPABASE_* (the client asserts those with `!`, so a
+      // missing one yields an invalid URL) — REJECTS rather than returning
+      // { error }. Without this catch the spinner ran forever with no feedback,
+      // which is what made "preview auth is flaky" so hard to diagnose.
+      console.error("Registration failed", err);
+      setError(t("errorGeneric"));
       setLoading(false);
     }
   }

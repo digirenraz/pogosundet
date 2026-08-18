@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-08-18',
+    text: 'Rettet: hvis login eller oprettelse gik galt på grund af forbindelsen, sad knappen bare og snurrede uden at sige noget. Nu får du en fejlbesked med det samme, så du ved at du kan prøve igen.',
+  },
+  {
     date: '2026-08-16',
     text: 'Ny kanal: #events. Her lægger appen automatisk besked op, når der kommer nye raid-events, og når raid-bosserne skifter — så du ikke selv skal holde øje. Data kommer fra LeekDuck.com. Beskeder med links kan nu trykkes direkte, og linjeskift bliver vist som de skal i alle chats.',
   },

@@ -1,5 +1,9 @@
 name: Lighthouse CI
 
+# Waits for "Ready in", which is what Next 16 prints ("✓ Ready in 94ms").
+# The old "Ready on" is pre-Next-13 wording and never matched, so Lighthouse ran
+# before the server was listening and every run failed with CHROME_INTERSTITIAL_ERROR.
+#
 # Report-only for now (all assertions use "warn", not "error") — see
 # .lighthouserc.json. Promote to a required gate once baseline scores
 # are established. Not a required status check, so it can never block a merge.
@@ -49,7 +53,7 @@ jobs:
         with:
           configPath: .lighthouserc.json
           serverCommand: npm start
-          serverReadyPattern: "Ready on"
+          serverReadyPattern: "Ready in"
           uploadArtifacts: true
           # temporaryPublicStorage disabled — depends on an external LHCI cloud
           # service that can be unavailable in CI; artifacts cover our needs.
