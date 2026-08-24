@@ -58,3 +58,6 @@ next-env.d.ts
 # claude code — local-scope settings (permission allow-list, per-project
 # MCP/plugin overrides); machine-specific, not meant to be shared via git
 .claude/settings.local.json
+
+# lighthouse ci local reports
+.lighthouseci/
