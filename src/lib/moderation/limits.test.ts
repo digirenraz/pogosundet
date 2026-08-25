@@ -20,7 +20,7 @@ import {
 // unit test would otherwise touch, and the migration is applied by hand, so
 // there is no runtime that would catch the mismatch earlier.
 const MIGRATION = readFileSync(
-  resolve(__dirname, '../../../supabase/migrations/023_moderation.sql'),
+  resolve(__dirname, '../../../supabase/migrations/024_moderation.sql'),
   'utf8'
 );
 
@@ -31,7 +31,7 @@ function checkLimitFor(column: string): number {
   );
   if (!match) {
     throw new Error(
-      `No CHECK (length(${column}) <= n) found in 023_moderation.sql — ` +
+      `No CHECK (length(${column}) <= n) found in 024_moderation.sql — ` +
         'the constraint was renamed or removed; update this test with it.'
     );
   }

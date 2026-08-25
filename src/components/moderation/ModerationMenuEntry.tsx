@@ -41,7 +41,7 @@ export function ModerationMenuEntry({
       try {
         const supabase = createClient();
 
-        // is_admin() over a column select: migration 023 revokes SELECT on
+        // is_admin() over a column select: migration 024 revokes SELECT on
         // profiles.is_admin, and the RPC takes no argument, so it can only
         // report on the caller.
         const { data: admin } = await supabase.rpc('is_admin');

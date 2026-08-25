@@ -30,7 +30,7 @@ export default async function OnboardingPage() {
   // with "permission denied for column" when the role lacks privilege on any
   // selected column — it does not quietly omit them. `profiles` has several
   // columns revoked from `authenticated` (friend_code in migration 022;
-  // is_admin / banned_at / banned_reason in 023), so a star select fails here
+  // is_admin / banned_at / banned_reason in 024), so a star select fails here
   // and the chip silently disappears. These five are all the chip needs.
   const { data } = await supabase
     .from('profiles')

@@ -72,7 +72,7 @@ function toMessageReport(
 export async function isCurrentUserAdmin(): Promise<boolean> {
   const supabase = await createClient();
 
-  // Via the RPC rather than a column select: migration 023 revokes SELECT on
+  // Via the RPC rather than a column select: migration 024 revokes SELECT on
   // profiles.is_admin from `authenticated` (so nobody can look up who the
   // moderator is), and is_admin() takes no argument, so it can only ever
   // answer about the caller. Returns false when signed out — callers treat
@@ -118,7 +118,7 @@ export async function getReports(historyLimit = 30): Promise<{
   const historyRows = (historyResult.data ?? []) as unknown as ReportRow[];
 
   // Ban state is fetched separately, through the ADMIN client, because
-  // migration 023 revokes SELECT on profiles.banned_at from `authenticated` —
+  // migration 024 revokes SELECT on profiles.banned_at from `authenticated` —
   // otherwise any member could enumerate who is banned. It can't come from the
   // embedded join above for the same reason. Scoped to just the users who
   // actually appear in the queue, and only reached after the /admin page has

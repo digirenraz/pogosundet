@@ -2,7 +2,7 @@
 // code, so this module must stay free of any Supabase client import.
 
 // Which chat surface a reported message lives on. Mirrors the `surface` CHECK
-// constraint in migration 023 and the branches of the report_message() RPC.
+// constraint in migration 024 and the branches of the report_message() RPC.
 export type ReportSurface = 'channel' | 'raid' | 'dm';
 
 // Why the message was reported. Mirrors the `reason` CHECK constraint.
@@ -18,7 +18,7 @@ export const REPORT_REASONS = [
 export type ReportReason = (typeof REPORT_REASONS)[number];
 
 // Max length of the reporter's optional free-text note. Enforced as a
-// `maxLength` on the textarea and mirrored by a DB CHECK (migration 023).
+// `maxLength` on the textarea and mirrored by a DB CHECK (migration 024).
 export const REPORT_NOTE_MAX_LENGTH = 500;
 
 // Max length of the moderator's note (ban reason / warning text).

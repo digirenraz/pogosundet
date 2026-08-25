@@ -34,7 +34,7 @@ const PROFILE_GUARD_COOKIE = "pogo-profile-ok";
 // minutes bounds how long a just-banned user keeps seeing the normal UI.
 //
 // This redirect is UX, not the security boundary — a banned user is blocked
-// from actually posting by the RLS policies in migration 023, which consult
+// from actually posting by the RLS policies in migration 024, which consult
 // the database on every single insert and cannot be cached around.
 const BAN_GUARD_COOKIE = "pogo-ban-ok";
 const BAN_GUARD_MAX_AGE = 60 * 5;
@@ -137,7 +137,7 @@ export async function updateSession(request: NextRequest) {
       path !== BANNED_PATH &&
       !banProven
     ) {
-      // is_banned() rather than a `banned_at` column select: migration 023
+      // is_banned() rather than a `banned_at` column select: migration 024
       // revokes SELECT on that column so members can't enumerate who is
       // banned, and the RPC takes no argument so it only answers for the caller.
       const { data: banned } = await supabase.rpc("is_banned");

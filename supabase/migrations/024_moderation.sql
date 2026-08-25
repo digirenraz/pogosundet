@@ -1,4 +1,4 @@
--- Migration 023: content moderation — user reports, message deletion, user bans.
+-- Migration 024: content moderation — user reports, message deletion, user bans.
 --
 -- Run in the Supabase SQL editor after 022_friend_code_column_security.sql.
 --

@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 //
 // The ban reason is read through get_own_profile(), the SECURITY DEFINER RPC
 // from migration 022: `banned_reason` is REVOKEd from the authenticated role
-// (migration 023) so a normal select can't read it, but a user is entitled to
+// (migration 024) so a normal select can't read it, but a user is entitled to
 // know why their own account was restricted.
 export default async function BannedPage() {
   const supabase = await createClient();

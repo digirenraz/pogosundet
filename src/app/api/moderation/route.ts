@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   }
 
   // is_admin() is argument-less and SECURITY DEFINER — it answers only about
-  // the caller, and profiles.is_admin is not directly selectable (migration 023).
+  // the caller, and profiles.is_admin is not directly selectable (migration 024).
   const { data: isAdmin } = await supabase.rpc('is_admin');
   if (isAdmin !== true) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
