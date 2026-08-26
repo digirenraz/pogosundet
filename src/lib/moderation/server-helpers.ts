@@ -148,14 +148,3 @@ export async function getReports(historyLimit = 30): Promise<{
     history: historyRows.map((row) => toMessageReport(row, bannedUserIds)),
   };
 }
-
-// Count of unreviewed reports — drives the badge on the app-menu entry.
-export async function getPendingReportCount(): Promise<number> {
-  const supabase = await createClient();
-  const { count, error } = await supabase
-    .from('message_reports')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'pending');
-  if (error) return 0;
-  return count ?? 0;
-}
