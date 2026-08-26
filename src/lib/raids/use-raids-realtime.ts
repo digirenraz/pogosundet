@@ -21,12 +21,16 @@ import type { RaidMessageRow } from './message-helpers';
 // (migration 005_realtime.sql, applied manually in the Supabase SQL editor).
 export function useRaidsRealtime(
   raidId?: string,
-  onMessageInsert?: (row: RaidMessageRow) => void
+  onMessageInsert?: (row: RaidMessageRow) => void,
+  onMessageDelete?: (messageId: string) => void
 ) {
   const router = useRouter();
   const onMessageInsertRef = useRef(onMessageInsert);
   // Must update via effect — React 19 react-hooks/refs forbids ref.current writes during render.
   useEffect(() => { onMessageInsertRef.current = onMessageInsert; }, [onMessageInsert]);
+
+  const onMessageDeleteRef = useRef(onMessageDelete);
+  useEffect(() => { onMessageDeleteRef.current = onMessageDelete; }, [onMessageDelete]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -55,6 +59,19 @@ export function useRaidsRealtime(
             } else {
               refresh();
             }
+          }
+        )
+        .on(
+          'postgres_changes',
+          // Unfiltered: a DELETE payload carries only the primary key, so
+          // raid_id isn't there to filter on. The detail view drops the id from
+          // its own already raid-scoped list; without a handler we fall back to
+          // a refresh, which re-reads the raid without the deleted message.
+          { event: 'DELETE', schema: 'public', table: 'raid_messages' },
+          (payload) => {
+            const id = (payload.old as { id?: string } | undefined)?.id;
+            if (id && onMessageDeleteRef.current) onMessageDeleteRef.current(id);
+            else refresh();
           }
         );
     } else {

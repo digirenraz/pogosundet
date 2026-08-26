@@ -1,6 +1,6 @@
 'use client';
 
-import { Reply, Copy } from 'lucide-react';
+import { Reply, Copy, Flag } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ChatMessage } from '@/lib/chat/types';
 
@@ -11,6 +11,11 @@ interface MessageActionSheetProps {
   onReact: (emoji: string) => void;
   onReply: () => void;
   onCopy: () => void;
+  /**
+   * Opens the report sheet for this message. Optional so a surface that hasn't
+   * been wired for moderation yet simply doesn't show the action.
+   */
+  onReport?: () => void;
 }
 
 // Quick reactions shown at the top of the sheet. Order mirrors the design.
@@ -26,6 +31,7 @@ export function MessageActionSheet({
   onReact,
   onReply,
   onCopy,
+  onReport,
 }: MessageActionSheetProps) {
   const t = useTranslations('Chat');
   if (!message) return null;
@@ -91,6 +97,16 @@ export function MessageActionSheet({
         <div className="px-2 flex flex-col">
           <ActionRow icon="reply" label={t('actionSvar')} onClick={onReply} />
           <ActionRow icon="copy" label={t('actionKopier')} onClick={onCopy} />
+          {/* Reporting your own message is meaningless (and rejected by the
+              report_message RPC), so the action only appears on others'. */}
+          {onReport && !mine && (
+            <ActionRow
+              icon="report"
+              label={t('actionAnmeld')}
+              onClick={onReport}
+              destructive
+            />
+          )}
         </div>
       </div>
     </div>
@@ -98,18 +114,24 @@ export function MessageActionSheet({
 }
 
 interface ActionRowProps {
-  icon: 'reply' | 'copy';
+  icon: 'reply' | 'copy' | 'report';
   label: string;
   onClick: () => void;
+  /** Renders the row in the destructive colour — used by "Anmeld". */
+  destructive?: boolean;
 }
 
-function ActionRow({ icon, label, onClick }: ActionRowProps) {
-  const Icon = icon === 'reply' ? Reply : Copy;
+const ACTION_ICONS = { reply: Reply, copy: Copy, report: Flag } as const;
+
+function ActionRow({ icon, label, onClick, destructive = false }: ActionRowProps) {
+  const Icon = ACTION_ICONS[icon];
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-3.5 px-3 py-3 rounded-[10px] bg-transparent text-[15px] font-semibold text-card-foreground text-left"
+      className={`flex items-center gap-3.5 px-3 py-3 rounded-[10px] bg-transparent text-[15px] font-semibold text-left ${
+        destructive ? 'text-destructive' : 'text-card-foreground'
+      }`}
     >
       <Icon size={18} />
       {label}

@@ -24,6 +24,10 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
     text: 'Ny kanal: #events. Her lægger appen automatisk besked op, når der kommer nye raid-events, og når raid-bosserne skifter — så du ikke selv skal holde øje. Data kommer fra LeekDuck.com. Beskeder med links kan nu trykkes direkte, og linjeskift bliver vist som de skal i alle chats.',
   },
   {
+    date: '2026-08-12',
+    text: 'Du kan nu anmelde en besked, hvis nogen skriver noget upassende. Hold fingeren nede på beskeden og vælg "Anmeld" — det virker i kanaler, raid-chat og private beskeder. Administratoren kigger på anmeldelsen og kan slette beskeden eller udelukke brugeren.',
+  },
+  {
     date: '2026-08-03',
     text: 'Nu kan du starte en ny direkte besked til enhver træner — ikke kun dem du allerede snakker med. Tryk på "Send besked" på en spillers profil eller i spilleroversigten, eller brug den nye "Ny besked"-knap under Chat.',
   },

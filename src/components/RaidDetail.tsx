@@ -40,6 +40,7 @@ import type { RaidWithDetails } from '@/lib/raids/server-helpers';
 import { Composer } from '@/components/chat/Composer';
 import { MessageActionSheet } from '@/components/chat/MessageActionSheet';
 import { MessageGroupView } from '@/components/chat/MessageGroup';
+import { ReportSheet } from '@/components/chat/ReportSheet';
 
 interface RaidDetailProps {
   raid: RaidWithDetails;
@@ -138,6 +139,8 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
   // Slice 16 chat orchestration — mirrors ChannelScreen.
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [actionMsgId, setActionMsgId] = useState<string | null>(null);
+  // Message currently being reported — drives ReportSheet.
+  const [reportMsgId, setReportMsgId] = useState<string | null>(null);
   // Sparse overlay: messageId → grouped reactions. Wins over messages[i].reactions
   // when present. Set via realtime + optimistic toggles.
   const [reactionOverrides, setReactionOverrides] = useState<
@@ -240,6 +243,10 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
       if (prev.some(m => m.id === row.id)) return prev;
       return [...prev, msg];
     });
+  },
+  // A moderator deleted this message — drop it from the open raid chat.
+  (messageId: string) => {
+    setMessages(prev => prev.filter(m => m.id !== messageId));
   });
 
   // Sync joined/extra/attendees when a fresh `raid` prop arrives (router.refresh
@@ -476,6 +483,11 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
     if (target && typeof navigator !== 'undefined' && navigator.clipboard) {
       void navigator.clipboard.writeText(target.body);
     }
+    setActionMsgId(null);
+  }
+
+  function handleSheetReport() {
+    setReportMsgId(actionMsgId);
     setActionMsgId(null);
   }
 
@@ -978,6 +990,13 @@ export function RaidDetail({ raid, currentUserId, currentUserName, profileNames,
         onReact={handleSheetReact}
         onReply={handleSheetReply}
         onCopy={handleSheetCopy}
+        onReport={handleSheetReport}
+      />
+
+      <ReportSheet
+        message={reportMsgId ? messagesById[reportMsgId] ?? null : null}
+        surface="raid"
+        onClose={() => setReportMsgId(null)}
       />
 
       <style>{`
