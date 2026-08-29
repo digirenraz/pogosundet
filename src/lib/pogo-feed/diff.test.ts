@@ -4,6 +4,7 @@ import {
   diffRaidLineup,
   raidLineupFingerprint,
   isAnnounceable,
+  isPostableRaidTier,
   MAX_POSTS_PER_RUN,
   MAX_LEAD_DAYS,
 } from './diff';
@@ -195,6 +196,23 @@ describe('selectNewEvents', () => {
     const result = selectNewEvents(feed, new Set(['seed']), NOW, true);
 
     expect(result.toPost.map((e) => e.eventID)).toEqual(['sooner', 'later']);
+  });
+});
+
+describe('isPostableRaidTier', () => {
+  it('allows 5-star and mega raids', () => {
+    expect(isPostableRaidTier(boss('Groudon', '5-Star Raids'))).toBe(true);
+    expect(isPostableRaidTier(boss('Mega Garchomp', 'Mega Raids'))).toBe(true);
+  });
+
+  it('excludes lower tiers', () => {
+    expect(isPostableRaidTier(boss('Tirtouga', '1-Star Raids'))).toBe(false);
+    expect(isPostableRaidTier(boss('Poliwrath', '3-Star Raids'))).toBe(false);
+    expect(isPostableRaidTier(boss('Giratina', 'Shadow Raids'))).toBe(false);
+  });
+
+  it('excludes an unrecognised tier rather than guessing', () => {
+    expect(isPostableRaidTier(boss('Mystery', 'Some New Tier'))).toBe(false);
   });
 });
 

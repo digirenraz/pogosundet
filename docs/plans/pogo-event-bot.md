@@ -10,8 +10,12 @@ fetches two ScrapedDuck endpoints, works out what changed since last time, and
 posts the diff to `#events` as a hidden bot account.
 
 - **New raid events** → one message each: name, time window, LeekDuck link.
-- **Raid boss rotation changed** → one message listing the current line-up by
-  tier, shiny-eligible bosses marked ✨.
+- **Raid boss rotation changed** → one message listing the current 5-star/mega
+  line-up by tier, shiny-eligible bosses marked ✨, plus a link to LeekDuck's
+  raid-boss page. **5-star and mega only** (added 2026-08-29) — 1-star/3-star/
+  shadow rotate too often to be "news", and are filtered out before both the
+  diff and the message so a change there doesn't trigger a post. See
+  `isPostableRaidTier` in `src/lib/pogo-feed/diff.ts`.
 
 Nothing else. No push notification (channel messages deliberately don't push —
 see `docs/notifications.md`), so members get an in-app badge only.

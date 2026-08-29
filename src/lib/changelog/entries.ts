@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-08-29',
+    text: 'Raid-boss-skift i #events viser nu kun 5-stjernede og Mega raids, så du ikke får beskeder om mindre skift. Hver besked har også et link til den fulde raid-boss-liste på LeekDuck.',
+  },
+  {
     date: '2026-08-18',
     text: 'Rettet: hvis login eller oprettelse gik galt på grund af forbindelsen, sad knappen bare og snurrede uden at sige noget. Nu får du en fejlbesked med det samme, så du ved at du kan prøve igen.',
   },

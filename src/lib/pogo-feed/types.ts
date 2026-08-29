@@ -33,6 +33,19 @@ export const POSTABLE_EVENT_TYPES = [
 export type PostableEventType = (typeof POSTABLE_EVENT_TYPES)[number];
 
 /**
+ * Raid tiers the rotation post announces.
+ *
+ * Deliberately 5-star and mega only — these are the raids worth travelling and
+ * grouping up for; 1-star/3-star/shadow rotate too often to be "news". Widen
+ * this list (and its pinning test) if that changes.
+ *
+ * Exact-string match, same caveat as `POSTABLE_EVENT_TYPES`: the wiki still
+ * documents "Tier 3" while the live feed returns "3-Star Raids", so these
+ * strings must track whatever the feed actually sends, not the docs.
+ */
+export const POSTABLE_RAID_TIERS = ['5-Star Raids', 'Mega Raids'] as const;
+
+/**
  * A single event from events.json.
  *
  * `start` / `end` are nullable AND carry two different meanings — see

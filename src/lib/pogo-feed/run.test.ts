@@ -342,6 +342,56 @@ describe('runFeedPoll', () => {
     expect(setState).not.toHaveBeenCalledWith('raid_lineup_fingerprint', expect.anything());
   });
 
+  it('does not post when only a non-postable tier changes', async () => {
+    // Fingerprint reflects the 5-star lineup only (Groudon) — a 1-star rotation
+    // change must not read as a change.
+    setup({
+      raidFingerprint: '5-Star Raids|Groudon|s',
+      bosses: [
+        { name: 'Groudon', tier: '5-Star Raids', canBeShiny: true, image: '' },
+        { name: 'Tirtouga', tier: '1-Star Raids', canBeShiny: false, image: '' },
+      ],
+    });
+    vi.mocked(fetchEvents).mockResolvedValue({ status: 'unchanged' });
+
+    const summary = await runFeedPoll(NOW);
+
+    expect(summary.rotationPosted).toBe(false);
+    expect(postAsBot).not.toHaveBeenCalled();
+  });
+
+  it('excludes non-postable tiers from the rotation message', async () => {
+    setup({
+      raidFingerprint: 'stale',
+      bosses: [
+        { name: 'Groudon', tier: '5-Star Raids', canBeShiny: true, image: '' },
+        { name: 'Tirtouga', tier: '1-Star Raids', canBeShiny: false, image: '' },
+      ],
+    });
+    vi.mocked(fetchEvents).mockResolvedValue({ status: 'unchanged' });
+
+    await runFeedPoll(NOW);
+
+    const body = postedBodies()[0];
+    expect(body).toContain('Groudon');
+    expect(body).not.toContain('Tirtouga');
+  });
+
+  it('ignores a lineup with no postable tiers rather than posting an empty rotation', async () => {
+    setup({
+      raidFingerprint: 'stale',
+      bosses: [{ name: 'Tirtouga', tier: '1-Star Raids', canBeShiny: false, image: '' }],
+    });
+    vi.mocked(fetchEvents).mockResolvedValue({ status: 'unchanged' });
+
+    const summary = await runFeedPoll(NOW);
+
+    expect(summary.rotationPosted).toBe(false);
+    expect(summary.notes).toContain('raids_filtered_empty');
+    expect(postAsBot).not.toHaveBeenCalled();
+    expect(setState).not.toHaveBeenCalledWith('raid_lineup_fingerprint', expect.anything());
+  });
+
   it('does not count a failed post as posted', async () => {
     setup({ events: [event('fresh')] });
     vi.mocked(fetchRaidBosses).mockResolvedValue({ status: 'unchanged' });
