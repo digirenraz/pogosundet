@@ -244,7 +244,11 @@ function tierRank(tier: string): number {
  * The raid rotation post.
  *
  * Grouped by tier, shiny-eligible bosses marked with ✨. Carries the LeekDuck /
- * ScrapedDuck attribution required by ScrapedDuck's terms of use.
+ * ScrapedDuck attribution required by ScrapedDuck's terms of use, plus a link to
+ * the full LeekDuck raid-boss page.
+ *
+ * Callers are expected to pass only postable tiers (see `isPostableRaidTier` in
+ * diff.ts) — this function formats whatever it's given, it doesn't filter.
  */
 export function formatRaidRotationMessage(bosses: ScrapedDuckRaidBoss[]): string {
   const byTier = new Map<string, ScrapedDuckRaidBoss[]>();
@@ -268,7 +272,8 @@ export function formatRaidRotationMessage(bosses: ScrapedDuckRaidBoss[]): string
     }
   }
 
-  lines.push('', 'Data: LeekDuck.com via ScrapedDuck');
+  lines.push('', 'Alle raid-bosses: https://leekduck.com/raid-bosses/');
+  lines.push('Data: LeekDuck.com via ScrapedDuck');
 
   return truncate(lines.join('\n'));
 }

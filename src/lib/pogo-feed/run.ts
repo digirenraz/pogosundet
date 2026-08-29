@@ -7,7 +7,7 @@
 // write degrades this run, never the next one. Nothing here throws.
 
 import { fetchEvents, fetchRaidBosses } from './feed';
-import { selectNewEvents, diffRaidLineup } from './diff';
+import { selectNewEvents, diffRaidLineup, isPostableRaidTier } from './diff';
 import { formatEventMessage, formatRaidRotationMessage } from './format';
 import {
   getState,
@@ -160,8 +160,21 @@ async function pollRaidRotation(summary: RunSummary): Promise<void> {
     return;
   }
 
+  // Only 5-star and mega are announcement-worthy (see isPostableRaidTier) — a
+  // rotation in the smaller tiers should neither trigger a post nor appear in
+  // one. Filtering here, before both the fingerprint and the emptiness guard
+  // below, also catches a tier-label drift (see the comment on TIER_ORDER in
+  // format.ts): if the exact strings ever stop matching anything, that reads as
+  // "nothing postable" and skips rather than posting an empty rotation.
+  const postableBosses = result.data.filter(isPostableRaidTier);
+
+  if (postableBosses.length === 0) {
+    summary.notes.push('raids_filtered_empty');
+    return;
+  }
+
   const previous = await getState(STATE_KEY_RAID_FINGERPRINT);
-  const diff = diffRaidLineup(result.data, previous);
+  const diff = diffRaidLineup(postableBosses, previous);
 
   if (!diff.changed) {
     if (result.etag) await setState(STATE_KEY_RAIDS_ETAG, result.etag);
@@ -177,7 +190,7 @@ async function pollRaidRotation(summary: RunSummary): Promise<void> {
   // silence with nothing to indicate anything went wrong. Posting first risks
   // one duplicate if the process dies in the gap between these two awaits —
   // visible, self-limiting, and far preferable to a silent two-week gap.
-  const { error } = await postAsBot(BOT_CHANNEL, formatRaidRotationMessage(result.data));
+  const { error } = await postAsBot(BOT_CHANNEL, formatRaidRotationMessage(postableBosses));
 
   if (error) {
     // Leave BOTH the fingerprint and the ETag untouched, so the next poll

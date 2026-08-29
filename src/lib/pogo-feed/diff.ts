@@ -7,6 +7,7 @@
 
 import {
   POSTABLE_EVENT_TYPES,
+  POSTABLE_RAID_TIERS,
   type ScrapedDuckEvent,
   type ScrapedDuckRaidBoss,
 } from './types';
@@ -18,6 +19,7 @@ export const MAX_POSTS_PER_RUN = 5;
 export const MAX_LEAD_DAYS = 30;
 
 const POSTABLE = new Set<string>(POSTABLE_EVENT_TYPES);
+const POSTABLE_TIERS = new Set<string>(POSTABLE_RAID_TIERS);
 
 /**
  * Parse a ScrapedDuck timestamp to an absolute instant, for comparison only.
@@ -151,6 +153,16 @@ export function selectNewEvents(
     .map((event) => event.eventID);
 
   return { toPost, toSeedOnly, seeding: false };
+}
+
+/**
+ * Is this raid boss in a tier the rotation post announces?
+ *
+ * Applied before fingerprinting AND before formatting, so a 1-star/3-star/
+ * shadow rotation change neither triggers a post nor appears in one.
+ */
+export function isPostableRaidTier(boss: ScrapedDuckRaidBoss): boolean {
+  return POSTABLE_TIERS.has(boss.tier);
 }
 
 /**

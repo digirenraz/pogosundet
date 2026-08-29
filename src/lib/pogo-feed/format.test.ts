@@ -198,6 +198,12 @@ describe('formatRaidRotationMessage', () => {
     expect(message).toContain('ScrapedDuck');
   });
 
+  it('links to the LeekDuck raid-boss page', () => {
+    const message = formatRaidRotationMessage([boss('Groudon', '5-Star Raids')]);
+
+    expect(message).toContain('https://leekduck.com/raid-bosses/');
+  });
+
   it('sorts an unrecognised tier to the end rather than dropping it', () => {
     const message = formatRaidRotationMessage([
       boss('Mystery', 'Some New Tier'),
