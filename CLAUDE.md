@@ -35,6 +35,7 @@ Every server route and page component must export `export const preferredRegion 
 - `experimental.optimizePackageImports: ['lucide-react']` — tree-shakes the icon barrel. Removing it ships every Lucide icon in every bundle that imports one.
 - `images.remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }]` — required for `next/image` to optimise raid screenshots and avatars from Supabase Storage. Any new image origin must be added here or `next/image` will refuse the URL.
 - Wrapped in `withNextIntl('./src/i18n/request.ts')` — do not unwrap; it's what loads locale messages for Server Components.
+- Also wrapped in `withSentryConfig` (outermost) — captures server/edge errors and uploads source maps when `SENTRY_AUTH_TOKEN` is set (CI/prod only; skipped locally and in PR builds without it).
 
 ### Middleware (`src/proxy.ts`)
 Next.js 16 renamed `middleware.ts` → `proxy.ts`. It chains two middlewares: Supabase session refresh (`updateSession`) then next-intl locale routing. Auth cookies are manually copied from the Supabase response onto the intl response to prevent loss.
