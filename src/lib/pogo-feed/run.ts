@@ -173,6 +173,12 @@ async function pollRaidRotation(summary: RunSummary): Promise<void> {
     return;
   }
 
+  // One-time note: the persisted fingerprint predates the tier filter (it used
+  // to cover every tier), so it won't match a fingerprint computed from just
+  // postableBosses even if the 5-star/mega lineup itself hasn't moved. The first
+  // poll after this shipped therefore reads as "changed" and reposts once,
+  // showing the current lineup under the new scheme. Accepted deliberately — a
+  // single harmless extra message beats a manual state-row edit on prod.
   const previous = await getState(STATE_KEY_RAID_FINGERPRINT);
   const diff = diffRaidLineup(postableBosses, previous);
 
