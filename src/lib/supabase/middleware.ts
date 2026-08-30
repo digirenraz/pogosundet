@@ -10,6 +10,7 @@ const PROFILE_GUARD_SKIPLIST = new Set<string>([
   "/login",
   "/register",
   "/privacy",
+  "/terms",
   "/profile/setup",
   "/reset",
   "/reset/confirm",
