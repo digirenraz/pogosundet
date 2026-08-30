@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-08-30',
+    text: 'Rettet: app-ikonet på login/opret-konto-skærmen viste det gamle sværd-ikon og var delvist skjult bag baggrundsbilledet. Nu vises det rigtige PoGoSundet-ikon tydeligt.',
+  },
+  {
+    date: '2026-08-30',
     text: 'Rettet: sletning af konto kunne fejle, hvis du havde postet et raid, deltaget i et raid, eller skrevet en besked. Nu virker det korrekt for alle.',
   },
   {
