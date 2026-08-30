@@ -78,9 +78,9 @@ export default function LoginPage() {
     <div className="flex flex-col min-h-screen bg-background">
       {/* Redirect into the app if a session appears (installed-PWA OAuth return). */}
       <AuthRedirectOnSignIn />
-      <Hero />
+      <Hero height={90} />
 
-      <div className="flex-1 px-6 pb-6 flex flex-col gap-6 mt-4">
+      <div className="px-6 pb-6 flex flex-col gap-3 mt-1">
         <div className="text-center">
           <h1 className="text-[28px] font-extrabold text-foreground tracking-tight mb-2">
             {t("title")}
@@ -90,7 +90,13 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
+          <GoogleButton type="button" onClick={handleGoogle}>
+            {t("googleButton")}
+          </GoogleButton>
+
+          <OrDivider text={t("or")} />
+
           <AuthInput
             label={t("emailLabel")}
             icon={Mail}
@@ -127,20 +133,12 @@ export default function LoginPage() {
             </p>
           )}
 
-          <div className="flex flex-col gap-4">
-            <PrimaryButton type="submit" disabled={loading}>
-              {loading ? "…" : t("submit")}
-            </PrimaryButton>
-
-            <OrDivider text={t("or")} />
-
-            <GoogleButton type="button" onClick={handleGoogle}>
-              {t("googleButton")}
-            </GoogleButton>
-          </div>
+          <PrimaryButton type="submit" disabled={loading}>
+            {loading ? "…" : t("submit")}
+          </PrimaryButton>
         </form>
 
-        <p className="mt-auto text-center text-sm text-muted-foreground pt-4">
+        <p className="text-center text-sm text-muted-foreground">
           {t("footerPrompt")}{" "}
           <Link href="/register" className="text-primary font-semibold">
             {t("footerLink")}

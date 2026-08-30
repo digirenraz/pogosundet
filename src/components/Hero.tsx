@@ -3,15 +3,17 @@ import Image from "next/image";
 interface HeroProps {
   /** Path to hero image (relative to /public). Defaults to the login hero. */
   imageSrc?: string;
+  /** Hero image height in px. Defaults to 320 (the original design height). */
+  height?: number;
 }
 
-// 320px hero illustration with a gradient fade at the bottom and the app logo
-// floating over the edge — matches the Banani login screen design.
-export function Hero({ imageSrc = "/hero-login.jpg" }: HeroProps) {
+// Hero illustration (320px by default) with a gradient fade at the bottom and
+// the app logo floating over the edge — matches the Banani login screen design.
+export function Hero({ imageSrc = "/hero-login.jpg", height = 320 }: HeroProps) {
   return (
     <>
       {/* Hero illustration */}
-      <div className="w-full h-80 relative flex-shrink-0">
+      <div className="w-full relative flex-shrink-0" style={{ height }}>
         <Image
           src={imageSrc}
           alt=""
@@ -20,10 +22,17 @@ export function Hero({ imageSrc = "/hero-login.jpg" }: HeroProps) {
           className="object-cover"
           priority
         />
-        {/* Gradient that fades the image into the page background */}
+        {/*
+          Gradient that fades the image into the page background. Scaled to
+          half the hero height (160px at the original 320px default) rather
+          than a fixed height — a fixed 160px fade on a much shorter hero
+          (e.g. the compact login layout) would extend past the image's own
+          top edge and wash out the whole photo instead of just its bottom.
+        */}
         <div
-          className="absolute bottom-0 left-0 right-0 h-40"
+          className="absolute bottom-0 left-0 right-0"
           style={{
+            height: height / 2,
             background:
               "linear-gradient(to bottom, transparent, var(--color-background) 95%)",
           }}
