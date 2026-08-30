@@ -120,6 +120,25 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+          <div className="flex flex-col gap-1">
+            <GoogleButton type="button" onClick={handleGoogle}>
+              {t("googleButton")}
+            </GoogleButton>
+            <p className="text-[12px] text-muted-foreground text-center">
+              {t("googleConsentNotice")}{" "}
+              <Link href="/privacy" className="underline">
+                {t("consentLink")}
+              </Link>
+              {t("consentAnd")}
+              <Link href="/terms" className="underline">
+                {t("termsLink")}
+              </Link>
+              .
+            </p>
+          </div>
+
+          <OrDivider text={t("or")} />
+
           <AuthInput
             label={t("emailLabel")}
             icon={Mail}
@@ -179,30 +198,9 @@ export default function RegisterPage() {
             </p>
           )}
 
-          <div className="flex flex-col gap-4">
-            <PrimaryButton type="submit" disabled={!consent || loading}>
-              {loading ? "…" : t("submit")}
-            </PrimaryButton>
-
-            <OrDivider text={t("or")} />
-
-            <div className="flex flex-col gap-1">
-              <GoogleButton type="button" onClick={handleGoogle}>
-                {t("googleButton")}
-              </GoogleButton>
-              <p className="text-[12px] text-muted-foreground text-center">
-                {t("googleConsentNotice")}{" "}
-                <Link href="/privacy" className="underline">
-                  {t("consentLink")}
-                </Link>
-                {t("consentAnd")}
-                <Link href="/terms" className="underline">
-                  {t("termsLink")}
-                </Link>
-                .
-              </p>
-            </div>
-          </div>
+          <PrimaryButton type="submit" disabled={!consent || loading}>
+            {loading ? "…" : t("submit")}
+          </PrimaryButton>
         </form>
 
         <p className="mt-auto text-center text-sm text-muted-foreground pt-4">

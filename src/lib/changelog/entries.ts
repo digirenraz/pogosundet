@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-08-30',
+    text: 'Opret konto-siden viser nu også "Fortsæt med Google" øverst, ligesom log ind-siden.',
+  },
+  {
+    date: '2026-08-30',
     text: 'Log ind-siden viser nu "Fortsæt med Google" øverst, og hele siden er rykket lidt op, så "Installér PoGoSundet"-boksen ikke længere kan dække login-knappen.',
   },
   {
