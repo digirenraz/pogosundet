@@ -3,15 +3,17 @@ import Image from "next/image";
 interface HeroProps {
   /** Path to hero image (relative to /public). Defaults to the login hero. */
   imageSrc?: string;
+  /** Hero image height in px. Defaults to 320 (the original design height). */
+  height?: number;
 }
 
-// 320px hero illustration with a gradient fade at the bottom and the app logo
-// floating over the edge — matches the Banani login screen design.
-export function Hero({ imageSrc = "/hero-login.jpg" }: HeroProps) {
+// Hero illustration (320px by default) with a gradient fade at the bottom and
+// the app logo floating over the edge — matches the Banani login screen design.
+export function Hero({ imageSrc = "/hero-login.jpg", height = 320 }: HeroProps) {
   return (
     <>
       {/* Hero illustration */}
-      <div className="w-full h-80 relative flex-shrink-0">
+      <div className="w-full relative flex-shrink-0" style={{ height }}>
         <Image
           src={imageSrc}
           alt=""
