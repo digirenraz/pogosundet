@@ -161,6 +161,15 @@ export default function RegisterPage() {
               >
                 {t("consentLink")}
               </Link>
+              {t("consentAnd")}
+              <Link
+                href="/terms"
+                className="text-primary font-semibold underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t("termsLink")}
+              </Link>
             </span>
           </label>
 
@@ -185,6 +194,10 @@ export default function RegisterPage() {
                 {t("googleConsentNotice")}{" "}
                 <Link href="/privacy" className="underline">
                   {t("consentLink")}
+                </Link>
+                {t("consentAnd")}
+                <Link href="/terms" className="underline">
+                  {t("termsLink")}
                 </Link>
               </p>
             </div>

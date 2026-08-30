@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-08-30',
+    text: 'PoGoSundet har nu sine egne vilkår for brug, som du kan læse under registrering sammen med privatlivspolitikken.',
+  },
+  {
     date: '2026-08-29',
     text: 'Raid-boss-skift i #events viser nu kun 5-stjernede og Mega raids, så du ikke får beskeder om mindre skift. Hver besked har også et link til den fulde raid-boss-liste på LeekDuck.',
   },
