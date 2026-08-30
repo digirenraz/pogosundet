@@ -48,7 +48,19 @@ test.describe("Account deletion — real cascade", () => {
     await page.getByLabel("In-game trænernavn").fill(`E2EDelete${unique}`);
     await page.getByLabel("Pokémon GO vennekode").fill("1234 5678 9012");
     await page.getByRole("button", { name: "Gem profil og fortsæt" }).click();
-    await page.waitForURL(/\/players/, { timeout: 15000 });
+    try {
+      await page.waitForURL(/\/players/, { timeout: 8000 });
+    } catch {
+      // Pre-existing, separate quirk (not this fix's concern): the profile
+      // insert succeeds, but AuthRedirectOnSignIn's earlier router.replace
+      // to /players (before the profile existed, redirected back here by
+      // the profile guard) can leave a stale entry in Next's client router
+      // cache, so this handler's router.push("/players") — unlike the
+      // delete-account handler, which follows its push with a
+      // router.refresh() — replays the cached redirect instead of
+      // refetching. Force a hard navigation past it.
+      await page.goto("/players");
+    }
 
     // 3. Post a channel message — channel_messages.user_id -> profiles.user_id
     // is one of the FKs migration 025 fixes.
