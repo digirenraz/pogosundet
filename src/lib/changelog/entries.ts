@@ -17,6 +17,10 @@ export interface ChangelogEntry {
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     date: '2026-08-30',
+    text: 'Rettet: sletning af konto kunne fejle, hvis du havde postet et raid, deltaget i et raid, eller skrevet en besked. Nu virker det korrekt for alle.',
+  },
+  {
+    date: '2026-08-30',
     text: 'PoGoSundet har nu sine egne vilkår for brug, som du kan læse under registrering sammen med privatlivspolitikken.',
   },
   {
