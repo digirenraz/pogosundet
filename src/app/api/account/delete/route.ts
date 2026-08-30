@@ -19,6 +19,9 @@ export async function POST() {
 
   const { error } = await deleteAccount(user.id);
   if (error) {
+    // Log the real Supabase/Postgres error (e.g. a foreign key violation) so
+    // Sentry captures it — the client only ever sees the generic message.
+    console.error('Account deletion failed', user.id, error);
     return NextResponse.json({ error: 'Failed to delete account' }, { status: 500 });
   }
 
