@@ -22,10 +22,17 @@ export function Hero({ imageSrc = "/hero-login.jpg", height = 320 }: HeroProps) 
           className="object-cover"
           priority
         />
-        {/* Gradient that fades the image into the page background */}
+        {/*
+          Gradient that fades the image into the page background. Scaled to
+          half the hero height (160px at the original 320px default) rather
+          than a fixed height — a fixed 160px fade on a much shorter hero
+          (e.g. the compact login layout) would extend past the image's own
+          top edge and wash out the whole photo instead of just its bottom.
+        */}
         <div
-          className="absolute bottom-0 left-0 right-0 h-40"
+          className="absolute bottom-0 left-0 right-0"
           style={{
+            height: height / 2,
             background:
               "linear-gradient(to bottom, transparent, var(--color-background) 95%)",
           }}
