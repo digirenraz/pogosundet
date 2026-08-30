@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Swords } from "lucide-react";
 
 interface HeroProps {
   /** Path to hero image (relative to /public). Defaults to the login hero. */
@@ -31,12 +30,20 @@ export function Hero({ imageSrc = "/hero-login.jpg" }: HeroProps) {
         />
       </div>
 
-      {/* Logo — overlaps the bottom edge of the hero by half its height (36px) */}
+      {/*
+        Logo — overlaps the bottom edge of the hero by half its height (36px).
+        `relative z-10`: without an explicit position, this box paints *behind*
+        the hero above it in CSS's stacking order (the hero's `relative` makes
+        it a positioned element, and positioned elements paint after
+        non-positioned siblings regardless of DOM order) — the hero image was
+        visibly clipping the top of this badge.
+      */}
       <div
-        className="flex items-center justify-center bg-primary border-4 border-background shadow-lg mx-auto -mt-9"
+        data-testid="hero-logo"
+        className="relative z-10 overflow-hidden border-4 border-background shadow-lg mx-auto -mt-9"
         style={{ width: 72, height: 72, borderRadius: 20 }}
       >
-        <Swords size={32} className="text-primary-foreground" />
+        <Image src="/icon-512.png" alt="" fill sizes="72px" className="object-cover" />
       </div>
     </>
   );
