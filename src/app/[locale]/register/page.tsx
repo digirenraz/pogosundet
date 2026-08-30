@@ -199,6 +199,7 @@ export default function RegisterPage() {
                 <Link href="/terms" className="underline">
                   {t("termsLink")}
                 </Link>
+                .
               </p>
             </div>
           </div>
