@@ -3,6 +3,7 @@
 // The profiles row is removed automatically via ON DELETE CASCADE.
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
+import * as Sentry from '@sentry/nextjs';
 import { createClient } from '@/lib/supabase/server';
 import { deleteAccount } from '@/lib/account/server-helpers';
 
@@ -19,9 +20,11 @@ export async function POST() {
 
   const { error } = await deleteAccount(user.id);
   if (error) {
-    // Log the real Supabase/Postgres error (e.g. a foreign key violation) so
-    // Sentry captures it — the client only ever sees the generic message.
-    console.error('Account deletion failed', user.id, error);
+    // Report the real Supabase/Postgres error (e.g. a foreign key violation)
+    // to Sentry — a bare console.error is never forwarded there (no
+    // captureConsoleIntegration is registered), and the client only ever
+    // sees the generic message below.
+    Sentry.captureException(error, { extra: { userId: user.id } });
     return NextResponse.json({ error: 'Failed to delete account' }, { status: 500 });
   }
 
