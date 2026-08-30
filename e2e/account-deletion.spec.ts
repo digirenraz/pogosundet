@@ -22,6 +22,20 @@ test.describe("Account deletion — real cascade", () => {
 
     // 1. Sign up a fresh throwaway account.
     await page.goto("/register");
+
+    // This context has no storageState (unlike the persistent E2E_TEST_EMAIL
+    // account other specs reuse), so the Amplitude consent banner appears
+    // fresh and — being a fixed overlay — blocks every click below until
+    // dismissed. Mirrors global-setup.ts's dismissal.
+    const consentBanner = page.getByRole("dialog", { name: /Samtykke til analyse/ });
+    try {
+      await consentBanner.waitFor({ state: "visible", timeout: 5000 });
+      await page.getByRole("button", { name: /Afvis/ }).click();
+      await consentBanner.waitFor({ state: "hidden", timeout: 5000 });
+    } catch {
+      // No banner shown — nothing to dismiss.
+    }
+
     await page.getByLabel("E-mail").fill(email);
     await page.getByLabel("Adgangskode").fill(password);
     await page.getByRole("checkbox").check();
