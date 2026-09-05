@@ -1,4 +1,4 @@
--- Migration 026: per-user record of whether the app is installed to the home
+-- Migration 027: per-user record of whether the app is installed to the home
 -- screen and whether notifications are allowed.
 --
 -- WHY: push only reaches people who (a) installed the PWA — mandatory on iOS —
@@ -16,6 +16,11 @@
 -- member themselves (RLS below) and by the service role on the admin screen.
 -- It is not exposed to other members anywhere in the app. Privacy Policy §2/§3
 -- updated in the same change.
+--
+-- Numbered 027, not 026: PR #238 (live location sharing) claimed 026 first
+-- while this branch was open — same renumber the moderation migration did when
+-- the event-bot migration took 023. Ordering between the two is independent;
+-- neither touches the other's tables.
 --
 -- Apply-before-merge ordering (like 021/023/024): the /admin setup tab reads
 -- this table and every app open calls the RPC, so it must exist in prod before

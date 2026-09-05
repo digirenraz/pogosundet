@@ -4,7 +4,7 @@
 // nudge?" by combining three sources:
 //   • profiles           — everyone who counts as a member (bots excluded)
 //   • app_setup_status   — installed / notification permission, per member
-//                          (migration 026; written by AppSetupReporter)
+//                          (migration 027; written by AppSetupReporter)
 //   • push_subscriptions — the row the Edge Functions actually send to
 //
 // Read through the SERVICE ROLE client on purpose. app_setup_status and
@@ -26,7 +26,7 @@ export interface MemberSetupRow {
   /** Browser permission last reported from their device. */
   push_permission: PushPermission | null;
   platform: SetupPlatform | null;
-  /** Last app open we recorded, or null if they haven't opened it since 026. */
+  /** Last app open we recorded, or null if they haven't opened it since migration 027. */
   last_seen_at: string | null;
   /** Last time we saw them in the installed app — spots an uninstall. */
   last_standalone_at: string | null;

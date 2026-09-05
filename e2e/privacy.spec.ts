@@ -17,7 +17,7 @@ test("privacy policy discloses Sentry as a data processor", async ({ page }) => 
   ).toBeVisible();
 });
 
-// Added 2026-09-05 with the app-setup tracking (migration 026): the app now
+// Added 2026-09-05 with the app-setup tracking (migration 027): the app now
 // records whether a member has installed the PWA and allowed notifications,
 // which is personal data about their device and therefore has to be disclosed.
 test("privacy policy discloses the app-setup data collected automatically", async ({

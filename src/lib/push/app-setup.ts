@@ -7,7 +7,7 @@
 //
 // Neither was recorded anywhere, so there was no way to see who was missing a
 // step. This module reads both from the device on app open and reports them
-// through the record_app_setup() RPC (migration 026). Browser-only — never
+// through the record_app_setup() RPC (migration 027). Browser-only — never
 // import from a Server Component.
 import type { SupabaseClient } from '@supabase/supabase-js';
 
