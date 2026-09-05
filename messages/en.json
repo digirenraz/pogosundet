@@ -86,7 +86,7 @@
     "s3Title": "3. How do we use the data?",
     "s3Body": "Your data is used solely to operate PoGoSundet: to show your profile to other local players and make it easy to add each other as friends in Pokémon GO.",
     "s4Title": "4. Legal basis",
-    "s4Body": "Processing is based on your consent, given at registration (GDPR Article 6(1)(a)).",
+    "s4Body": "Processing of your profile information is based on your consent, given at registration (GDPR Article 6(1)(a)). A small amount of technical information is collected automatically and instead rests on our legitimate interest in operating, debugging and supporting the app (GDPR Article 6(1)(f)): error logging (see section 7) and whether you have installed the app and allowed notifications (see section 2). You may object to this processing at any time by contacting us. Analytics via Amplitude (see section 9) is collected only with your separate consent.",
     "s5Title": "5. Retention and deletion",
     "s5Body": "Your data is stored for as long as your account is active. You can delete your account at any time via \"Edit profile\" in the app — all your data is deleted immediately and permanently.",
     "s6Title": "6. Sharing",

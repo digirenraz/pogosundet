@@ -37,4 +37,11 @@ test("privacy policy discloses the app-setup data collected automatically", asyn
   await expect(
     page.getByText(/kun synlige for appens administrator/)
   ).toBeVisible();
+
+  // The legal basis has to match: this data is collected automatically on
+  // every app open, so it cannot rest on the consent given at registration.
+  await expect(
+    page.getByRole("heading", { name: "4. Retsgrundlag" })
+  ).toBeVisible();
+  await expect(page.getByText(/legitime interesse/)).toBeVisible();
 });
