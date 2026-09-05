@@ -75,7 +75,7 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-08-12",
+    "lastUpdated": "Sidst opdateret: 2026-09-05",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
@@ -105,7 +105,9 @@
     "s13Title": "13. Direkte beskeder",
     "s13Body": "Når du sender en direkte besked (DM) til en anden træner, gemmer vi beskeden sammen med afsenderens og modtagerens bruger-id, beskedteksten, tidspunktet og eventuelle reaktioner (emojis). Kun de to deltagere i samtalen kan læse beskederne — det er sikret teknisk på databaseniveau, så ingen andre har adgang. Beskederne opbevares på ubestemt tid, indtil du sletter din konto. Når du sletter din konto, slettes alle dine direkte beskeder (både sendte og modtagne) samt dine reaktioner automatisk.",
     "s14Title": "14. Anmeldelser og moderation",
-    "s14Body": "Hvis du anmelder en besked, gemmer vi en kopi af den anmeldte besked, dit trænernavn som anmelder, afsenderens trænernavn, den årsag du vælger, og en eventuel kommentar fra dig. Kopien gemmes, fordi anmeldelsen ellers ville være ubrugelig, når beskeden er slettet. Anmeldelser kan kun læses af app-administratoren — heller ikke af andre brugere. Anmelder du en privat besked, deles kun den ene anmeldte besked med administratoren, aldrig resten af samtalen. Administratoren kan slette den anmeldte besked, sende dig eller afsenderen en besked, og udelukke en konto fra at skrive. Udelukkes din konto, gemmer vi tidspunktet og en begrundelse, som vises for dig. Anmeldelser og udelukkelser opbevares, så længe din konto er aktiv, og slettes sammen med kontoen."
+    "s14Body": "Hvis du anmelder en besked, gemmer vi en kopi af den anmeldte besked, dit trænernavn som anmelder, afsenderens trænernavn, den årsag du vælger, og en eventuel kommentar fra dig. Kopien gemmes, fordi anmeldelsen ellers ville være ubrugelig, når beskeden er slettet. Anmeldelser kan kun læses af app-administratoren — heller ikke af andre brugere. Anmelder du en privat besked, deles kun den ene anmeldte besked med administratoren, aldrig resten af samtalen. Administratoren kan slette den anmeldte besked, sende dig eller afsenderen en besked, og udelukke en konto fra at skrive. Udelukkes din konto, gemmer vi tidspunktet og en begrundelse, som vises for dig. Anmeldelser og udelukkelser opbevares, så længe din konto er aktiv, og slettes sammen med kontoen.",
+    "s15Title": "15. Deling af din position",
+    "s15Body": "Hvis du selv vælger at dele din position, gemmer vi dine koordinater, hvor længe delingen varer, og en eventuel note du selv skriver. Delingen sker kun, når du aktivt starter den, og alle indloggede medlemmer kan se, hvor du er, så længe den er aktiv. Du bestemmer varigheden — højst 2 timer — og du kan stoppe delingen når som helst. Din position slettes automatisk, når tiden er gået: vi gemmer kun din seneste position, aldrig en historik over, hvor du har været. Vi gemmer én række per bruger, som overskrives, hver gang din position opdateres. Din position opdateres kun, mens du har appen fremme — en webapp kan ikke aflæse placering i baggrunden — og andre kan derfor se, hvor du var for et par minutter siden, ikke hvor du er lige nu. Vi anbefaler, at du ikke deler din position hjemmefra. Kortet henter kortfliser fra OpenStreetMap, som derved kan se, hvilket område du kigger på. Trykker du \"Vis på kort\", åbner du Google Maps med de valgte koordinater — det sker kun, når du selv trykker."
   },
   "Terms": {
     "title": "Vilkår for brug",
@@ -367,7 +369,8 @@
     "players": "Spillere",
     "raids": "Raids",
     "chat": "Chat",
-    "profile": "Profil"
+    "profile": "Profil",
+    "map": "Kort"
   },
   "LoadingScreen": {
     "ariaLabel": "Indlæser",
@@ -615,5 +618,41 @@
     "reasonLabel": "Årsag",
     "since": "Udelukket den {date}",
     "appeal": "Mener du, at det er en fejl? Kontakt administratoren i Frederikssund-fællesskabet."
+  },
+  "LiveLocation": {
+    "title": "Hvem spiller nu",
+    "sharingBanner": "Du deler din position",
+    "remaining": "{minutes} min tilbage",
+    "stop": "Stop",
+    "share": "Del min position",
+    "shareTitle": "Del din position",
+    "durationLabel": "Hvor længe spiller du?",
+    "duration15": "15 min",
+    "duration30": "30 min",
+    "duration60": "1 time",
+    "duration120": "2 timer",
+    "notePlaceholder": "Fx ved havnen (valgfrit)",
+    "startShare": "Start deling",
+    "cancel": "Annuller",
+    "empty": "Ingen deler deres position lige nu.",
+    "emptyHint": "Start selv en deling, så andre kan se hvor du er.",
+    "openMap": "Åbn kort",
+    "closeMap": "Luk kort",
+    "centerOnMe": "Centrer på mig",
+    "sendMessage": "Send besked",
+    "showOnMap": "Vis på kort",
+    "near": "ved {gym}",
+    "you": "Dig",
+    "denied": "Du har slået placering fra i browseren. Slå det til igen for at dele din position.",
+    "unsupported": "Din browser understøtter ikke placering.",
+    "failed": "Kunne ikke hente din placering. Prøv igen.",
+    "mapAttribution": "Kortdata © OpenStreetMap-bidragydere",
+    "consentTitle": "Før du deler din position",
+    "consentWhat": "Alle medlemmer af PoGoSundet kan se, hvor du er, så længe din deling er aktiv.",
+    "consentDuration": "Du bestemmer hvor længe — højst 2 timer. Din position slettes automatisk, når tiden er gået, og vi gemmer ingen historik.",
+    "consentStale": "Din position opdateres kun, når du har appen fremme. Andre kan derfor se, hvor du var for et par minutter siden — ikke live.",
+    "consentHome": "Del ikke din position hjemmefra. Del kun, når du er ude og spille.",
+    "consentAccept": "Jeg forstår",
+    "staleWarning": "Positionerne opdateres kun, når folk har appen fremme."
   }
 }

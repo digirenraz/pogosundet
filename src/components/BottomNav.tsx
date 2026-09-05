@@ -3,7 +3,7 @@
 import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Users, Swords, MessageCircle, User } from 'lucide-react';
+import { Users, Swords, MessageCircle, User, Map } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useUnread } from '@/components/UnreadProvider';
 
@@ -106,6 +106,15 @@ export function BottomNav() {
             )
           }
         />
+      </Link>
+
+      {/* Kort — live location sharing. Fifth tab: with justify-around and
+          fixed w-16 items, 5 x 64px still fits a 375px viewport. */}
+      <Link
+        href="/kort"
+        className={`flex flex-col items-center justify-center gap-1 w-16 ${isActive('/kort') ? 'text-primary' : 'text-muted-foreground'}`}
+      >
+        <NavTabContent active={isActive('/kort')} icon={Map} label={t('map')} />
       </Link>
 
       {/* Profile */}
