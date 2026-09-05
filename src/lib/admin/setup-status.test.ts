@@ -3,7 +3,9 @@ import { summarise, type MemberSetupRow } from './setup-status';
 
 function member(overrides: Partial<MemberSetupRow>): MemberSetupRow {
   return {
-    user_id: overrides.trainer_name ?? 'u',
+    // Derived from the name only so each row gets a distinct id without every
+    // test having to invent one; pass user_id explicitly to override it.
+    user_id: `user-${overrides.trainer_name ?? 'default'}`,
     trainer_name: 'Trainer',
     installed: false,
     push: false,
