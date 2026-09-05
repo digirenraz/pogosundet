@@ -640,6 +640,7 @@
     "platform_desktop": "Computer",
     "platform_other": "Ukendt enhed",
     "loadErrorTitle": "Kunne ikke hente opsætningen",
-    "loadErrorBody": "Noget gik galt, da tallene skulle hentes. De vises ikke her, fordi halvt indlæste data ville se ud som om ingen har notifikationer slået til. Prøv at genindlæse siden."
+    "loadErrorBody": "Noget gik galt, da tallene skulle hentes. De vises ikke her, fordi halvt indlæste data ville se ud som om ingen har notifikationer slået til. Prøv at genindlæse siden.",
+    "flagInstallUnknown": "Installation ukendt"
   }
 }

@@ -19,8 +19,13 @@ import type { PushPermission, SetupPlatform } from '@/lib/push/app-setup';
 export interface MemberSetupRow {
   user_id: string;
   trainer_name: string;
-  /** Has ever opened the app as an installed PWA. */
-  installed: boolean;
+  /**
+   * Has ever opened the app as an installed PWA — or `null` when we have no
+   * report from them at all and genuinely cannot say. Rendering `null` as
+   * "not installed" would be asserting something we don't know, which on
+   * rollout day is every member who has not opened the app since this shipped.
+   */
+  installed: boolean | null;
   /** Has a live push subscription the Edge Functions can send to. */
   push: boolean;
   /** Browser permission last reported from their device. */
@@ -30,7 +35,13 @@ export interface MemberSetupRow {
   last_seen_at: string | null;
   /** Last time we saw them in the installed app — spots an uninstall. */
   last_standalone_at: string | null;
-  /** True when they have never reported: we know nothing, not "not set up". */
+  /**
+   * True when we know nothing about them at all: no setup report AND no push
+   * subscription. Deliberately NOT just "no setup row" — a member who enabled
+   * notifications before this shipped has a push_subscriptions row, so their
+   * push state is known even though their install state isn't, and showing
+   * them as never-seen would bury a signal we already have.
+   */
   unknown: boolean;
 }
 
@@ -72,22 +83,56 @@ interface StatusRow {
 }
 
 /**
- * Orders the nudge list by how much help the person needs: never opened the app
- * since we started measuring (we can't even tell), then not installed at all
- * (the biggest blocker — on iOS it makes push impossible), then installed but
- * no notifications. Blocked permissions sort last within their group: a nudge
- * won't fix those, only a trip to system settings will.
+ * Orders the nudge list by how much help the person needs:
+ *   0  nothing known about them at all — start here
+ *   1  definitely not installed (on iOS that makes push impossible)
+ *   3  installed, but notifications off
+ *   5  install unconfirmed BUT push already works — least urgent, since the
+ *      only thing missing is a confirmation, not a capability
+ * Blocked permissions sort one place later within their group: a nudge can't
+ * fix those, only a trip to system settings can.
  */
 function nudgeRank(row: MemberSetupRow): number {
   if (row.unknown) return 0;
-  if (!row.installed) return row.push_permission === 'denied' ? 2 : 1;
-  return row.push_permission === 'denied' ? 4 : 3;
+  const denied = row.push_permission === 'denied' ? 1 : 0;
+  if (row.installed === false) return 1 + denied;
+  if (row.installed === true) return 3 + denied;
+  // installed === null: we can't confirm the install, but push works (a row
+  // with neither is `unknown` and already returned above).
+  return 5;
+}
+
+/**
+ * Builds one member's row from the three sources. Split out from the queries so
+ * the "what do we actually know?" rules are unit-testable — the rollout case
+ * (a push subscription that predates any setup report) lives here, not in
+ * summarise().
+ */
+export function toMemberRow(
+  profile: { user_id: string; trainer_name: string | null },
+  status: StatusRow | undefined,
+  push: boolean
+): MemberSetupRow {
+  return {
+    user_id: profile.user_id,
+    trainer_name: profile.trainer_name ?? '—',
+    // null when they have never reported — see the field's note.
+    installed: status === undefined ? null : status.installed_at != null,
+    push,
+    push_permission: (status?.push_permission as PushPermission) ?? null,
+    platform: (status?.platform as SetupPlatform) ?? null,
+    last_seen_at: status?.last_seen_at ?? null,
+    last_standalone_at: status?.last_standalone_at ?? null,
+    // Not merely "no setup row": a member who enabled notifications before
+    // this shipped has no row but a very much known push state.
+    unknown: status === undefined && !push,
+  };
 }
 
 /** Pure summariser, split out from the queries so it can be unit-tested. */
 export function summarise(rows: MemberSetupRow[], failed = false): SetupSummary {
   const needsNudge = rows
-    .filter((row) => !(row.installed && row.push))
+    .filter((row) => !(row.installed === true && row.push))
     .sort((a, b) => {
       const rank = nudgeRank(a) - nudgeRank(b);
       return rank !== 0 ? rank : a.trainer_name.localeCompare(b.trainer_name, 'da');
@@ -95,13 +140,14 @@ export function summarise(rows: MemberSetupRow[], failed = false): SetupSummary 
 
   return {
     members: rows.length,
-    installed: rows.filter((row) => row.installed).length,
+    // Only confirmed installs count — `null` is "unknown", not "no".
+    installed: rows.filter((row) => row.installed === true).length,
     push: rows.filter((row) => row.push).length,
     denied: rows.filter((row) => row.push_permission === 'denied').length,
     unknown: rows.filter((row) => row.unknown).length,
     needsNudge,
     ready: rows
-      .filter((row) => row.installed && row.push)
+      .filter((row) => row.installed === true && row.push)
       .sort((a, b) => a.trainer_name.localeCompare(b.trainer_name, 'da')),
     failed,
   };
@@ -151,21 +197,14 @@ export async function getSetupStatus(): Promise<SetupSummary> {
     ((pushResult.data ?? []) as { user_id: string }[]).map((row) => row.user_id)
   );
 
-  const rows: MemberSetupRow[] = ((profilesResult.data ?? []) as ProfileRow[]).map(
-    (profile) => {
-      const status = statusByUser.get(profile.user_id);
-      return {
-        user_id: profile.user_id,
-        trainer_name: profile.trainer_name ?? '—',
-        installed: status?.installed_at != null,
-        push: subscribed.has(profile.user_id),
-        push_permission: (status?.push_permission as PushPermission) ?? null,
-        platform: (status?.platform as SetupPlatform) ?? null,
-        last_seen_at: status?.last_seen_at ?? null,
-        last_standalone_at: status?.last_standalone_at ?? null,
-        unknown: status === undefined,
-      };
-    }
+  const rows: MemberSetupRow[] = (
+    (profilesResult.data ?? []) as ProfileRow[]
+  ).map((profile) =>
+    toMemberRow(
+      profile,
+      statusByUser.get(profile.user_id),
+      subscribed.has(profile.user_id)
+    )
   );
 
   return summarise(rows, failed);

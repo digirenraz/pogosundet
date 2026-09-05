@@ -146,10 +146,21 @@ function MemberRow({ row }: { row: MemberSetupRow }) {
             </span>
           ) : (
             <>
-              <Flag
-                ok={row.installed}
-                label={row.installed ? t('flagInstalled') : t('flagNotInstalled')}
-              />
+              {/* Three states, not two: `null` means they haven't reported
+                  since this shipped, so we genuinely don't know — showing that
+                  as a red "Ikke installeret" would invent a fact. */}
+              {row.installed === null ? (
+                <span className="text-[12px] text-muted-foreground font-semibold">
+                  {t('flagInstallUnknown')}
+                </span>
+              ) : (
+                <Flag
+                  ok={row.installed}
+                  label={
+                    row.installed ? t('flagInstalled') : t('flagNotInstalled')
+                  }
+                />
+              )}
               <Flag
                 ok={row.push}
                 label={

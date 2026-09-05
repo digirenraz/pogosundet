@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { summarise, type MemberSetupRow } from './setup-status';
+import { summarise, toMemberRow, type MemberSetupRow } from './setup-status';
 
 function member(overrides: Partial<MemberSetupRow>): MemberSetupRow {
   return {
@@ -7,7 +7,7 @@ function member(overrides: Partial<MemberSetupRow>): MemberSetupRow {
     // test having to invent one; pass user_id explicitly to override it.
     user_id: `user-${overrides.trainer_name ?? 'default'}`,
     trainer_name: 'Trainer',
-    installed: false,
+    installed: false as boolean | null,
     push: false,
     push_permission: 'default',
     platform: 'android',
@@ -45,11 +45,59 @@ describe('summarise', () => {
     expect(summary.ready.map((r) => r.trainer_name)).toEqual(['Ready']);
   });
 
+  // The rollout case, exercised through the real row-builder: everyone who
+  // enabled notifications BEFORE this shipped has a push_subscriptions row but
+  // no app_setup_status row. Reporting them as never-seen would bury a signal
+  // we already have, and rank them above people who genuinely need help.
+  it('does not call a known subscriber unknown just because they have no report', () => {
+    const row = toMemberRow(
+      { user_id: 'u1', trainer_name: 'PreExisting' },
+      undefined,
+      true
+    );
+    expect(row.unknown).toBe(false);
+    expect(row.push).toBe(true);
+    // Install genuinely isn't known — not false.
+    expect(row.installed).toBeNull();
+  });
+
+  it('calls a member with neither a report nor a subscription unknown', () => {
+    const row = toMemberRow(
+      { user_id: 'u2', trainer_name: 'NeverSeen' },
+      undefined,
+      false
+    );
+    expect(row.unknown).toBe(true);
+    expect(row.installed).toBeNull();
+  });
+
+  it('ranks an unconfirmed-install subscriber last — their push already works', () => {
+    const summary = summarise([
+      toMemberRow({ user_id: 'a', trainer_name: 'PreExisting' }, undefined, true),
+      toMemberRow({ user_id: 'b', trainer_name: 'NeverSeen' }, undefined, false),
+      member({ trainer_name: 'NotInstalled' }),
+    ]);
+    expect(summary.needsNudge.map((r) => r.trainer_name)).toEqual([
+      'NeverSeen',
+      'NotInstalled',
+      'PreExisting',
+    ]);
+  });
+
+  it('counts only confirmed installs, never an unknown one', () => {
+    const summary = summarise([
+      member({ trainer_name: 'A', installed: null, push: true }),
+      member({ trainer_name: 'B', installed: true, push: true }),
+    ]);
+    expect(summary.installed).toBe(1);
+    expect(summary.ready.map((r) => r.trainer_name)).toEqual(['B']);
+  });
+
   it('sorts the nudge list by how much help the person needs', () => {
     const summary = summarise([
       member({ trainer_name: 'InstalledNoPush', installed: true }),
       member({ trainer_name: 'NotInstalled' }),
-      member({ trainer_name: 'NeverOpened', unknown: true, push_permission: null }),
+      member({ trainer_name: 'NeverOpened', unknown: true, installed: null, push_permission: null }),
       member({
         trainer_name: 'Blocked',
         installed: true,
@@ -66,7 +114,7 @@ describe('summarise', () => {
 
   it('counts unknowns and blocked permissions separately from the rest', () => {
     const summary = summarise([
-      member({ trainer_name: 'A', unknown: true, push_permission: null }),
+      member({ trainer_name: 'A', unknown: true, installed: null, push_permission: null }),
       member({ trainer_name: 'B', push_permission: 'denied' }),
       member({ trainer_name: 'C', installed: true, push: true }),
     ]);
