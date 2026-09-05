@@ -23,13 +23,16 @@
     "@sentry/nextjs": "^10.68.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.103.0",
+    "@types/leaflet": "^1.9.22",
     "@types/qrcode": "^1.5.6",
+    "leaflet": "^1.9.4",
     "lucide-react": "^1.27.0",
     "next": "16.2.12",
     "next-intl": "^4.13.4",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

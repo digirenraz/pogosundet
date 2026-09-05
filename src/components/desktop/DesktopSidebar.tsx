@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Users, Swords, MessageCircle, User, MapPinned, Newspaper, CircleHelp, Rocket, Settings } from 'lucide-react';
+import { Users, Swords, MessageCircle, User, Map, MapPinned, Newspaper, CircleHelp, Rocket, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Team } from '@/lib/profile/validation';
 import { useUnread } from '@/components/UnreadProvider';
@@ -29,7 +29,7 @@ interface DesktopSidebarProps {
 interface NavItem {
   key: string;
   icon: LucideIcon;
-  labelKey: 'players' | 'raids' | 'chat' | 'profile';
+  labelKey: 'players' | 'raids' | 'chat' | 'profile' | 'map';
   href: string;
 }
 
@@ -37,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'spillere', icon: Users, labelKey: 'players', href: '/players' },
   { key: 'raids', icon: Swords, labelKey: 'raids', href: '/raids' },
   { key: 'chat', icon: MessageCircle, labelKey: 'chat', href: '/chat' },
+  { key: 'kort', icon: Map, labelKey: 'map', href: '/kort' },
   { key: 'profil', icon: User, labelKey: 'profile', href: '/profile' },
 ];
 

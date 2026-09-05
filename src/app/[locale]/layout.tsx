@@ -3,6 +3,8 @@ import { getMessages } from "next-intl/server";
 import { InitialSplash } from "@/components/InitialSplash";
 import LoadingScreen from "@/components/LoadingScreen";
 import { UnreadProvider } from "@/components/UnreadProvider";
+import { LocationShareProvider } from "@/components/LocationShareProvider";
+import { LocationShareBanner } from "@/components/LocationShareBanner";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 
 // Locale layout — loads translations and makes them available to all
@@ -23,7 +25,12 @@ export default async function LocaleLayout({
       <InitialSplash>
         <LoadingScreen />
       </InitialSplash>
-      <UnreadProvider>{children}</UnreadProvider>
+      <UnreadProvider>
+        <LocationShareProvider>
+          {children}
+          <LocationShareBanner />
+        </LocationShareProvider>
+      </UnreadProvider>
       <AnalyticsProvider />
     </NextIntlClientProvider>
   );

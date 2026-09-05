@@ -75,7 +75,7 @@
   },
   "Privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: 2026-08-12",
+    "lastUpdated": "Last updated: 2026-09-05",
     "backLink": "Back",
     "s1Title": "1. Data Controller",
     "s1Body": "René Rasmussen is the data controller for PoGoSundet. Contact: renraz@gmail.com",
@@ -103,7 +103,9 @@
     "s12Title": "12. Community chat",
     "s12Body": "When you post in the shared channels (#generelt and #app-feedback), we store your message together with your user id and timestamp. Messages are visible to all signed-in users of PoGoSundet and are kept indefinitely. When you delete your account, all your chat messages are deleted automatically along with your profile.",
     "s14Title": "14. Reports and moderation",
-    "s14Body": "If you report a message, we store a copy of the reported message, your trainer name as the reporter, the sender's trainer name, the reason you select, and any comment you add. The copy is kept because the report would otherwise be useless once the message is deleted. Reports can only be read by the app administrator — not by other users. If you report a private message, only that single reported message is shared with the administrator, never the rest of the conversation. The administrator can delete the reported message, message you or the sender, and ban an account from posting. If your account is banned we store the time and a reason, which is shown to you. Reports and bans are kept while your account is active and are deleted along with the account."
+    "s14Body": "If you report a message, we store a copy of the reported message, your trainer name as the reporter, the sender's trainer name, the reason you select, and any comment you add. The copy is kept because the report would otherwise be useless once the message is deleted. Reports can only be read by the app administrator — not by other users. If you report a private message, only that single reported message is shared with the administrator, never the rest of the conversation. The administrator can delete the reported message, message you or the sender, and ban an account from posting. If your account is banned we store the time and a reason, which is shown to you. Reports and bans are kept while your account is active and are deleted along with the account.",
+    "s15Title": "15. Sharing your location",
+    "s15Body": "If you choose to share your location, we store your coordinates, how long the share lasts, and any note you write yourself. Sharing only happens when you actively start it, and all logged-in members can see where you are while it is active. You choose the duration — 2 hours at most — and you can stop sharing at any time. Your location is deleted automatically when the time is up: we only keep your most recent position, never a history of where you have been. We store one row per user, overwritten each time your position updates. Your location only updates while you have the app open — a web app cannot read location in the background — so others may see where you were a few minutes ago, not where you are right now. We recommend that you do not share your location from home. The map loads tiles from OpenStreetMap, which can therefore see which area you are looking at. Tapping \"Vis på kort\" opens Google Maps with the selected coordinates — that only happens when you tap it yourself."
   },
   "Terms": {
     "title": "Terms of Use",
@@ -300,7 +302,8 @@
     "players": "Players",
     "raids": "Raids",
     "chat": "Chat",
-    "profile": "Profile"
+    "profile": "Profile",
+    "map": "Map"
   },
   "LoadingScreen": {
     "ariaLabel": "Loading",
@@ -507,5 +510,43 @@
     "reasonLabel": "Reason",
     "since": "Banned on {date}",
     "appeal": "Think this is a mistake? Contact the administrator in the Frederikssund community."
+  },
+  "LiveLocation": {
+    "title": "Who is playing now",
+    "subtitle": "See who is out playing right now",
+    "sharingBanner": "You are sharing your location",
+    "remaining": "{minutes} min left",
+    "stop": "Stop",
+    "share": "Share my location",
+    "shareTitle": "Share your location",
+    "durationLabel": "How long are you playing?",
+    "duration15": "15 min",
+    "duration30": "30 min",
+    "duration60": "1 hour",
+    "duration120": "2 hours",
+    "notePlaceholder": "E.g. by the harbour (optional)",
+    "startShare": "Start sharing",
+    "cancel": "Cancel",
+    "empty": "Nobody is sharing their location right now.",
+    "emptyHint": "Start a share so others can see where you are.",
+    "openMap": "Open map",
+    "closeMap": "Close map",
+    "centerOnMe": "Center on me",
+    "sendMessage": "Send message",
+    "showOnMap": "Show on map",
+    "near": "near {gym}",
+    "until": "until {time}",
+    "you": "You",
+    "denied": "Location is turned off in your browser. Turn it back on to share your location.",
+    "unsupported": "Your browser does not support location.",
+    "failed": "Could not get your location. Try again.",
+    "mapAttribution": "Map data © OpenStreetMap contributors",
+    "consentTitle": "Before you share your location",
+    "consentWhat": "Every PoGoSundet member can see where you are while your share is active.",
+    "consentDuration": "You choose how long — 2 hours at most. Your location is deleted automatically when the time is up, and we keep no history.",
+    "consentStale": "Your location only updates while you have the app open. Others may see where you were a few minutes ago — not live.",
+    "consentHome": "Do not share your location from home. Only share while you are out playing.",
+    "consentAccept": "I understand",
+    "staleWarning": "Locations only update while people have the app open."
   }
 }
