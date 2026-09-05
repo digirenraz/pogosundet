@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getReports, isCurrentUserAdmin } from '@/lib/moderation/server-helpers';
+import { getSetupStatus } from '@/lib/admin/setup-status';
 import { ModerationScreen } from '@/components/moderation/ModerationScreen';
 import { BottomNav } from '@/components/BottomNav';
 
@@ -25,8 +26,11 @@ export default async function AdminPage() {
 
   if (!(await isCurrentUserAdmin())) notFound();
 
-  const [{ pending, history }, t] = await Promise.all([
+  // getSetupStatus() reads through the service role, which is only safe
+  // because isCurrentUserAdmin() has already passed above.
+  const [{ pending, history }, setup, t] = await Promise.all([
     getReports(),
+    getSetupStatus(),
     getTranslations('Moderation'),
   ]);
 
@@ -35,6 +39,7 @@ export default async function AdminPage() {
       <ModerationScreen
         pending={pending}
         history={history}
+        setup={setup}
         title={t('title')}
       />
       <BottomNav />

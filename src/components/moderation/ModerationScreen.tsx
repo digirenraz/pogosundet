@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ExternalLink, ShieldAlert } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
+import type { SetupSummary } from '@/lib/admin/setup-status';
+import { SetupPanel } from '@/components/moderation/SetupPanel';
 import {
   MODERATOR_NOTE_MAX_LENGTH,
   reportContextHref,
@@ -14,11 +16,12 @@ import {
 } from '@/lib/moderation/types';
 
 // ---------------------------------------------------------------------------
-// ModerationScreen — the moderator's queue at /admin.
+// ModerationScreen — the admin surface at /admin.
 //
-// Two tabs: unreviewed reports ("Afventer") and a tail of already-handled ones
-// ("Historik"). Each report card shows the snapshot of the reported message,
-// who reported it and why, and the actions available.
+// Three tabs: unreviewed reports ("Afventer"), a tail of already-handled ones
+// ("Historik"), and the community's notification setup overview ("Opsætning").
+// Each report card shows the snapshot of the reported message, who reported it
+// and why, and the actions available.
 //
 // Every action POSTs to /api/moderation and then router.refresh() re-runs the
 // server component, so the list always reflects real database state rather than
@@ -29,6 +32,8 @@ import {
 interface ModerationScreenProps {
   pending: MessageReport[];
   history: MessageReport[];
+  /** Who in the community can actually receive notifications. */
+  setup: SetupSummary;
   /** Pre-translated page title — AppHeader takes a plain string. */
   title: string;
 }
@@ -41,12 +46,13 @@ const NOTE_ACTIONS = new Set<ModerationAction>(['warn', 'ban']);
 export function ModerationScreen({
   pending,
   history,
+  setup,
   title,
 }: ModerationScreenProps) {
   const t = useTranslations('Moderation');
   const router = useRouter();
 
-  const [tab, setTab] = useState<'pending' | 'history'>('pending');
+  const [tab, setTab] = useState<'pending' | 'history' | 'setup'>('pending');
   // The (report, action) pair currently awaiting a typed note, if any.
   const [noteFor, setNoteFor] = useState<{
     report: MessageReport;
@@ -121,6 +127,12 @@ export function ModerationScreen({
             label={t('tabHistory')}
             count={null}
           />
+          <TabButton
+            active={tab === 'setup'}
+            onClick={() => setTab('setup')}
+            label={t('tabSetup')}
+            count={null}
+          />
         </div>
 
         {error && (
@@ -129,7 +141,9 @@ export function ModerationScreen({
           </p>
         )}
 
-        {list.length === 0 ? (
+        {tab === 'setup' ? (
+          <SetupPanel setup={setup} />
+        ) : list.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-center">
             <ShieldAlert size={32} className="text-muted-foreground" />
             <p className="text-[15px] font-semibold text-card-foreground">

@@ -75,13 +75,14 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-08-12",
+    "lastUpdated": "Sidst opdateret: 2026-09-05",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
     "s2Title": "2. Hvilke oplysninger indsamler vi?",
     "s2Body": "Vi indsamler de oplysninger, du selv opgiver, når du opretter en konto og profil:",
     "s2List": "E-mailadresse · Trænernavn (in-game navn) · Pokémon GO vennekode · Fornavn (valgfrit) · Mini-bio (valgfrit) · Profilbillede (valgfrit)",
+    "s2Technical": "Derudover registrerer appen automatisk to tekniske oplysninger om din enhed: om du har installeret PoGoSundet på hjemmeskærmen, og om du har givet tilladelse til notifikationer (samt om du bruger iPhone, Android eller computer, og hvornår du sidst åbnede appen). Det bruges udelukkende til at se, hvem der endnu ikke er sat op til at modtage besked om raids, så vi kan hjælpe med opsætningen. Oplysningerne er kun synlige for appens administrator — aldrig for andre brugere — og slettes sammen med din konto.",
     "s3Title": "3. Hvad bruger vi oplysningerne til?",
     "s3Body": "Oplysningerne bruges udelukkende til at drive PoGoSundet: at vise din profil til andre lokale spillere og gøre det nemt at tilføje hinanden som venner i Pokémon GO.",
     "s4Title": "4. Retsgrundlag",
@@ -607,7 +608,8 @@
     "banPlaceholder": "Årsag (valgfrit) — vises for brugeren.",
     "cancel": "Annullér",
     "confirm": "Bekræft",
-    "errorGeneric": "Handlingen kunne ikke gennemføres. Prøv igen."
+    "errorGeneric": "Handlingen kunne ikke gennemføres. Prøv igen.",
+    "tabSetup": "Opsætning"
   },
   "Banned": {
     "title": "Din konto er udelukket",
@@ -615,5 +617,27 @@
     "reasonLabel": "Årsag",
     "since": "Udelukket den {date}",
     "appeal": "Mener du, at det er en fejl? Kontakt administratoren i Frederikssund-fællesskabet."
+  },
+  "Setup": {
+    "statInstalled": "Har installeret appen",
+    "statPush": "Har slået notifikationer til",
+    "measuredHint": "Tallene opdateres, når folk åbner appen.",
+    "unknownHint": "{count} har ikke åbnet appen, siden vi begyndte at måle — dem ved vi endnu ikke noget om.",
+    "deniedHint": "{count} har aktivt sagt nej til notifikationer i browseren — det kan de kun selv lave om i systemindstillingerne.",
+    "needsNudgeTitle": "Mangler opsætning ({count})",
+    "readyTitle": "Klar til notifikationer ({count})",
+    "allReady": "Alle er sat op med app og notifikationer. Intet at gøre her.",
+    "neverSeen": "Har ikke åbnet appen endnu",
+    "flagInstalled": "Installeret",
+    "flagNotInstalled": "Ikke installeret",
+    "flagPush": "Notifikationer",
+    "flagNoPush": "Ingen notifikationer",
+    "flagPushDenied": "Notifikationer afvist",
+    "message": "Skriv",
+    "messageAria": "Send besked til {name}",
+    "platform_ios": "iPhone",
+    "platform_android": "Android",
+    "platform_desktop": "Computer",
+    "platform_other": "Ukendt enhed"
   }
 }

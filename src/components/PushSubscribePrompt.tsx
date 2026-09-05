@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import { Bell, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { subscribeToPush, getPushStatus } from '@/lib/push/subscription-helpers';
+import { reportAppSetup } from '@/lib/push/app-setup';
+import { createClient } from '@/lib/supabase/client';
 import { useMounted } from '@/lib/hooks/use-mounted';
 
 const DISMISSED_KEY = 'push-prompt-dismissed';
@@ -57,6 +59,17 @@ export function PushSubscribePrompt({ userId }: Props) {
     if (error) {
       console.error('[push] subscribe failed', error);
       return;
+    }
+    // Record the newly-granted permission straight away, so the /admin setup
+    // overview stops listing this member as needing a nudge on the very next
+    // load. Without this the change would only be picked up the next time the
+    // app is backgrounded and reopened.
+    try {
+      void reportAppSetup(createClient());
+    } catch {
+      // createClient() throws without Supabase env (tests, misconfigured
+      // build). Recording setup state is never worth failing a subscribe that
+      // already succeeded — the next app open reports it anyway.
     }
     setDismissed(true);
   }
