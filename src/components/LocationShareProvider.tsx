@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useUnread } from '@/components/UnreadProvider';
 import { refreshShare, startShare, stopShare } from '@/lib/location/helpers';
 import { shouldRefreshPosition } from '@/lib/location/staleness';
 import { SHARE_GEO_OPTIONS } from '@/lib/location/types';
@@ -37,7 +38,10 @@ interface LocationShareContextValue {
 const LocationShareContext = createContext<LocationShareContextValue | null>(null);
 
 export function LocationShareProvider({ children }: { children: React.ReactNode }) {
-  const [userId, setUserId] = useState<string | null>(null);
+  // Reuses the id UnreadProvider already resolved — this provider is mounted
+  // inside it, and a second getClaims() would be an extra auth round-trip on
+  // every page load for a feature most sessions never touch.
+  const { userId } = useUnread();
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   // Deliberately NOT useGeolocation(): this provider is mounted app-wide, and
   // the hook reads the position silently on mount whenever the browser
@@ -56,18 +60,6 @@ export function LocationShareProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     expiresRef.current = expiresAt;
   }, [expiresAt]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getClaims();
-      if (!cancelled) setUserId(data?.claims?.sub ?? null);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Restore an in-flight share after a reload or a cold open — the row outlives
   // the tab, so the banner has to come back with it.

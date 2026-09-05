@@ -27,6 +27,13 @@ import { getChannelById, type ChannelId } from '@/lib/chat/channels';
 // badge, issue #104) so each nav item only reflects its own surface; `total`
 // (their sum) is the grand total that drives the app-icon badge.
 interface UnreadContextValue {
+  /**
+   * The logged-in user's id, or null while logged out / still resolving.
+   * Exposed so sibling providers mounted inside this one (LocationShareProvider)
+   * can reuse the resolved value instead of each making their own getClaims()
+   * round-trip on every page load.
+   */
+  userId: string | null;
   total: number;
   chatUnread: number;
   raidUnread: number;
@@ -116,7 +123,7 @@ export function UnreadProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <UnreadContext.Provider
-      value={{ total, chatUnread, raidUnread, clearChannel, clearPartner, clearRaid }}
+      value={{ userId, total, chatUnread, raidUnread, clearChannel, clearPartner, clearRaid }}
     >
       {children}
     </UnreadContext.Provider>
@@ -130,6 +137,7 @@ export function useUnread(): UnreadContextValue {
   const ctx = useContext(UnreadContext);
   if (!ctx) {
     return {
+      userId: null,
       total: 0,
       chatUnread: 0,
       raidUnread: 0,
