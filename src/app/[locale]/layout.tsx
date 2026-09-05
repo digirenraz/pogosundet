@@ -4,6 +4,7 @@ import { InitialSplash } from "@/components/InitialSplash";
 import LoadingScreen from "@/components/LoadingScreen";
 import { UnreadProvider } from "@/components/UnreadProvider";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
+import { AppSetupReporter } from "@/components/AppSetupReporter";
 
 // Locale layout — loads translations and makes them available to all
 // child Server Components (via getTranslations) and Client Components
@@ -25,6 +26,7 @@ export default async function LocaleLayout({
       </InitialSplash>
       <UnreadProvider>{children}</UnreadProvider>
       <AnalyticsProvider />
+      <AppSetupReporter />
     </NextIntlClientProvider>
   );
 }

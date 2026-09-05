@@ -6,7 +6,15 @@ export default async function PrivacyPage() {
 
   const sections = [
     { title: t('s1Title'), body: t('s1Body') },
-    { title: t('s2Title'), body: t('s2Body'), list: t('s2List') },
+    {
+      title: t('s2Title'),
+      body: t('s2Body'),
+      list: t('s2List'),
+      // Automatically collected device state (install + notification
+      // permission), kept as its own paragraph so it reads clearly as separate
+      // from the fields the user types in themselves.
+      extra: t('s2Technical'),
+    },
     { title: t('s3Title'), body: t('s3Body') },
     { title: t('s4Title'), body: t('s4Body') },
     { title: t('s5Title'), body: t('s5Body') },
@@ -19,7 +27,7 @@ export default async function PrivacyPage() {
     { title: t('s12Title'), body: t('s12Body') },
     { title: t('s13Title'), body: t('s13Body') },
     { title: t('s14Title'), body: t('s14Body') },
-  ] as { title: string; body: string; list?: string }[];
+  ] as { title: string; body: string; list?: string; extra?: string }[];
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] px-4 py-10 max-w-2xl mx-auto">
@@ -33,6 +41,9 @@ export default async function PrivacyPage() {
             <p className="text-sm text-[#374151] leading-relaxed">{s.body}</p>
             {s.list && (
               <p className="text-sm text-[#6B7280] mt-1 leading-relaxed">{s.list}</p>
+            )}
+            {s.extra && (
+              <p className="text-sm text-[#374151] mt-2 leading-relaxed">{s.extra}</p>
             )}
           </div>
         ))}

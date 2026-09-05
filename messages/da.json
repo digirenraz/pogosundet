@@ -75,17 +75,18 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-08-12",
+    "lastUpdated": "Sidst opdateret: 2026-09-05",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
     "s2Title": "2. Hvilke oplysninger indsamler vi?",
     "s2Body": "Vi indsamler de oplysninger, du selv opgiver, når du opretter en konto og profil:",
     "s2List": "E-mailadresse · Trænernavn (in-game navn) · Pokémon GO vennekode · Fornavn (valgfrit) · Mini-bio (valgfrit) · Profilbillede (valgfrit)",
+    "s2Technical": "Derudover registrerer appen automatisk to tekniske oplysninger om din enhed: om du har installeret PoGoSundet på hjemmeskærmen, og om du har givet tilladelse til notifikationer (samt om du bruger iPhone, Android eller computer, og hvornår du sidst åbnede appen). Det bruges udelukkende til at se, hvem der endnu ikke er sat op til at modtage besked om raids, så vi kan hjælpe med opsætningen. Oplysningerne er kun synlige for appens administrator — aldrig for andre brugere — og slettes sammen med din konto.",
     "s3Title": "3. Hvad bruger vi oplysningerne til?",
     "s3Body": "Oplysningerne bruges udelukkende til at drive PoGoSundet: at vise din profil til andre lokale spillere og gøre det nemt at tilføje hinanden som venner i Pokémon GO.",
     "s4Title": "4. Retsgrundlag",
-    "s4Body": "Behandlingen sker på grundlag af dit samtykke, som du giver ved registrering (GDPR artikel 6, stk. 1, litra a).",
+    "s4Body": "Behandlingen af dine profiloplysninger sker på grundlag af dit samtykke, som du giver ved registrering (GDPR artikel 6, stk. 1, litra a). Enkelte tekniske oplysninger indsamles automatisk og hviler i stedet på vores legitime interesse i at kunne drive, fejlrette og supportere appen (GDPR artikel 6, stk. 1, litra f): fejllogning (se afsnit 7) og oplysningen om, hvorvidt du har installeret appen og tilladt notifikationer (se afsnit 2). Du kan til enhver tid gøre indsigelse mod denne behandling ved at kontakte os. Statistik via Amplitude (se afsnit 9) indsamles kun med dit særskilte samtykke.",
     "s5Title": "5. Opbevaring og sletning",
     "s5Body": "Dine oplysninger opbevares, så længe din konto er aktiv. Du kan til enhver tid slette din konto via \"Rediger profil\" i appen — alle dine data slettes straks og permanent.",
     "s6Title": "6. Videregivelse",
@@ -607,7 +608,8 @@
     "banPlaceholder": "Årsag (valgfrit) — vises for brugeren.",
     "cancel": "Annullér",
     "confirm": "Bekræft",
-    "errorGeneric": "Handlingen kunne ikke gennemføres. Prøv igen."
+    "errorGeneric": "Handlingen kunne ikke gennemføres. Prøv igen.",
+    "tabSetup": "Opsætning"
   },
   "Banned": {
     "title": "Din konto er udelukket",
@@ -615,5 +617,30 @@
     "reasonLabel": "Årsag",
     "since": "Udelukket den {date}",
     "appeal": "Mener du, at det er en fejl? Kontakt administratoren i Frederikssund-fællesskabet."
+  },
+  "Setup": {
+    "statInstalled": "Har installeret appen",
+    "statPush": "Har slået notifikationer til",
+    "measuredHint": "Tallene opdateres, når folk åbner appen.",
+    "unknownHint": "{count} har ikke åbnet appen, siden vi begyndte at måle — dem ved vi endnu ikke noget om.",
+    "deniedHint": "{count} har aktivt sagt nej til notifikationer i browseren — det kan de kun selv lave om i systemindstillingerne.",
+    "needsNudgeTitle": "Mangler opsætning ({count})",
+    "readyTitle": "Klar til notifikationer ({count})",
+    "allReady": "Alle er sat op med app og notifikationer. Intet at gøre her.",
+    "neverSeen": "Har ikke åbnet appen endnu",
+    "flagInstalled": "Installeret",
+    "flagNotInstalled": "Ikke installeret",
+    "flagPush": "Notifikationer",
+    "flagNoPush": "Ingen notifikationer",
+    "flagPushDenied": "Notifikationer afvist",
+    "message": "Skriv",
+    "messageAria": "Send besked til {name}",
+    "platform_ios": "iPhone",
+    "platform_android": "Android",
+    "platform_desktop": "Computer",
+    "platform_other": "Ukendt enhed",
+    "loadErrorTitle": "Kunne ikke hente opsætningen",
+    "loadErrorBody": "Noget gik galt, da tallene skulle hentes. De vises ikke her, fordi halvt indlæste data ville se ud som om ingen har notifikationer slået til. Prøv at genindlæse siden.",
+    "flagInstallUnknown": "Installation ukendt"
   }
 }

@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-09-05',
+    text: 'Appen holder nu styr på, om du har den installeret på hjemmeskærmen og har slået notifikationer til, så vi kan hjælpe dem, der endnu ikke får besked om nye raids. Det kan kun ses af administratoren — aldrig af andre spillere. Privatlivspolitikken er opdateret.',
+  },
+  {
     date: '2026-08-30',
     text: 'Opret konto-siden viser nu også "Fortsæt med Google" øverst, ligesom log ind-siden.',
   },

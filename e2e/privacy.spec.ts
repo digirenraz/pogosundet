@@ -16,3 +16,32 @@ test("privacy policy discloses Sentry as a data processor", async ({ page }) => 
     page.getByText(/indsamler bevidst ikke din IP-adresse/)
   ).toBeVisible();
 });
+
+// Added 2026-09-05 with the app-setup tracking (migration 027): the app now
+// records whether a member has installed the PWA and allowed notifications,
+// which is personal data about their device and therefore has to be disclosed.
+test("privacy policy discloses the app-setup data collected automatically", async ({
+  page,
+}) => {
+  await page.goto("/privacy");
+
+  await expect(
+    page.getByRole("heading", { name: "2. Hvilke oplysninger indsamler vi?" })
+  ).toBeVisible();
+
+  await expect(
+    page.getByText(/installeret PoGoSundet på hjemmeskærmen/)
+  ).toBeVisible();
+  // The two limits that make this proportionate: admin-only, and deleted with
+  // the account.
+  await expect(
+    page.getByText(/kun synlige for appens administrator/)
+  ).toBeVisible();
+
+  // The legal basis has to match: this data is collected automatically on
+  // every app open, so it cannot rest on the consent given at registration.
+  await expect(
+    page.getByRole("heading", { name: "4. Retsgrundlag" })
+  ).toBeVisible();
+  await expect(page.getByText(/legitime interesse/)).toBeVisible();
+});
