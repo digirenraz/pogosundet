@@ -24,8 +24,17 @@ export function AppSetupReporter() {
     async function report() {
       try {
         const supabase = createClient();
-        const { data } = await supabase.auth.getClaims();
-        if (cancelled || !data?.claims?.sub) return;
+        // getSession() rather than getClaims(): all we need is "is anyone
+        // signed in", to avoid firing a pointless request on the logged-out
+        // pages that share this layout. getSession() answers that from the
+        // cookie already in the browser, where getClaims() additionally
+        // verifies the JWT — a round-trip on every page load, for a report
+        // that writes at most twice a day. The write itself is authorised
+        // server-side regardless: record_app_setup() returns early when
+        // auth.uid() is null, so this check is an optimisation, never the
+        // security boundary.
+        const { data } = await supabase.auth.getSession();
+        if (cancelled || !data?.session) return;
         await reportAppSetup(supabase);
       } catch {
         // Missing env in tests, offline, storage disabled — reporting is
