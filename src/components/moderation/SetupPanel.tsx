@@ -10,7 +10,7 @@
 // Admin-only, and rendered only inside /admin, which 404s for non-moderators.
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Check, Send, X } from 'lucide-react';
+import { AlertTriangle, Check, Send, X } from 'lucide-react';
 import type { MemberSetupRow, SetupSummary } from '@/lib/admin/setup-status';
 
 interface SetupPanelProps {
@@ -19,6 +19,28 @@ interface SetupPanelProps {
 
 export function SetupPanel({ setup }: SetupPanelProps) {
   const t = useTranslations('Setup');
+
+  // A partial load is shown as a failure, not as numbers. Half the data would
+  // render as confident zeros ("nobody has notifications on"), which is a
+  // worse outcome than no answer on a screen used to decide who to contact.
+  if (setup.failed) {
+    return (
+      <div
+        role="alert"
+        className="bg-card border border-destructive rounded-lg px-3.5 py-3 flex items-start gap-2.5"
+      >
+        <AlertTriangle size={18} className="text-destructive shrink-0 mt-0.5" />
+        <div>
+          <p className="text-[14px] font-bold text-card-foreground">
+            {t('loadErrorTitle')}
+          </p>
+          <p className="text-[13px] text-muted-foreground leading-relaxed mt-0.5">
+            {t('loadErrorBody')}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">

@@ -46,6 +46,15 @@ export interface SetupSummary {
   needsNudge: MemberSetupRow[];
   /** Everyone fully set up — installed AND subscribed. */
   ready: MemberSetupRow[];
+  /**
+   * True when one of the underlying queries failed. The numbers below it are
+   * then built from partial data and must NOT be shown: a failed
+   * push_subscriptions read, for instance, would report every member as having
+   * notifications off — a plausible-looking answer that happens to be wrong,
+   * which is worse than no answer on a screen whose whole job is to be
+   * trustworthy about who needs help.
+   */
+  failed: boolean;
 }
 
 interface ProfileRow {
@@ -76,7 +85,7 @@ function nudgeRank(row: MemberSetupRow): number {
 }
 
 /** Pure summariser, split out from the queries so it can be unit-tested. */
-export function summarise(rows: MemberSetupRow[]): SetupSummary {
+export function summarise(rows: MemberSetupRow[], failed = false): SetupSummary {
   const needsNudge = rows
     .filter((row) => !(row.installed && row.push))
     .sort((a, b) => {
@@ -94,13 +103,17 @@ export function summarise(rows: MemberSetupRow[]): SetupSummary {
     ready: rows
       .filter((row) => row.installed && row.push)
       .sort((a, b) => a.trainer_name.localeCompare(b.trainer_name, 'da')),
+    failed,
   };
 }
 
 /**
- * Loads the overview. Returns an empty summary on any error rather than
- * throwing — a broken stats panel must not take down the moderation queue it
- * shares a page with.
+ * Loads the overview.
+ *
+ * A failed query sets `failed` rather than throwing: /admin renders the
+ * moderation queue from the same request, and a broken stats panel must not
+ * take that down. But the counts are not shown in that state either — see the
+ * note on SetupSummary.failed.
  *
  * CALLERS MUST have already verified the viewer is a moderator.
  */
@@ -119,7 +132,10 @@ export async function getSetupStatus(): Promise<SetupSummary> {
     admin.from('push_subscriptions').select('user_id'),
   ]);
 
-  if (profilesResult.error || statusResult.error || pushResult.error) {
+  const failed = Boolean(
+    profilesResult.error || statusResult.error || pushResult.error
+  );
+  if (failed) {
     console.error('Admin setup status: query failed', {
       profiles: profilesResult.error?.message,
       status: statusResult.error?.message,
@@ -152,5 +168,5 @@ export async function getSetupStatus(): Promise<SetupSummary> {
     }
   );
 
-  return summarise(rows);
+  return summarise(rows, failed);
 }

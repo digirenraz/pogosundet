@@ -530,6 +530,8 @@
     "platform_ios": "iPhone",
     "platform_android": "Android",
     "platform_desktop": "Desktop",
-    "platform_other": "Unknown device"
+    "platform_other": "Unknown device",
+    "loadErrorTitle": "Couldn't load the setup overview",
+    "loadErrorBody": "Something went wrong fetching the numbers. They are hidden rather than shown, because half-loaded data would look like nobody has notifications enabled. Try reloading the page."
   }
 }

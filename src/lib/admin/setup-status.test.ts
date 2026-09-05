@@ -72,6 +72,16 @@ describe('summarise', () => {
     expect(summary.denied).toBe(1);
   });
 
+  it('is not marked failed for a clean load', () => {
+    expect(summarise([member({ trainer_name: 'A' })]).failed).toBe(false);
+  });
+
+  it('carries the failed flag through, so partial data is never shown as fact', () => {
+    // The counts are still computed — the panel just refuses to render them.
+    const summary = summarise([member({ trainer_name: 'A' })], true);
+    expect(summary.failed).toBe(true);
+  });
+
   it('handles an empty community', () => {
     const summary = summarise([]);
     expect(summary).toMatchObject({ members: 0, installed: 0, push: 0 });
