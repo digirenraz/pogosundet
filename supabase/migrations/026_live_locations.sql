@@ -158,7 +158,10 @@ BEGIN
   ON CONFLICT (user_id) DO UPDATE
     SET lat        = EXCLUDED.lat,
         lng        = EXCLUDED.lng,
-        note       = COALESCE(EXCLUDED.note, l.note),
+        -- Replaces rather than COALESCEs: starting a NEW share with an empty
+        -- note must clear the previous one, not silently carry forward a note
+        -- from a share that may have ended hours ago.
+        note       = EXCLUDED.note,
         updated_at = EXCLUDED.updated_at,
         expires_at = EXCLUDED.expires_at;
 
@@ -184,6 +187,13 @@ DECLARE
 BEGIN
   IF v_user IS NULL THEN
     RAISE EXCEPTION 'not_authenticated';
+  END IF;
+
+  -- Checked here as well as in start_location_share(): without it, a user
+  -- banned mid-share would keep moving their pin around until the window
+  -- happened to expire.
+  IF public.is_banned() THEN
+    RAISE EXCEPTION 'banned';
   END IF;
 
   IF p_lat IS NULL OR p_lng IS NULL

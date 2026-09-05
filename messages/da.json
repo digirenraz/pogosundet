@@ -621,7 +621,6 @@
   },
   "LiveLocation": {
     "title": "Hvem spiller nu",
-    "subtitle": "Se hvem der er ude og spille lige nu",
     "sharingBanner": "Du deler din position",
     "remaining": "{minutes} min tilbage",
     "stop": "Stop",
@@ -643,7 +642,6 @@
     "sendMessage": "Send besked",
     "showOnMap": "Vis på kort",
     "near": "ved {gym}",
-    "until": "til {time}",
     "you": "Dig",
     "denied": "Du har slået placering fra i browseren. Slå det til igen for at dele din position.",
     "unsupported": "Din browser understøtter ikke placering.",

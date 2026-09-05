@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { refreshShare, startShare, stopShare } from '@/lib/location/helpers';
 import { shouldRefreshPosition } from '@/lib/location/staleness';
 import { SHARE_GEO_OPTIONS } from '@/lib/location/types';
-import { useGeolocation } from '@/lib/hooks/use-geolocation';
+import { readPosition } from '@/lib/hooks/use-geolocation';
 
 // Owns the current user's own location share, app-wide.
 //
@@ -39,7 +39,14 @@ const LocationShareContext = createContext<LocationShareContextValue | null>(nul
 export function LocationShareProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
-  const { refresh } = useGeolocation(SHARE_GEO_OPTIONS);
+  // Deliberately NOT useGeolocation(): this provider is mounted app-wide, and
+  // the hook reads the position silently on mount whenever the browser
+  // permission is already granted — which many users have from the unrelated
+  // "vis gyms i nærheden" button. That would mean a GPS read on every session
+  // for people who never touch location sharing, contradicting both the hook's
+  // own contract and Privacy Policy §15 ("sharing only happens when you
+  // actively start it"). readPosition() only fires when we call it.
+  const refresh = useCallback(() => readPosition(SHARE_GEO_OPTIONS), []);
 
   // Timestamp of the last successful position write, for the refresh throttle.
   const lastWriteRef = useRef<number | null>(null);

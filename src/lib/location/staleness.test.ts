@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  isShareExpired,
   locationAgeMinutes,
   locationAgeLabel,
   isStale,
@@ -95,5 +96,16 @@ describe('shouldRefreshPosition', () => {
   it('honours an explicit throttle', () => {
     expect(shouldRefreshPosition(now - 5_000, now, 1_000)).toBe(true);
     expect(shouldRefreshPosition(now - 500, now, 1_000)).toBe(false);
+  });
+});
+
+describe('isShareExpired', () => {
+  it('is false while the window is open', () => {
+    expect(isShareExpired(minutesAhead(1), NOW)).toBe(false);
+  });
+
+  it('is true at and after the expiry instant', () => {
+    expect(isShareExpired(NOW.toISOString(), NOW)).toBe(true);
+    expect(isShareExpired(minutesAgo(1), NOW)).toBe(true);
   });
 });

@@ -513,7 +513,6 @@
   },
   "LiveLocation": {
     "title": "Who is playing now",
-    "subtitle": "See who is out playing right now",
     "sharingBanner": "You are sharing your location",
     "remaining": "{minutes} min left",
     "stop": "Stop",
@@ -535,7 +534,6 @@
     "sendMessage": "Send message",
     "showOnMap": "Show on map",
     "near": "near {gym}",
-    "until": "until {time}",
     "you": "You",
     "denied": "Location is turned off in your browser. Turn it back on to share your location.",
     "unsupported": "Your browser does not support location.",

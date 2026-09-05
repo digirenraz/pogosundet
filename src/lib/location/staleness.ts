@@ -59,6 +59,19 @@ export function shareEndsLabel(expiresAt: string, now: Date): string | null {
   return `til ${hh}:${mm}`;
 }
 
+/**
+ * Has a share's window closed?
+ *
+ * Callers must filter on this rather than waiting for a Realtime DELETE:
+ * Supabase filters postgres_changes DELETE events against the OLD row, and the
+ * table's SELECT policy (expires_at > now()) is false by construction for a row
+ * being purged for expiry — so the removal event may never reach other viewers.
+ * Without this filter an expired pin would sit on screen indefinitely.
+ */
+export function isShareExpired(expiresAt: string, now: Date): boolean {
+  return new Date(expiresAt).getTime() <= now.getTime();
+}
+
 /** Whole minutes left on a share, floored at 0. Drives the "47 min tilbage" banner. */
 export function minutesRemaining(expiresAt: string, now: Date): number {
   const diffMs = new Date(expiresAt).getTime() - now.getTime();

@@ -11,7 +11,12 @@ import { BottomNav } from '@/components/BottomNav';
 import { DesktopSidebar } from '@/components/desktop/DesktopSidebar';
 import { useLocationShare } from '@/components/LocationShareProvider';
 import { useLiveLocations } from '@/lib/location/use-live-locations';
-import { locationAgeLabel, isStale, shareEndsLabel } from '@/lib/location/staleness';
+import {
+  locationAgeLabel,
+  isStale,
+  isShareExpired,
+  shareEndsLabel,
+} from '@/lib/location/staleness';
 import { nearestGymName } from '@/lib/location/nearest';
 import { SHARE_DURATIONS, MAX_NOTE_LENGTH, type LiveLocation } from '@/lib/location/types';
 import { fetchGyms } from '@/lib/gyms/helpers';
@@ -90,7 +95,15 @@ export function LiveLocationScreen({ currentUserId }: LiveLocationScreenProps) {
 
   const decorated = useMemo(
     () =>
-      locations.map(location => ({
+      locations
+        // Drop shares whose window has closed, rather than trusting a Realtime
+        // DELETE to arrive. Supabase filters postgres_changes DELETE events
+        // against the OLD row, and this table's SELECT policy (expires_at >
+        // now()) is false by construction for a row being purged for expiry —
+        // so the removal event may never reach other viewers, which would leave
+        // an expired pin on screen indefinitely. The `now` tick re-runs this.
+        .filter(location => !isShareExpired(location.expires_at, now))
+        .map(location => ({
         location,
         stale: isStale(location.updated_at, now),
         ageLabel: locationAgeLabel(location.updated_at, now),
@@ -147,7 +160,7 @@ export function LiveLocationScreen({ currentUserId }: LiveLocationScreenProps) {
       setNote('');
     } catch (err) {
       const code = err instanceof Error ? err.message : '';
-      setError(code === 'no_position' ? t('failed') : t('failed'));
+      setError(code === 'no_position' ? t('denied') : t('failed'));
     } finally {
       setBusy(false);
     }

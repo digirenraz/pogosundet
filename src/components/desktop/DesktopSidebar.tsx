@@ -102,6 +102,7 @@ export function DesktopSidebar({ me }: DesktopSidebarProps) {
     if (/\/raids(\/.*)?$/.test(pathname)) return 'raids';
     if (/\/profile(\/.*)?$/.test(pathname)) return 'profil';
     if (/\/players(\/.*)?$/.test(pathname)) return 'spillere';
+    if (/\/kort(\/.*)?$/.test(pathname)) return 'kort';
     return '';
   })();
 

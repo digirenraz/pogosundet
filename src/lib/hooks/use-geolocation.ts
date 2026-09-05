@@ -40,6 +40,29 @@ const GEO_OPTIONS: PositionOptions = {
   timeout: 10_000,
 };
 
+/**
+ * One-shot position read, outside React.
+ *
+ * Exists so callers that must ONLY read a position on an explicit user action
+ * can do so without mounting the hook — the hook reads silently on mount when
+ * the browser permission is already granted, which is right for gym sorting
+ * (the user is on the raid form) but wrong for anything mounted app-wide.
+ *
+ * Resolves to null on denial, timeout, or an unsupported browser.
+ */
+export function readPosition(options?: PositionOptions): Promise<GymLocation | null> {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    return Promise.resolve(null);
+  }
+  return new Promise(resolve => {
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      options ?? GEO_OPTIONS
+    );
+  });
+}
+
 export function useGeolocation(options?: PositionOptions): {
   status: GeolocationStatus;
   position: GymLocation | null;
