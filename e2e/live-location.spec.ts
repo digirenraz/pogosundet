@@ -112,7 +112,7 @@ test.describe("Live location sharing", () => {
     await page.goto("/kort");
     await page.waitForLoadState("networkidle");
     await page.getByRole("button", { name: "Del min position" }).click();
-    await page.getByRole("button", { name: "60 min" }).click();
+    await page.getByRole("button", { name: "1 time" }).click();
     await page.getByRole("button", { name: "Start deling" }).click();
     await expect(page.getByText("Du deler din position")).toBeVisible();
 

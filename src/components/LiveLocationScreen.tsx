@@ -19,6 +19,7 @@ import type { Gym } from '@/lib/gyms/suggestions';
 import { haversineMeters, formatDistance } from '@/lib/gyms/suggestions';
 import { buildMapsUrl } from '@/lib/gyms/maps';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
+import { useMounted } from '@/lib/hooks/use-mounted';
 import type { MapMarker } from '@/components/map/CommunityMap';
 
 // Leaflet reads `window` at import time, so the map can only be loaded in the
@@ -54,6 +55,10 @@ export function LiveLocationScreen({ currentUserId }: LiveLocationScreenProps) {
   // it never publishes. The sharing path uses its own high-accuracy instance
   // inside LocationShareProvider.
   const { position: myPosition, status: geoStatus, request: requestGeo } = useGeolocation();
+  // useGeolocation resolves to 'unsupported' during SSR (no navigator) and
+  // 'idle' once hydrated, so anything keyed on the status must wait for mount
+  // or React reports a hydration mismatch. See CLAUDE.md → React 19 patterns.
+  const mounted = useMounted();
 
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [mapOpen, setMapOpen] = useState(false);
@@ -176,7 +181,7 @@ export function LiveLocationScreen({ currentUserId }: LiveLocationScreenProps) {
         </button>
       )}
 
-      {geoStatus === 'idle' && (
+      {mounted && geoStatus === 'idle' && (
         <button
           type="button"
           onClick={requestGeo}
@@ -185,7 +190,7 @@ export function LiveLocationScreen({ currentUserId }: LiveLocationScreenProps) {
           {t('centerOnMe')}
         </button>
       )}
-      {geoStatus === 'denied' && <p className="text-xs text-[#6B7280]">{t('denied')}</p>}
+      {mounted && geoStatus === 'denied' && <p className="text-xs text-[#6B7280]">{t('denied')}</p>}
 
       {!loading && decorated.length === 0 && (
         <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 text-center">
