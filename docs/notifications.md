@@ -113,6 +113,8 @@ That is the complete list. No other event sends a notification.
 
 - Channel chat messages (`#generelt`, `#app-feedback`, `#events`)
 - **Event-bot posts in `#events`** — the bot (see [`docs/plans/pogo-event-bot.md`](plans/pogo-event-bot.md)) posts new raid events and raid-boss rotations, but sends **no push**: it writes an ordinary `channel_messages` row, and channel messages don't push. Members get the in-app badge only. This is deliberate — an automated feed is exactly the thing that would cause notification fatigue. Don't "fix" it without deciding that explicitly.
+- **Q&A bot answers to `!pogo` questions** (see [`docs/plans/pogo-qa-bot.md`](plans/pogo-qa-bot.md)) — same mechanism, same outcome: an ordinary `channel_messages` row, no push, in-app badge only. The asker is looking at the screen when they ask, so a push would reach the one person who least needs it.
+  - ⚠️ **This one is not permanently safe.** Bot answers are posted with `reply_to_id` set to the question, so they are replies. If Priority 1's "**Reply to your message → notify the author**" (below) ships as written, **every bot answer would start pushing** the member who asked — a notification for something they are already watching. Whoever builds that feature must decide explicitly: exclude `profiles.is_bot` authors from the reply notification, or accept the push. Flagged here rather than pre-solved, because the reply feature isn't built and the right answer depends on how it's shaped.
 - Replies or reactions (raid chat **or** channel chat)
 - Someone **leaving** a raid you posted/attend (joining now notifies — see "Currently sent" entry #4)
 - Account / profile events
@@ -165,6 +167,11 @@ respect the **cross-cutting behaviours** further down. None are built yet.
   (channel chat *and* raid chat). We already store `reply_to_id`; a reply is our
   closest analogue to an @mention — high signal, low volume. Should fire even in
   a channel that isn't set to "notify on every message".
+  - **Decide about bot replies before shipping this.** Q&A bot answers set
+    `reply_to_id` to the question, so this feature would push every member who
+    asked the bot something — for an answer they are already watching arrive.
+    Excluding authors with `profiles.is_bot` is the obvious fix; make it a
+    decision, not an accident. See the NOT-sent list above.
 
 ### Priority 2 — expected, but tune for noise
 - ~~**New message in a raid chat you've joined → notify the other attendees.**~~
