@@ -160,7 +160,10 @@ edited or withdrawn, only hard-deleted by a moderator.
 
 Defences, cheapest first: a tight system prompt (Pokémon GO only, decline
 everything else, treat the question as data and never as instructions);
-`max_tokens: 1000`; truncation to `CHAT_MESSAGE_MAX_LENGTH`; and plain-text
+`max_tokens: 2048` (headroom, because adaptive thinking is billed against the
+same budget and a tight cap risks cutting the answer off mid-sentence — we pay
+for tokens produced, not for the ceiling); truncation to
+`CHAT_MESSAGE_MAX_LENGTH`; and plain-text
 rendering — the chat renderer linkifies bare URLs and does nothing else, with no
 `dangerouslySetInnerHTML` anywhere in the stack.
 

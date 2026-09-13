@@ -82,9 +82,21 @@ export function rateLimitWindows(now: Date): { hourAgo: string; dayAgo: string }
 /**
  * Has this member (or the community) asked too much?
  *
- * Three ceilings, checked cheapest-scope-first so a spamming member is refused
- * without a global count query. All three are `head: true` counts — they read no
- * rows, so they stay cheap as the table grows.
+ * Three ceilings. All three queries are fired concurrently and all three always
+ * run — the `if` ordering below decides only which `scope` gets reported, not
+ * which queries execute. One round-trip beats three sequential ones, and all
+ * three are `head: true` counts that read no rows, so they stay cheap as the
+ * table grows.
+ *
+ * Note the remaining TOCTOU window: this runs as its own round-trip before
+ * claimQuestionSlot writes, so two requests arriving within a few milliseconds
+ * of each other can both read the same count and both pass. Left as-is
+ * deliberately. Closing it properly needs an insert-if-under-limit RPC so the
+ * check and the claim are one atomic statement, which is real machinery for a
+ * window a person cannot hit by hand — it takes two chat messages posted within
+ * about 50ms. The bigger race, between claiming and the multi-second model call,
+ * IS closed (see log.ts), and the Anthropic Console spend limit is the actual
+ * backstop against a scripted abuser. Revisit if the bill ever shows it.
  */
 export async function checkRateLimit(
   userId: string,
