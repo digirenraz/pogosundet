@@ -18,15 +18,22 @@ export interface ChannelMessageRow {
 // Insert a message into channel_messages. The realtime subscription
 // in use-channel-realtime.ts will surface the row to all clients.
 // Pass replyToId to thread the new message under an existing one.
+//
+// Returns the inserted row's id alongside the error. The id matters for the
+// Q&A bot (src/lib/pogo-qa/): /api/bot/ask is handed the message id and
+// re-reads the row server-side to verify the asker owns it, so the caller
+// cannot answer a question it did not actually post.
 export async function sendMessage(
   channel: ChannelId,
   userId: string,
   body: string,
   replyToId: string | null = null
-): Promise<{ error: unknown }> {
+): Promise<{ data: { id: string } | null; error: unknown }> {
   const supabase = createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('channel_messages')
-    .insert({ channel, user_id: userId, body, reply_to_id: replyToId });
-  return { error };
+    .insert({ channel, user_id: userId, body, reply_to_id: replyToId })
+    .select('id')
+    .single();
+  return { data: data ?? null, error };
 }

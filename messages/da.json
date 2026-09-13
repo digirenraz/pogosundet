@@ -75,7 +75,7 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-08-12",
+    "lastUpdated": "Sidst opdateret: 2026-09-13",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
@@ -91,7 +91,7 @@
     "s6Title": "6. Videregivelse",
     "s6Body": "Vi sælger, udlejer eller deler ikke dine personoplysninger med tredjepart. Dine profiloplysninger (trænernavn, vennekode, fornavn, bio) er synlige for andre registrerede brugere af PoGoSundet. Du kan skjule din vennekode under \"Rediger profil\" — så bliver den ikke vist til eller delt med andre brugere.",
     "s7Title": "7. Databehandlere",
-    "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase fungerer som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR. Til fejllogning anvender vi Sentry (EU-region), så vi kan opdage og rette tekniske fejl i appen. Sentry modtager kun tekniske fejloplysninger, og vi indsamler bevidst ikke din IP-adresse eller andre personoplysninger via fejlloggen. Hvis du giver samtykke til statistik (se afsnit 9), anvender vi desuden Amplitude (EU-region) til anonym brugsstatistik. Hvis du rapporterer en fejl via appen, gemmes din rapport i vores private fejlsporingssystem hos GitHub, som dermed fungerer som databehandler for rapportens tekst og dit trænernavn — rapporten indeholder kun det, du selv skriver, samt dit trænernavn. Alle databehandlere behandler udelukkende data på vores vegne og i overensstemmelse med GDPR.",
+    "s7Body": "Vi anvender Supabase (EU/Irland) til opbevaring af data og autentificering. Supabase fungerer som databehandler på vores vegne og er forpligtet til at behandle data i overensstemmelse med GDPR. Til fejllogning anvender vi Sentry (EU-region), så vi kan opdage og rette tekniske fejl i appen. Sentry modtager kun tekniske fejloplysninger, og vi indsamler bevidst ikke din IP-adresse eller andre personoplysninger via fejlloggen. Hvis du giver samtykke til statistik (se afsnit 9), anvender vi desuden Amplitude (EU-region) til anonym brugsstatistik. Hvis du rapporterer en fejl via appen, gemmes din rapport i vores private fejlsporingssystem hos GitHub, som dermed fungerer som databehandler for rapportens tekst og dit trænernavn — rapporten indeholder kun det, du selv skriver, samt dit trænernavn. Alle databehandlere behandler udelukkende data på vores vegne og i overensstemmelse med GDPR. Stiller du botten et spørgsmål med !pogo (se afsnit 15), behandles spørgsmålets tekst af Anthropic PBC. I modsætning til vores øvrige databehandlere ligger Anthropic i USA og ikke i EU; overførslen sker på grundlag af en databehandleraftale med EU-Kommissionens standardkontraktbestemmelser, og spørgsmålene bruges ikke til at træne deres modeller.",
     "s8Title": "8. Dine rettigheder",
     "s8Body": "Du har ret til indsigt i dine data, berigtigelse af forkerte oplysninger, sletning (\"retten til at blive glemt\"), dataportabilitet samt retten til at klage til Datatilsynet (datatilsynet.dk). Kontakt os på renraz@gmail.com for at udøve disse rettigheder.",
     "s9Title": "9. Cookies og sporing",
@@ -105,7 +105,9 @@
     "s13Title": "13. Direkte beskeder",
     "s13Body": "Når du sender en direkte besked (DM) til en anden træner, gemmer vi beskeden sammen med afsenderens og modtagerens bruger-id, beskedteksten, tidspunktet og eventuelle reaktioner (emojis). Kun de to deltagere i samtalen kan læse beskederne — det er sikret teknisk på databaseniveau, så ingen andre har adgang. Beskederne opbevares på ubestemt tid, indtil du sletter din konto. Når du sletter din konto, slettes alle dine direkte beskeder (både sendte og modtagne) samt dine reaktioner automatisk.",
     "s14Title": "14. Anmeldelser og moderation",
-    "s14Body": "Hvis du anmelder en besked, gemmer vi en kopi af den anmeldte besked, dit trænernavn som anmelder, afsenderens trænernavn, den årsag du vælger, og en eventuel kommentar fra dig. Kopien gemmes, fordi anmeldelsen ellers ville være ubrugelig, når beskeden er slettet. Anmeldelser kan kun læses af app-administratoren — heller ikke af andre brugere. Anmelder du en privat besked, deles kun den ene anmeldte besked med administratoren, aldrig resten af samtalen. Administratoren kan slette den anmeldte besked, sende dig eller afsenderen en besked, og udelukke en konto fra at skrive. Udelukkes din konto, gemmer vi tidspunktet og en begrundelse, som vises for dig. Anmeldelser og udelukkelser opbevares, så længe din konto er aktiv, og slettes sammen med kontoen."
+    "s14Body": "Hvis du anmelder en besked, gemmer vi en kopi af den anmeldte besked, dit trænernavn som anmelder, afsenderens trænernavn, den årsag du vælger, og en eventuel kommentar fra dig. Kopien gemmes, fordi anmeldelsen ellers ville være ubrugelig, når beskeden er slettet. Anmeldelser kan kun læses af app-administratoren — heller ikke af andre brugere. Anmelder du en privat besked, deles kun den ene anmeldte besked med administratoren, aldrig resten af samtalen. Administratoren kan slette den anmeldte besked, sende dig eller afsenderen en besked, og udelukke en konto fra at skrive. Udelukkes din konto, gemmer vi tidspunktet og en begrundelse, som vises for dig. Anmeldelser og udelukkelser opbevares, så længe din konto er aktiv, og slettes sammen med kontoen.",
+    "s15Title": "15. Spørgsmål til botten",
+    "s15Body": "Skriver du !pogo efterfulgt af et spørgsmål i en chatkanal, sender vi spørgsmålets tekst videre til Anthropic, som genererer svaret. Vi sender kun den tekst, du selv skriver efter !pogo — aldrig dit trænernavn, din Trainer Code, din e-mailadresse eller dine øvrige beskeder. Hvert spørgsmål sendes for sig uden nogen historik over tidligere spørgsmål, så dine spørgsmål kan ikke kædes sammen. Anthropic behandler spørgsmålet som databehandler på vores vegne og bruger det ikke til at træne deres modeller. Anthropic behandler data i USA og ikke i EU, og overførslen sker på grundlag af en databehandleraftale med EU-Kommissionens standardkontraktbestemmelser — det er den eneste af vores databehandlere, der ligger uden for EU. Har botten brug for at slå noget op, sendes en søgetekst udledt af dit spørgsmål videre til en søgetjeneste. Selve spørgsmålet gemmer vi ikke andre steder end i chatten: dit spørgsmål og botens svar er helt almindelige beskeder, som alle indloggede medlemmer kan se, og de slettes sammen med din konto. Vi gemmer desuden tidspunktet for dine spørgsmål, så vi kan begrænse hvor mange der kan stilles ad gangen — det slettes også sammen med kontoen. Vi anbefaler, at du ikke skriver personlige oplysninger i et !pogo-spørgsmål."
   },
   "Terms": {
     "title": "Vilkår for brug",
@@ -418,7 +420,17 @@
     "dmTypingShort": "skriver…",
     "longPressHint": "Hold en besked nede for at svare, reagere eller kopiere",
     "hintDismiss": "Skjul tip",
-    "actionAnmeld": "Anmeld"
+    "actionAnmeld": "Anmeld",
+    "botConsentTitle": "Spørg botten",
+    "botConsentWhat": "Når du skriver !pogo og et spørgsmål, sender vi kun selve spørgsmålet videre — ikke dit trænernavn, din Trainer Code eller dine andre beskeder. Botten husker ikke, hvad du har spurgt om før.",
+    "botConsentWho": "Spørgsmålet besvares af Anthropic i USA på vores vegne, og det bruges ikke til at træne deres modeller. Dit spørgsmål og botens svar er helt almindelige beskeder i kanalen, som alle medlemmer kan se.",
+    "botConsentNoPersonal": "Skriv ikke personlige oplysninger i et !pogo-spørgsmål.",
+    "botConsentAccept": "Forstået — send spørgsmålet",
+    "botConsentCancel": "Annullér",
+    "botRateLimited": "Du har stillet botten en del spørgsmål på kort tid. Prøv igen om lidt 🙂",
+    "botFailed": "Botten kunne ikke svare lige nu. Prøv igen om lidt.",
+    "botUnavailable": "Botten er ikke slået til lige nu.",
+    "sendFailed": "Beskeden blev ikke sendt. Prøv igen."
   },
   "ProfileEdit": {
     "headerTitle": "Rediger profil",

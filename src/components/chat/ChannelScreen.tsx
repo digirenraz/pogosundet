@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { usePresence } from '@/lib/profile/use-presence';
 import { track } from '@/lib/analytics/amplitude';
+import { createClient } from '@/lib/supabase/client';
 import { useChannelRealtime } from '@/lib/chat/use-channel-realtime';
 import { useChannelReactionsRealtime } from '@/lib/chat/use-channel-reactions-realtime';
+import { isQaChannel } from '@/lib/pogo-qa/types';
+import { looksLikeQuestion, parseQuestion } from '@/lib/pogo-qa/trigger';
 import {
   sendMessage,
   type ChannelMessageRow,
@@ -37,6 +40,35 @@ import { TypingDots } from './TypingDots';
 // Re-exported for backward compatibility — the type lives in `@/lib/chat/types`
 // so both channel chat and raid chat can consume it without circular imports.
 export type { ChatMessage };
+
+// ---------------------------------------------------------------------------
+// Q&A bot (!pogo) — see src/lib/pogo-qa/ and docs/plans/pogo-qa-bot.md.
+// ---------------------------------------------------------------------------
+
+// Per-device acknowledgement that a !pogo question leaves the EU and reaches
+// Anthropic. Deliberately localStorage rather than a profile column: it is an
+// explainer, not a legal consent record, and the same per-device idiom the
+// live-location share explainer uses. Privacy Policy §15 is the durable text.
+const BOT_CONSENT_KEY = 'pogosundet:bot-consent';
+
+// How often to re-broadcast "the bot is typing" while /api/bot/ask is in
+// flight. Must stay under TYPING_IDLE_MS (3000) in use-channel-realtime.ts, or
+// the indicator blinks off between beats.
+const BOT_TYPING_BEAT_MS = 2000;
+
+/** Has this device seen the bot explainer? Never throws — see acceptBotConsent. */
+function hasBotConsent(): boolean {
+  try {
+    return window.localStorage.getItem(BOT_CONSENT_KEY) === '1';
+  } catch {
+    // Private mode or storage disabled. Falling back to "not yet acknowledged"
+    // re-shows the explainer, which is a harmless outcome for an explainer.
+    return false;
+  }
+}
+
+/** Which inline notice to show above the composer, if any. */
+type BotNotice = 'rate_limited' | 'unavailable' | 'failed' | 'send_failed';
 
 interface ChannelScreenProps {
   channel: Channel;
@@ -100,7 +132,30 @@ export function ChannelScreen({
     Record<string, Record<string, string[]>>
   >({});
 
+  // Q&A bot state. `botConsentBody` doubles as the open/closed flag for the
+  // explainer sheet AND the holding pen for the question typed before it was
+  // accepted — so accepting replays the exact text rather than asking the
+  // member to retype it.
+  const [botConsentBody, setBotConsentBody] = useState<string | null>(null);
+  const [botNotice, setBotNotice] = useState<BotNotice | null>(null);
+  const [botThinking, setBotThinking] = useState(false);
+  const botBeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const onlineIds = usePresence(currentUserId);
+
+  // The bot's identity comes from botProfiles (the author-resolution list), so
+  // the client never needs POGO_BOT_USER_ID. Empty when the bot account isn't
+  // configured on this deployment — in which case we simply don't broadcast.
+  const botUserId = botProfiles?.[0]?.user_id ?? null;
+  const botName = botProfiles?.[0]?.trainer_name ?? null;
+
+  // Clear the typing beat if the screen unmounts mid-request. askBot's `finally`
+  // covers the normal and error paths; this covers navigating away.
+  useEffect(() => {
+    return () => {
+      if (botBeatRef.current) clearInterval(botBeatRef.current);
+    };
+  }, []);
 
   // Analytics: channel opened. channel.id is the fixed channel slug (not PII).
   useEffect(() => {
@@ -236,27 +291,141 @@ export function ChannelScreen({
     reactionCallbacks
   );
 
+  // Ask the Q&A bot about a message we just posted. The route is handed only
+  // the message id and re-reads the row server-side, so it can verify the
+  // asker owns it — the question text itself is never sent from here.
+  const askBot = useCallback(
+    async (messageId: string) => {
+      setBotNotice(null);
+      setBotThinking(true);
+
+      // The bot has no browser session, so nothing broadcasts on its behalf.
+      // We do it here. createClient() is a singleton and supabase.channel()
+      // returns the channel this screen already subscribed to rather than
+      // opening a competing one, so this rides the live subscription.
+      // Broadcasts don't echo to the sender, hence `botThinking` above for the
+      // asker's own view.
+      if (botUserId) {
+        const supabase = createClient();
+        const ch = supabase.channel(`chat:${channel.id}`);
+        const beat = () =>
+          void ch.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { user_id: botUserId },
+          });
+        beat();
+        botBeatRef.current = setInterval(beat, BOT_TYPING_BEAT_MS);
+      }
+
+      try {
+        const res = await fetch('/api/bot/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messageId }),
+        });
+        // A 200 needs no UI at all — the answer lands as an ordinary message
+        // over Realtime, quoting the question.
+        if (res.status === 429) setBotNotice('rate_limited');
+        else if (res.status === 503) setBotNotice('unavailable');
+        else if (!res.ok) setBotNotice('failed');
+      } catch {
+        setBotNotice('failed');
+      } finally {
+        if (botBeatRef.current) {
+          clearInterval(botBeatRef.current);
+          botBeatRef.current = null;
+        }
+        setBotThinking(false);
+      }
+    },
+    [botUserId, channel.id]
+  );
+
+  // The actual send. Split out of handleSend so the consent explainer can hold
+  // a question back and replay it verbatim once accepted.
+  const deliver = useCallback(
+    async (body: string, replyId: string | null) => {
+      const optimisticId = `opt-${Date.now()}`;
+      const optimistic: ChatMessage = {
+        id: optimisticId,
+        author_id: currentUserId,
+        body,
+        sent_at: new Date(),
+        reply_to_id: replyId,
+        reactions: {},
+        profiles: {
+          trainer_name: currentUserName,
+          avatar_url: profileById.get(currentUserId)?.avatar_url ?? null,
+          team: profileById.get(currentUserId)?.team ?? null,
+          level: profileById.get(currentUserId)?.level ?? null,
+        },
+      };
+      setMessages((prev) => [...prev, optimistic]);
+      // Analytics: channel message sent. Channel slug only — never the body.
+      track('channel_message_sent', { channel: channel.id });
+
+      const { data, error } = await sendMessage(
+        channel.id,
+        currentUserId,
+        body,
+        replyId
+      );
+
+      if (error || !data) {
+        // Drop the placeholder instead of leaving a ghost that never resolves
+        // (a banned account, for instance, is refused by RLS on INSERT).
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+        setBotNotice('send_failed');
+        return;
+      }
+
+      // parseQuestion here, not looksLikeQuestion: a bare "!pogo" or an
+      // over-long one is a message like any other, and the route would only
+      // reject it. The explainer gate upstream is the looser of the two.
+      if (isQaChannel(channel.id) && parseQuestion(body) !== null) {
+        await askBot(data.id);
+      }
+    },
+    [askBot, channel.id, currentUserId, currentUserName, profileById]
+  );
+
   async function handleSend(body: string) {
     const replyId = replyTo?.id ?? null;
-    const optimistic: ChatMessage = {
-      id: `opt-${Date.now()}`,
-      author_id: currentUserId,
-      body,
-      sent_at: new Date(),
-      reply_to_id: replyId,
-      reactions: {},
-      profiles: {
-        trainer_name: currentUserName,
-        avatar_url: profileById.get(currentUserId)?.avatar_url ?? null,
-        team: profileById.get(currentUserId)?.team ?? null,
-        level: profileById.get(currentUserId)?.level ?? null,
-      },
-    };
-    setMessages((prev) => [...prev, optimistic]);
     setReplyTo(null);
-    // Analytics: channel message sent. Channel slug only — never the body.
-    track('channel_message_sent', { channel: channel.id });
-    await sendMessage(channel.id, currentUserId, body, replyId);
+
+    // First !pogo on this device: explain where the question goes before it
+    // goes anywhere. The message is held, not dropped — accepting sends it.
+    //
+    // Gated on looksLikeQuestion (did they type the trigger), NOT parseQuestion
+    // (is it a valid question). A bare "!pogo" or an over-long one parses to
+    // null but still shows intent, and someone who has clearly tried to reach
+    // the bot deserves the explainer rather than silence.
+    if (
+      isQaChannel(channel.id) &&
+      looksLikeQuestion(body) &&
+      !hasBotConsent()
+    ) {
+      setBotConsentBody(body);
+      return;
+    }
+
+    await deliver(body, replyId);
+  }
+
+  // Accepting the explainer records it and sends the held question.
+  function acceptBotConsent() {
+    const held = botConsentBody;
+    try {
+      window.localStorage.setItem(BOT_CONSENT_KEY, '1');
+    } catch {
+      // Storage unavailable — the explainer shows again next time, which is a
+      // harmless outcome. Don't block the question on it.
+    }
+    setBotConsentBody(null);
+    // Replies are cleared when the sheet opens, so the held question sends
+    // unthreaded — matching what the member saw before the explainer appeared.
+    if (held) void deliver(held, null);
   }
 
   // Tap a bubble → open the action sheet.
@@ -372,6 +541,12 @@ export function ChannelScreen({
   const typingNames = Array.from(typingUserIds)
     .map((id) => profileById.get(id)?.trainer_name)
     .filter((n): n is string => Boolean(n));
+
+  // Our own bot-typing broadcast doesn't echo back to us, so the asker would
+  // otherwise see nothing while waiting. Add it locally for this client only.
+  if (botThinking && botName && !typingNames.includes(botName)) {
+    typingNames.push(botName);
+  }
 
   // Composer reply preview names: "dig" when replying to yourself, otherwise
   // the resolved trainer name. Computed here so Composer stays presentational.
@@ -494,6 +669,35 @@ export function ChannelScreen({
         </div>
       </main>
 
+      {/* Q&A bot notice — sits just above the composer, dismissible. Only the
+          asker sees it; everyone else simply never gets an answer. */}
+      {botNotice && (
+        <div className="fixed bottom-[70px] left-0 right-0 z-20 px-3 pb-2">
+          <div
+            role="status"
+            className="mx-auto max-w-[480px] bg-card border border-border rounded-lg px-3 py-2.5 flex items-start gap-2 shadow-sm"
+          >
+            <p className="flex-1 text-[13px] text-card-foreground leading-snug">
+              {botNotice === 'rate_limited'
+                ? t('botRateLimited')
+                : botNotice === 'unavailable'
+                  ? t('botUnavailable')
+                  : botNotice === 'send_failed'
+                    ? t('sendFailed')
+                    : t('botFailed')}
+            </p>
+            <button
+              type="button"
+              onClick={() => setBotNotice(null)}
+              aria-label={t('close')}
+              className="w-6 h-6 -mr-1 shrink-0 flex items-center justify-center rounded-full text-muted-foreground"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <Composer
         channelName={channel.name}
         onSend={handleSend}
@@ -502,6 +706,46 @@ export function ChannelScreen({
         replyToName={replyToName}
         onCancelReply={() => setReplyTo(null)}
       />
+
+      {/* Bot explainer — shown once per device before the first !pogo question.
+          Holds the question until the member accepts; cancelling discards it. */}
+      {botConsentBody !== null && (
+        <div
+          className="fixed inset-0 bg-black/40 z-50 flex items-end"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setBotConsentBody(null);
+          }}
+        >
+          <div className="bg-card rounded-t-2xl w-full max-w-[480px] mx-auto max-h-[85vh] overflow-y-auto px-4 pt-4 pb-6 flex flex-col gap-3">
+            <h2 className="text-[16px] font-bold text-card-foreground">
+              {t('botConsentTitle')}
+            </h2>
+            <p className="text-[14px] text-card-foreground leading-relaxed">
+              {t('botConsentWhat')}
+            </p>
+            <p className="text-[14px] text-card-foreground leading-relaxed">
+              {t('botConsentWho')}
+            </p>
+            <p className="text-[14px] font-semibold text-card-foreground leading-relaxed">
+              {t('botConsentNoPersonal')}
+            </p>
+            <button
+              type="button"
+              onClick={acceptBotConsent}
+              className="h-[52px] w-full mt-1 bg-primary text-primary-foreground rounded-md flex items-center justify-center text-base font-semibold"
+            >
+              {t('botConsentAccept')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setBotConsentBody(null)}
+              className="h-[44px] w-full text-[15px] font-semibold text-muted-foreground"
+            >
+              {t('botConsentCancel')}
+            </button>
+          </div>
+        </div>
+      )}
 
       <MembersSheet
         open={membersOpen}
