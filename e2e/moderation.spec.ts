@@ -40,8 +40,19 @@ test.describe("Moderation — reporting", () => {
     await settled.press("Enter");
 
     // Reply/copy are offered on your own message; "Anmeld" is not.
-    await expect(page.getByRole("button", { name: "Svar" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Anmeld" })).toHaveCount(0);
+    //
+    // exact: true on both. An unqualified name is a SUBSTRING match, and every
+    // message bubble is itself a <button> whose accessible name is the message
+    // text — so any chat message containing "svar" (the Q&A bot's own refusal
+    // copy says "jeg svarer kun på spørgsmål om Pokémon GO") collides with the
+    // action-sheet button and trips strict mode. Same trap as the "Send" /
+    // "Send besked" collision in PR #207.
+    await expect(
+      page.getByRole("button", { name: "Svar", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Anmeld", exact: true })
+    ).toHaveCount(0);
   });
 
   test("another user's message opens the report sheet", async ({ page }) => {
@@ -65,7 +76,7 @@ test.describe("Moderation — reporting", () => {
     let opened = false;
     for (let i = 0; i < Math.min(count, 12); i++) {
       await otherBubbles.nth(i).press("Enter");
-      const report = page.getByRole("button", { name: "Anmeld" });
+      const report = page.getByRole("button", { name: "Anmeld", exact: true });
       if ((await report.count()) > 0) {
         await report.click();
         opened = true;

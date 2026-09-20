@@ -36,11 +36,11 @@ test.describe("Raid chat — reactions + replies", () => {
     await bubble.click();
 
     // Action sheet visible — pick 👍 from the quick-reaction row.
-    await expect(page.getByRole("button", { name: "Svar" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Svar", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "👍" }).first().click();
 
     // Sheet closes; chip with the emoji and count 1 appears.
-    await expect(page.getByRole("button", { name: "Svar" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Svar", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /👍\s*1/ })).toBeVisible();
 
     // Tap the chip again → it should disappear (toggle to remove).
@@ -60,7 +60,7 @@ test.describe("Raid chat — reactions + replies", () => {
 
     // Open sheet, tap Svar — banner appears.
     await originalBubble.click();
-    await page.getByRole("button", { name: "Svar" }).click();
+    await page.getByRole("button", { name: "Svar", exact: true }).click();
     await expect(page.getByText(/Svarer/)).toBeVisible();
 
     // Send reply via the reply-mode textbox.

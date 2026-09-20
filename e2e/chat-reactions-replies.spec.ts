@@ -44,7 +44,14 @@ test.describe("Chat — reactions + replies", () => {
     await thumbsUp.evaluate((el) => (el as HTMLElement).click());
 
     // Sheet closes; chip with the emoji and count 1 appears.
-    await expect(page.getByRole("button", { name: "Svar" })).toHaveCount(0);
+    //
+    // exact: true — an unqualified name is a SUBSTRING match, and each message
+    // bubble is a <button> named after its own text, so any message containing
+    // "svar" would keep this count above 0 forever. See the note at the Svar
+    // locator in the next test.
+    await expect(
+      page.getByRole("button", { name: "Svar", exact: true })
+    ).toHaveCount(0);
     // Multiple prior runs accumulate "👍 1" chips — use .first() to avoid strict-mode violations.
     await expect(page.getByRole("button", { name: /👍\s*1/ }).first()).toBeVisible();
   });
@@ -65,7 +72,14 @@ test.describe("Chat — reactions + replies", () => {
     // "Svar" is only available for other users' messages; skip if own-message action sheet.
     // Use evaluate(el.click()) to avoid the backdrop race (see test 1 comment).
     await originalBubble.evaluate((el) => (el as HTMLElement).click());
-    const svarBtn = page.getByRole("button", { name: "Svar" });
+    // exact: true is load-bearing, not tidiness. Without it the name is matched
+    // as a substring, and because every message bubble is a <button> whose
+    // accessible name is the message text, any chat message containing "svar"
+    // also matches — the Q&A bot's refusal copy ("jeg svarer kun på spørgsmål
+    // om Pokémon GO") did exactly that and broke this spec on main, since
+    // preview chat history accumulates and never resets. Same trap as the
+    // "Send" / "Send besked" collision in PR #207.
+    const svarBtn = page.getByRole("button", { name: "Svar", exact: true });
     if (!(await svarBtn.isVisible({ timeout: 3000 }).catch(() => false))) {
       test.skip(true, "Svar not in action sheet for own messages — needs a second user's message");
     }
