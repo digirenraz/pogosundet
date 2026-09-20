@@ -22,21 +22,25 @@ export const CHANNELS: readonly Channel[] = [
   {
     id: 'generelt',
     name: 'generelt',
-    description: 'Snak om alt og intet — fjorden, fangst og fællesskab.',
+    description:
+      'Snak om alt og intet — fjorden, fangst og fællesskab. Skriv !pogo efterfulgt af dit spørgsmål, så svarer botten.',
   },
   {
     id: 'feedback',
     name: 'app-feedback',
     description: 'Bugs, idéer og ønsker til PoGoSundet.',
   },
-  // Bot-only in practice: the event poller posts here (src/lib/pogo-feed/).
-  // Members can still write — it is an ordinary channel, just not one anybody
-  // needs to. The attribution in the description is required by ScrapedDuck's
-  // terms of use, so don't remove it.
+  // Mostly bot territory: the event poller posts here (src/lib/pogo-feed/), and
+  // the Q&A bot answers !pogo questions here too (src/lib/pogo-qa/ — see
+  // QA_CHANNELS, which must stay a subset of this list). Members can still
+  // write — it is an ordinary channel, just not one anybody needs to. The
+  // attribution in the description is required by ScrapedDuck's terms of use,
+  // so don't remove it.
   {
     id: 'events',
     name: 'events',
-    description: 'Nye raids og bosser, automatisk. Data fra LeekDuck.com via ScrapedDuck.',
+    description:
+      'Nye raids og bosser, automatisk. Skriv !pogo efterfulgt af dit spørgsmål, så svarer botten. Data fra LeekDuck.com via ScrapedDuck.',
   },
 ] as const;
 

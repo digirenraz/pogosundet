@@ -75,7 +75,7 @@
   },
   "Privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last updated: 2026-08-12",
+    "lastUpdated": "Last updated: 2026-09-13",
     "backLink": "Back",
     "s1Title": "1. Data Controller",
     "s1Body": "René Rasmussen is the data controller for PoGoSundet. Contact: renraz@gmail.com",
@@ -91,7 +91,7 @@
     "s6Title": "6. Sharing",
     "s6Body": "We do not sell, rent, or share your personal data with third parties. Your profile information (trainer name, friend code, first name, bio) is visible to other registered users of PoGoSundet. You can hide your friend code under \"Edit profile\" — it is then neither shown to nor shared with other users.",
     "s7Title": "7. Data processors",
-    "s7Body": "We use Supabase (EU/Ireland) for data storage and authentication. Supabase acts as a data processor on our behalf and is contractually obligated to comply with GDPR. For error logging we use Sentry (EU region) to detect and fix technical faults in the app. Sentry only receives technical error information; we do not deliberately collect your IP address or other personal data via the error log. If you consent to analytics (see section 9), we also use Amplitude (EU region) for anonymous usage statistics. If you report a bug via the app, your report is stored in our private issue tracker on GitHub, which thereby acts as a data processor for the report text and your trainer name — the report contains only what you write yourself, plus your trainer name. All processors handle data solely on our behalf and in compliance with GDPR.",
+    "s7Body": "We use Supabase (EU/Ireland) for data storage and authentication. Supabase acts as a data processor on our behalf and is contractually obligated to comply with GDPR. For error logging we use Sentry (EU region) to detect and fix technical faults in the app. Sentry only receives technical error information; we do not deliberately collect your IP address or other personal data via the error log. If you consent to analytics (see section 9), we also use Amplitude (EU region) for anonymous usage statistics. If you report a bug via the app, your report is stored in our private issue tracker on GitHub, which thereby acts as a data processor for the report text and your trainer name — the report contains only what you write yourself, plus your trainer name. All processors handle data solely on our behalf and in compliance with GDPR. If you ask the bot a question with !pogo (see section 15), the text of the question is processed by Anthropic PBC. Unlike our other data processors, Anthropic is located in the USA rather than the EU; the transfer takes place under a data processing agreement incorporating the European Commission's standard contractual clauses, and the questions are not used to train their models.",
     "s8Title": "8. Your rights",
     "s8Body": "You have the right to access your data, rectification of inaccurate data, erasure (\"right to be forgotten\"), data portability, and the right to lodge a complaint with your supervisory authority. Contact us at renraz@gmail.com to exercise these rights.",
     "s9Title": "9. Cookies and tracking",
@@ -102,8 +102,12 @@
     "s11Body": "If you choose to receive push notifications, we store your browser's push subscription (endpoint and encryption keys) in our database. This data is used solely to notify you of new raids, of new messages in raid chats you've joined, of new direct messages sent to you, and when a new player joins a raid you're attending. A direct-message or raid-chat-message notification contains only the sender's name (and, for raid chats, the raid's boss or gym — already visible in the app) — never the message content itself. A new-participant notification contains only the player's trainer name, which is already visible in the app. You can unsubscribe at any time via your browser or device settings — the subscription is deleted automatically.",
     "s12Title": "12. Community chat",
     "s12Body": "When you post in the shared channels (#generelt and #app-feedback), we store your message together with your user id and timestamp. Messages are visible to all signed-in users of PoGoSundet and are kept indefinitely. When you delete your account, all your chat messages are deleted automatically along with your profile.",
+    "s13Title": "13. Direct messages",
+    "s13Body": "When you send a direct message (DM) to another trainer, we store the message together with the sender's and recipient's user IDs, the message text, the timestamp and any reactions (emojis). Only the two participants in the conversation can read the messages — this is enforced technically at the database level, so nobody else has access. Messages are kept indefinitely until you delete your account. When you delete your account, all your direct messages (both sent and received) and your reactions are deleted automatically.",
     "s14Title": "14. Reports and moderation",
-    "s14Body": "If you report a message, we store a copy of the reported message, your trainer name as the reporter, the sender's trainer name, the reason you select, and any comment you add. The copy is kept because the report would otherwise be useless once the message is deleted. Reports can only be read by the app administrator — not by other users. If you report a private message, only that single reported message is shared with the administrator, never the rest of the conversation. The administrator can delete the reported message, message you or the sender, and ban an account from posting. If your account is banned we store the time and a reason, which is shown to you. Reports and bans are kept while your account is active and are deleted along with the account."
+    "s14Body": "If you report a message, we store a copy of the reported message, your trainer name as the reporter, the sender's trainer name, the reason you select, and any comment you add. The copy is kept because the report would otherwise be useless once the message is deleted. Reports can only be read by the app administrator — not by other users. If you report a private message, only that single reported message is shared with the administrator, never the rest of the conversation. The administrator can delete the reported message, message you or the sender, and ban an account from posting. If your account is banned we store the time and a reason, which is shown to you. Reports and bans are kept while your account is active and are deleted along with the account.",
+    "s15Title": "15. Questions to the bot",
+    "s15Body": "If you type !pogo followed by a question in a chat channel, we pass the text of the question on to Anthropic, which generates the answer. We send only the text you write after !pogo — never your trainer name, your Trainer Code, your email address or your other messages. Each question is sent on its own with no history of earlier questions, so your questions cannot be linked together. Anthropic processes the question as a data processor on our behalf and does not use it to train their models. Anthropic processes data in the USA rather than the EU, and the transfer takes place under a data processing agreement incorporating the European Commission's standard contractual clauses — it is the only one of our data processors located outside the EU. If the bot needs to look something up, a search phrase derived from your question is passed on to a search service. We do not store the question itself anywhere other than in the chat: your question and the bot's answer are ordinary messages that all logged-in members can see, and they are deleted together with your account. We also store the time of your questions so we can limit how many can be asked at once — that is deleted with the account too. We recommend that you do not put personal information in a !pogo question."
   },
   "Terms": {
     "title": "Terms of Use",
@@ -344,7 +348,17 @@
     "newMessageButton": "New message",
     "longPressHint": "Hold a message down to reply, react, or copy",
     "hintDismiss": "Dismiss hint",
-    "actionAnmeld": "Report"
+    "actionAnmeld": "Report",
+    "botConsentTitle": "Ask the bot",
+    "botConsentWhat": "When you type !pogo and a question, we send only the question itself — not your trainer name, your Trainer Code or your other messages. The bot doesn't remember what you asked before.",
+    "botConsentWho": "The question is answered by Anthropic in the USA on our behalf, and it is not used to train their models. Your question and the bot's answer are ordinary channel messages that every member can see.",
+    "botConsentNoPersonal": "Don't put personal information in a !pogo question.",
+    "botConsentAccept": "Got it — send the question",
+    "botConsentCancel": "Cancel",
+    "botRateLimited": "You've asked the bot quite a few questions in a short time. Try again shortly 🙂",
+    "botFailed": "The bot couldn't answer right now. Try again shortly.",
+    "botUnavailable": "The bot isn't switched on right now.",
+    "sendFailed": "The message wasn't sent. Please try again."
   },
   "ProfileEdit": {
     "headerTitle": "Edit profile",

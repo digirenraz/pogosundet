@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-09-13',
+    text: 'Du kan nu spørge botten om Pokémon GO i #generelt og #events: skriv !pogo efterfulgt af dit spørgsmål, så svarer den i kanalen. Første gang får du en kort forklaring på, hvad der sendes videre — skriv aldrig personlige oplysninger i et spørgsmål.',
+  },
+  {
     date: '2026-08-30',
     text: 'Opret konto-siden viser nu også "Fortsæt med Google" øverst, ligesom log ind-siden.',
   },
