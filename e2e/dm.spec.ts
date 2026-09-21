@@ -58,7 +58,7 @@ test.describe("Direct messages", () => {
     await reloadedBubble.evaluate((el) => (el as HTMLElement).click());
 
     // React 👍 from the action sheet.
-    await expect(page.getByRole("button", { name: "Svar" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Svar", exact: true })).toBeVisible();
     // Exact regex /^👍$/ avoids matching accumulated reaction chips ("👍 3" etc.)
     const thumbsUpDm = page.locator('button').filter({ hasText: /^👍$/ }).first();
     await thumbsUpDm.evaluate((el) => (el as HTMLElement).click());
@@ -68,7 +68,7 @@ test.describe("Direct messages", () => {
 
     // Reply to the same message — same evaluate pattern to keep sheet open.
     await page.getByRole("button", { name: body }).evaluate((el) => (el as HTMLElement).click());
-    await page.getByRole("button", { name: "Svar" }).evaluate((el) => (el as HTMLElement).click());
+    await page.getByRole("button", { name: "Svar", exact: true }).evaluate((el) => (el as HTMLElement).click());
     // Multiple prior test runs accumulate "Svarer" banners — use .first() to
     // avoid strict-mode violations when there are leftover reply quotes.
     await expect(page.getByText(/Svarer/).first()).toBeVisible();

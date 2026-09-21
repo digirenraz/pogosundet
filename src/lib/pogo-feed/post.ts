@@ -8,6 +8,10 @@
 // The row is otherwise completely ordinary: it lands in channel_messages, hits
 // the supabase_realtime publication, and fans out to connected clients exactly
 // like a human message. No client-side change was needed to display it.
+//
+// Two callers now: the event poller (src/lib/pogo-feed/run.ts), which posts
+// standalone announcements, and the Q&A bot (src/lib/pogo-qa/), which passes
+// replyToId so its answer renders as a quoted reply to the question.
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { ChannelId } from '@/lib/chat/channels';
@@ -19,7 +23,7 @@ import type { ChannelId } from '@/lib/chat/channels';
  * the environment rather than hard-coded, because prod and pogosundet-preview
  * have different bot users.
  */
-function botUserId(): string | null {
+export function botUserId(): string | null {
   return process.env.POGO_BOT_USER_ID || null;
 }
 
@@ -34,10 +38,17 @@ export function isBotConfigured(): boolean {
  * Returns { error } mirroring Supabase conventions. Callers post messages one at
  * a time and tolerate individual failures — a single failed post must not abort
  * the rest of the run.
+ *
+ * `replyToId` threads the message under an existing one (channel_messages
+ * .reply_to_id, migration 010), which the chat renderer turns into a quoted
+ * reply with no UI work. Omitted for the poller's standalone announcements.
+ * Note the column is ON DELETE SET NULL, so a moderator deleting the original
+ * question leaves the answer standing rather than orphaning a dangling id.
  */
 export async function postAsBot(
   channel: ChannelId,
-  body: string
+  body: string,
+  replyToId?: string | null
 ): Promise<{ error: unknown }> {
   const userId = botUserId();
   if (!userId) {
@@ -45,9 +56,12 @@ export async function postAsBot(
   }
 
   const supabase = createAdminClient();
-  const { error } = await supabase
-    .from('channel_messages')
-    .insert({ channel, user_id: userId, body });
+  const { error } = await supabase.from('channel_messages').insert({
+    channel,
+    user_id: userId,
+    body,
+    ...(replyToId ? { reply_to_id: replyToId } : {}),
+  });
 
   if (error) {
     console.error(`[pogo-feed] failed to post to #${channel}: ${error.message}`);

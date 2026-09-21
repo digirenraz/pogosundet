@@ -16,6 +16,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    date: '2026-09-13',
+    text: 'Du kan nu spørge botten om Pokémon GO i #generelt og #events: skriv !pogo efterfulgt af dit spørgsmål, så svarer den i kanalen. Første gang får du en kort forklaring på, hvad der sendes videre — skriv aldrig personlige oplysninger i et spørgsmål.',
+  },
+  {
     date: '2026-09-05',
     text: 'Ny fane "Kort": del din position mens du spiller, og se hvem der er ude lige nu. Du vælger selv hvor længe (højst 2 timer), og din position slettes automatisk bagefter — vi gemmer ingen historik. Positionerne opdateres kun, når folk har appen fremme, så der står altid hvor gammel en position er.',
   },
