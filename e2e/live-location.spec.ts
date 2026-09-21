@@ -116,8 +116,12 @@ test.describe("Live location sharing", () => {
     // A freshly captured position reads "lige nu" — and the screen carries the
     // standing caveat that positions only update while the app is open.
     await expect(page.getByText("lige nu").first()).toBeVisible();
+    // `.first()` for the same reason as "lige nu" above: /kort double-mounts
+    // under `npm run dev` (the documented RaidDetail behaviour, and CI runs the
+    // specs against the dev server), so this renders twice there and once in
+    // production. The assertion is that the caveat is shown, not how many times.
     await expect(
-      page.getByText(/Positionerne opdateres kun, når folk har appen fremme/)
+      page.getByText(/Positionerne opdateres kun, når folk har appen fremme/).first()
     ).toBeVisible();
   });
 
