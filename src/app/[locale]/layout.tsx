@@ -4,7 +4,7 @@ import { InitialSplash } from "@/components/InitialSplash";
 import LoadingScreen from "@/components/LoadingScreen";
 import { UnreadProvider } from "@/components/UnreadProvider";
 import { LocationShareProvider } from "@/components/LocationShareProvider";
-import { LocationShareBanner } from "@/components/LocationShareBanner";
+import { LocationSharePill } from "@/components/LocationSharePill";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 
 // Locale layout — loads translations and makes them available to all
@@ -28,7 +28,7 @@ export default async function LocaleLayout({
       <UnreadProvider>
         <LocationShareProvider>
           {children}
-          <LocationShareBanner />
+          <LocationSharePill />
         </LocationShareProvider>
       </UnreadProvider>
       <AnalyticsProvider />

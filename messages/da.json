@@ -665,6 +665,9 @@
     "consentStale": "Din position opdateres kun, når du har appen fremme. Andre kan derfor se, hvor du var for et par minutter siden — ikke live.",
     "consentHome": "Del ikke din position hjemmefra. Del kun, når du er ude og spille.",
     "consentAccept": "Jeg forstår",
-    "staleWarning": "Positionerne opdateres kun, når folk har appen fremme."
+    "staleWarning": "Positionerne opdateres kun, når folk har appen fremme.",
+    "pillRemaining": "{minutes} min",
+    "sharingExplainer": "Andre medlemmer kan se på kortet, hvor du er, indtil tiden løber ud. Din position slettes automatisk bagefter, og vi gemmer ingen historik.",
+    "close": "Luk"
   }
 }

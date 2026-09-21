@@ -54,7 +54,7 @@ export function LiveLocationScreen({ currentUserId }: LiveLocationScreenProps) {
   const router = useRouter();
 
   const { locations, loading } = useLiveLocations(true);
-  // Stopping lives in the always-visible banner (LocationShareBanner), not here.
+  // Stopping lives in the always-visible pill (LocationSharePill), not here.
   const { isSharing, start } = useLocationShare();
   // Default (low-accuracy, cached) options: this instance only labels distances,
   // it never publishes. The sharing path uses its own high-accuracy instance

@@ -88,7 +88,7 @@ test.describe("Account deletion — real cascade", () => {
     }
     await page.getByRole("button", { name: "15 min" }).click();
     await page.getByRole("button", { name: "Start deling" }).click();
-    await expect(page.getByText("Du deler din position")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Du deler din position/ })).toBeVisible();
 
     // 5. Delete the account.
     await page.goto("/profile/edit");

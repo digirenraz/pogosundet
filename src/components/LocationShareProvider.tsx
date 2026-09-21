@@ -21,9 +21,10 @@ import { readPosition } from '@/lib/hooks/use-geolocation';
 // alone would mean a pin only updated when its owner happened to look at the
 // map, which is exactly when it matters least.
 //
-// It also renders the persistent "du deler din position" banner. That banner is
-// the primary safety affordance of this feature: it must be visible everywhere
-// and must not be dismissible, so that nobody can forget they are sharing.
+// The persistent "du deler din position" indicator (LocationSharePill) reads
+// from this context and is mounted alongside the provider in the locale layout.
+// It is the primary safety affordance of this feature: it must be visible
+// everywhere and must not be dismissible, so nobody can forget they are sharing.
 interface LocationShareContextValue {
   /** Expiry of the active share (ISO), or null when not sharing. */
   expiresAt: string | null;

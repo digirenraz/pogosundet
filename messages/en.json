@@ -559,6 +559,9 @@
     "consentStale": "Your location only updates while you have the app open. Others may see where you were a few minutes ago — not live.",
     "consentHome": "Do not share your location from home. Only share while you are out playing.",
     "consentAccept": "I understand",
-    "staleWarning": "Locations only update while people have the app open."
+    "staleWarning": "Locations only update while people have the app open.",
+    "pillRemaining": "{minutes} min",
+    "sharingExplainer": "Other members can see where you are on the map until the timer runs out. Your position is deleted automatically afterwards, and we keep no history.",
+    "close": "Close"
   }
 }

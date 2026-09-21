@@ -38,11 +38,22 @@ test.describe("Live location sharing", () => {
   test.afterEach(async ({ page }) => {
     // Leave no share behind — a stale row would leak into later tests (and
     // into the preview environment) as a phantom player on the map.
+    //
+    // This must WAIT for the pill rather than probe for it: `isVisible()` is a
+    // one-shot check with no auto-waiting, so asking right after a goto asks
+    // before the provider has loaded the share state and always answers "no".
+    // That is exactly how a share used to survive this hook and break every
+    // later spec that needs the "Del min position" button back.
     await page.goto("/kort");
-    const stop = page.getByRole("button", { name: "Stop" });
-    if (await stop.isVisible().catch(() => false)) {
-      await stop.click();
+    const pill = page.getByRole("button", { name: /Du deler din position/ });
+    try {
+      await pill.waitFor({ state: "visible", timeout: 5000 });
+    } catch {
+      return; // Nothing being shared — the common, healthy case.
     }
+    await pill.click();
+    await page.getByRole("button", { name: "Stop" }).click();
+    await expect(pill).toBeHidden();
   });
 
   test("the Kort tab is reachable from the bottom nav", async ({ page }) => {
@@ -52,7 +63,7 @@ test.describe("Live location sharing", () => {
     await expect(page.getByText("Hvem spiller nu").first()).toBeVisible();
   });
 
-  test("start a share → banner appears → stop → banner is gone", async ({ page }) => {
+  test("start a share → pill appears → stop → pill is gone", async ({ page }) => {
     await page.goto("/kort");
     await page.waitForLoadState("networkidle");
 
@@ -63,31 +74,36 @@ test.describe("Live location sharing", () => {
     await page.getByRole("button", { name: "15 min" }).click();
     await page.getByRole("button", { name: "Start deling" }).click();
 
-    // The persistent banner is the safety affordance — it must show up, and it
-    // must carry a countdown.
-    const banner = page.getByText("Du deler din position");
-    await expect(banner).toBeVisible();
-    await expect(page.getByText(/\d+ min tilbage/)).toBeVisible();
+    // The persistent pill is the safety affordance — it must show up, and it
+    // must carry a countdown. The pill is visually just icon + minutes, so the
+    // sentence is asserted through its accessible name, which is what assistive
+    // tech announces.
+    const pill = page.getByRole("button", { name: /Du deler din position/ });
+    await expect(pill).toBeVisible();
+    await expect(pill).toHaveAccessibleName(/\d+ min tilbage/);
 
     // The sharer appears in the list, labelled as themselves.
     await expect(page.getByText("Dig").first()).toBeVisible();
 
+    // Stopping is deliberate: expand the pill, then stop from the panel.
+    await pill.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("button", { name: "Stop" }).click();
-    await expect(banner).toBeHidden();
+    await expect(pill).toBeHidden();
   });
 
-  test("the share survives a reload, and the banner comes back with it", async ({ page }) => {
+  test("the share survives a reload, and the pill comes back with it", async ({ page }) => {
     await page.goto("/kort");
     await page.waitForLoadState("networkidle");
     await page.getByRole("button", { name: "Del min position" }).click();
     await page.getByRole("button", { name: "15 min" }).click();
     await page.getByRole("button", { name: "Start deling" }).click();
-    await expect(page.getByText("Du deler din position")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Du deler din position/ })).toBeVisible();
 
-    // The row outlives the tab, so a cold open must restore the banner —
+    // The row outlives the tab, so a cold open must restore the pill —
     // otherwise someone could be sharing with no visible indication.
     await page.reload();
-    await expect(page.getByText("Du deler din position")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Du deler din position/ })).toBeVisible();
   });
 
   test("every position is labelled with its age, never as live", async ({ page }) => {
@@ -114,7 +130,7 @@ test.describe("Live location sharing", () => {
     await page.getByRole("button", { name: "Del min position" }).click();
     await page.getByRole("button", { name: "1 time" }).click();
     await page.getByRole("button", { name: "Start deling" }).click();
-    await expect(page.getByText("Du deler din position")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Du deler din position/ })).toBeVisible();
 
     // Walk somewhere else, then simulate the app coming back to the front.
     // This is the whole refresh-on-focus premise: a web app cannot update a
@@ -124,7 +140,7 @@ test.describe("Live location sharing", () => {
     // The write is throttled to once a minute, so reload instead of waiting it
     // out — a fresh mount always writes (lastWriteAt is null).
     await page.reload();
-    await expect(page.getByText("Du deler din position")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Du deler din position/ })).toBeVisible();
     await expect(page.getByText("Dig").first()).toBeVisible();
   });
 
@@ -141,6 +157,6 @@ test.describe("Live location sharing", () => {
     // The home-address warning is the part that must not quietly disappear.
     await expect(page.getByText(/Del ikke din position hjemmefra/)).toBeVisible();
     await page.getByRole("button", { name: "Annuller" }).click();
-    await expect(page.getByText("Du deler din position")).toBeHidden();
+    await expect(page.getByRole("button", { name: /Du deler din position/ })).toBeHidden();
   });
 });
