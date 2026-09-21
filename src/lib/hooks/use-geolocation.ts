@@ -3,14 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GymLocation } from '@/lib/gyms/maps';
 
-// Browser geolocation for the nearby-gym suggestions (raid form).
+// Browser geolocation, shared by the nearby-gym suggestions (raid form) and
+// live location sharing.
 //
-// GDPR: the position is used transiently in the browser to sort gym
-// suggestions by distance — it is NEVER stored and NEVER sent to our servers
-// (Privacy Policy §9). The permission prompt only ever appears on an explicit
-// user action (`request()`, wired to a visible button); on mount we read the
-// position silently ONLY when the browser permission is already granted, so
-// returning users skip the button without being prompted.
+// GDPR: for the gym suggestions the position is used transiently in the browser
+// to sort suggestions by distance — it is NEVER stored and NEVER sent to our
+// servers (Privacy Policy §9). Live location sharing is the deliberate
+// exception: there the user explicitly chooses to publish their position for a
+// bounded window, and only via an affirmative action. Either way the permission
+// prompt only ever appears on an explicit user action (`request()`, wired to a
+// visible button); on mount we read the position silently ONLY when the browser
+// permission is already granted, so returning users skip the button without
+// being prompted.
 //
 // Status flow:
 //   'unsupported'      — no navigator.geolocation (nothing renders)
@@ -26,16 +30,45 @@ export type GeolocationStatus =
   | 'located'
   | 'denied';
 
+// Defaults tuned for gym-suggestion sorting: a cached, low-accuracy fix is
+// plenty to rank stops a few hundred metres apart, and it is much faster and
+// cheaper on battery. Location sharing overrides these (see SHARE_GEO_OPTIONS
+// in src/lib/location/types.ts) because there the precision is the point.
 const GEO_OPTIONS: PositionOptions = {
   enableHighAccuracy: false,
   maximumAge: 60_000,
   timeout: 10_000,
 };
 
-export function useGeolocation(): {
+/**
+ * One-shot position read, outside React.
+ *
+ * Exists so callers that must ONLY read a position on an explicit user action
+ * can do so without mounting the hook — the hook reads silently on mount when
+ * the browser permission is already granted, which is right for gym sorting
+ * (the user is on the raid form) but wrong for anything mounted app-wide.
+ *
+ * Resolves to null on denial, timeout, or an unsupported browser.
+ */
+export function readPosition(options?: PositionOptions): Promise<GymLocation | null> {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    return Promise.resolve(null);
+  }
+  return new Promise(resolve => {
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      options ?? GEO_OPTIONS
+    );
+  });
+}
+
+export function useGeolocation(options?: PositionOptions): {
   status: GeolocationStatus;
   position: GymLocation | null;
   request: () => void;
+  /** Re-read the position without changing status back to pending. */
+  refresh: () => Promise<GymLocation | null>;
 } {
   // Lazy initializer instead of a "did mount" setState (React 19 lint rule).
   // During SSR navigator is undefined → 'unsupported'; nothing depending on
@@ -46,6 +79,13 @@ export function useGeolocation(): {
       : 'idle'
   );
   const [position, setPosition] = useState<GymLocation | null>(null);
+
+  // Held in a ref so callers can pass an inline options object without
+  // re-creating locate() (and re-running the mount effect) on every render.
+  const optionsRef = useRef(options);
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   // Guards against setState after unmount from the async geolocation
   // callbacks (both the silent mount path and request()).
@@ -68,7 +108,7 @@ export function useGeolocation(): {
         if (cancelledRef.current) return;
         setStatus('denied');
       },
-      GEO_OPTIONS
+      optionsRef.current ?? GEO_OPTIONS
     );
   }, []);
 
@@ -98,8 +138,8 @@ export function useGeolocation(): {
       });
   }, [locate]);
 
-  // Explicit user action (the "Vis gyms i nærheden" button) — may show the
-  // browser's permission prompt.
+  // Explicit user action (the "Vis gyms i nærheden" button, or starting a
+  // location share) — may show the browser's permission prompt.
   const request = useCallback(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       return;
@@ -108,5 +148,29 @@ export function useGeolocation(): {
     locate();
   }, [locate]);
 
-  return { status, position, request };
+  // One-shot read that resolves with the position, for callers that need the
+  // value inline rather than as rendered state — the refresh-on-focus path
+  // writes the new position immediately and has nothing to render meanwhile,
+  // so it must not flip the status back to 'granted-pending' and flicker the UI.
+  const refresh = useCallback((): Promise<GymLocation | null> => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      return Promise.resolve(null);
+    }
+    return new Promise(resolve => {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          if (!cancelledRef.current) {
+            setPosition(next);
+            setStatus('located');
+          }
+          resolve(next);
+        },
+        () => resolve(null),
+        optionsRef.current ?? GEO_OPTIONS
+      );
+    });
+  }, []);
+
+  return { status, position, request, refresh };
 }

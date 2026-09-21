@@ -20,6 +20,7 @@ export default async function PrivacyPage() {
     { title: t('s13Title'), body: t('s13Body') },
     { title: t('s14Title'), body: t('s14Body') },
     { title: t('s15Title'), body: t('s15Body') },
+    { title: t('s16Title'), body: t('s16Body') },
   ] as { title: string; body: string; list?: string }[];
 
   return (

@@ -75,7 +75,7 @@
   },
   "Privacy": {
     "title": "Privatlivspolitik",
-    "lastUpdated": "Sidst opdateret: 2026-09-13",
+    "lastUpdated": "Sidst opdateret: 2026-09-21",
     "backLink": "Tilbage",
     "s1Title": "1. Dataansvarlig",
     "s1Body": "René Rasmussen er dataansvarlig for PoGoSundet. Kontakt: renraz@gmail.com",
@@ -107,7 +107,9 @@
     "s14Title": "14. Anmeldelser og moderation",
     "s14Body": "Hvis du anmelder en besked, gemmer vi en kopi af den anmeldte besked, dit trænernavn som anmelder, afsenderens trænernavn, den årsag du vælger, og en eventuel kommentar fra dig. Kopien gemmes, fordi anmeldelsen ellers ville være ubrugelig, når beskeden er slettet. Anmeldelser kan kun læses af app-administratoren — heller ikke af andre brugere. Anmelder du en privat besked, deles kun den ene anmeldte besked med administratoren, aldrig resten af samtalen. Administratoren kan slette den anmeldte besked, sende dig eller afsenderen en besked, og udelukke en konto fra at skrive. Udelukkes din konto, gemmer vi tidspunktet og en begrundelse, som vises for dig. Anmeldelser og udelukkelser opbevares, så længe din konto er aktiv, og slettes sammen med kontoen.",
     "s15Title": "15. Spørgsmål til botten",
-    "s15Body": "Skriver du !pogo efterfulgt af et spørgsmål i en chatkanal, sender vi spørgsmålets tekst videre til Anthropic, som genererer svaret. Vi sender kun den tekst, du selv skriver efter !pogo — aldrig dit trænernavn, din Trainer Code, din e-mailadresse eller dine øvrige beskeder. Hvert spørgsmål sendes for sig uden nogen historik over tidligere spørgsmål, så dine spørgsmål kan ikke kædes sammen. Anthropic behandler spørgsmålet som databehandler på vores vegne og bruger det ikke til at træne deres modeller. Anthropic behandler data i USA og ikke i EU, og overførslen sker på grundlag af en databehandleraftale med EU-Kommissionens standardkontraktbestemmelser — det er den eneste af vores databehandlere, der ligger uden for EU. Har botten brug for at slå noget op, sendes en søgetekst udledt af dit spørgsmål videre til en søgetjeneste. Selve spørgsmålet gemmer vi ikke andre steder end i chatten: dit spørgsmål og botens svar er helt almindelige beskeder, som alle indloggede medlemmer kan se, og de slettes sammen med din konto. Vi gemmer desuden tidspunktet for dine spørgsmål, så vi kan begrænse hvor mange der kan stilles ad gangen — det slettes også sammen med kontoen. Vi anbefaler, at du ikke skriver personlige oplysninger i et !pogo-spørgsmål."
+    "s15Body": "Skriver du !pogo efterfulgt af et spørgsmål i en chatkanal, sender vi spørgsmålets tekst videre til Anthropic, som genererer svaret. Vi sender kun den tekst, du selv skriver efter !pogo — aldrig dit trænernavn, din Trainer Code, din e-mailadresse eller dine øvrige beskeder. Hvert spørgsmål sendes for sig uden nogen historik over tidligere spørgsmål, så dine spørgsmål kan ikke kædes sammen. Anthropic behandler spørgsmålet som databehandler på vores vegne og bruger det ikke til at træne deres modeller. Anthropic behandler data i USA og ikke i EU, og overførslen sker på grundlag af en databehandleraftale med EU-Kommissionens standardkontraktbestemmelser — det er den eneste af vores databehandlere, der ligger uden for EU. Har botten brug for at slå noget op, sendes en søgetekst udledt af dit spørgsmål videre til en søgetjeneste. Selve spørgsmålet gemmer vi ikke andre steder end i chatten: dit spørgsmål og botens svar er helt almindelige beskeder, som alle indloggede medlemmer kan se, og de slettes sammen med din konto. Vi gemmer desuden tidspunktet for dine spørgsmål, så vi kan begrænse hvor mange der kan stilles ad gangen — det slettes også sammen med kontoen. Vi anbefaler, at du ikke skriver personlige oplysninger i et !pogo-spørgsmål.",
+    "s16Title": "16. Deling af din position",
+    "s16Body": "Hvis du selv vælger at dele din position, gemmer vi dine koordinater, hvor længe delingen varer, og en eventuel note du selv skriver. Delingen sker kun, når du aktivt starter den, og alle indloggede medlemmer kan se, hvor du er, så længe den er aktiv. Du bestemmer varigheden — højst 2 timer — og du kan stoppe delingen når som helst. Din position slettes automatisk, når tiden er gået: vi gemmer kun din seneste position, aldrig en historik over, hvor du har været. Vi gemmer én række per bruger, som overskrives, hver gang din position opdateres. Din position opdateres kun, mens du har appen fremme — en webapp kan ikke aflæse placering i baggrunden — og andre kan derfor se, hvor du var for et par minutter siden, ikke hvor du er lige nu. Vi anbefaler, at du ikke deler din position hjemmefra. Kortet henter kortfliser fra OpenStreetMap, som derved kan se, hvilket område du kigger på. Trykker du \"Vis på kort\", åbner du Google Maps med de valgte koordinater — det sker kun, når du selv trykker."
   },
   "Terms": {
     "title": "Vilkår for brug",
@@ -369,7 +371,8 @@
     "players": "Spillere",
     "raids": "Raids",
     "chat": "Chat",
-    "profile": "Profil"
+    "profile": "Profil",
+    "map": "Kort"
   },
   "LoadingScreen": {
     "ariaLabel": "Indlæser",
@@ -627,5 +630,44 @@
     "reasonLabel": "Årsag",
     "since": "Udelukket den {date}",
     "appeal": "Mener du, at det er en fejl? Kontakt administratoren i Frederikssund-fællesskabet."
+  },
+  "LiveLocation": {
+    "title": "Hvem spiller nu",
+    "sharingBanner": "Du deler din position",
+    "remaining": "{minutes} min tilbage",
+    "stop": "Stop",
+    "share": "Del min position",
+    "shareTitle": "Del din position",
+    "durationLabel": "Hvor længe spiller du?",
+    "duration15": "15 min",
+    "duration30": "30 min",
+    "duration60": "1 time",
+    "duration120": "2 timer",
+    "notePlaceholder": "Fx ved havnen (valgfrit)",
+    "startShare": "Start deling",
+    "cancel": "Annuller",
+    "empty": "Ingen deler deres position lige nu.",
+    "emptyHint": "Start selv en deling, så andre kan se hvor du er.",
+    "openMap": "Åbn kort",
+    "closeMap": "Luk kort",
+    "centerOnMe": "Centrer på mig",
+    "sendMessage": "Send besked",
+    "showOnMap": "Vis på kort",
+    "near": "ved {gym}",
+    "you": "Dig",
+    "denied": "Du har slået placering fra i browseren. Slå det til igen for at dele din position.",
+    "unsupported": "Din browser understøtter ikke placering.",
+    "failed": "Kunne ikke hente din placering. Prøv igen.",
+    "mapAttribution": "Kortdata © OpenStreetMap-bidragydere",
+    "consentTitle": "Før du deler din position",
+    "consentWhat": "Alle medlemmer af PoGoSundet kan se, hvor du er, så længe din deling er aktiv.",
+    "consentDuration": "Du bestemmer hvor længe — højst 2 timer. Din position slettes automatisk, når tiden er gået, og vi gemmer ingen historik.",
+    "consentStale": "Din position opdateres kun, når du har appen fremme. Andre kan derfor se, hvor du var for et par minutter siden — ikke live.",
+    "consentHome": "Del ikke din position hjemmefra. Del kun, når du er ude og spille.",
+    "consentAccept": "Jeg forstår",
+    "staleWarning": "Positionerne opdateres kun, når folk har appen fremme.",
+    "pillRemaining": "{minutes} min",
+    "sharingExplainer": "Andre medlemmer kan se på kortet, hvor du er, indtil tiden løber ud. Din position slettes automatisk bagefter, og vi gemmer ingen historik.",
+    "close": "Luk"
   }
 }
