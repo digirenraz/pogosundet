@@ -43,6 +43,30 @@ jobs:
     needs: playwright-version
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Serialise this job repo-wide. Every run logs in as the same
+    # E2E_TEST_EMAIL against pogosundet-preview, and some specs mutate
+    # per-user state that is globally unique — live_locations has user_id as
+    # its PRIMARY KEY, so that account has exactly one share row for the whole
+    # project. When two runs overlap, one starts a share and the other times
+    # out clicking "Del min position", which LiveLocationScreen hides behind
+    # {!isSharing && …}. That is what cancelled PR #256: the main run from
+    # #255 and the #256 PR run overlapped, E2E ran 17m35s against this 20min
+    # timeout, and 12 live-location specs failed.
+    #
+    # The group name is deliberately constant — no github.ref — so runs on
+    # DIFFERENT branches queue behind each other, which is the whole point.
+    # cancel-in-progress: false because a half-finished E2E leaves a share
+    # row behind; let it finish and clean up.
+    #
+    # Known limitation: GitHub keeps only ONE pending run per group, so if a
+    # third run arrives while one is running and one is pending, the pending
+    # one is cancelled. `test` is a required check, so that shows up as a
+    # cancelled check needing a re-run rather than a wrong result. Acceptable
+    # at this repo's volume; if it starts biting, the real fix is a second
+    # test account so runs stop sharing state.
+    concurrency:
+      group: ci-e2e-shared-test-account
+      cancel-in-progress: false
     # 'true' on normal PRs/pushes; '' (falsey) on Dependabot-triggered runs,
     # which GitHub deliberately withholds repo secrets from. Steps that need a
     # real Supabase backend (E2E) are gated on this; the rest run either way
