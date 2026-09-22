@@ -5,8 +5,42 @@ on:
   push:
     branches: [main]
 
+# Least privilege: every job here only reads the repo. Artifact upload uses
+# the runtime token, not GITHUB_TOKEN, so it needs nothing extra.
+permissions:
+  contents: read
+
 jobs:
+  # Derive the Playwright container tag from the lockfile so the image's
+  # baked-in browsers can never drift from the installed @playwright/test.
+  # Why this exists: the tag used to be hard-coded, and Dependabot can't see
+  # the coupling — it bumped @playwright/test 1.62 -> 1.63 and left the tag,
+  # so every spec failed with "Executable doesn't exist at
+  # .../chromium_headless_shell-1243". That could not be caught on the PR
+  # itself, because E2E is skipped on Dependabot runs (no secrets), so it
+  # only surfaced after merge, on main. See PR #247.
+  #
+  # Read from package-lock.json, not package.json: the lockfile carries the
+  # exact resolved version that `npm ci` installs, while package.json only
+  # carries a caret range that may resolve higher.
+  #
+  # If MCR has no image for that version the test job fails to start. That is
+  # deliberate — a loud failure beats silently running mismatched browsers.
+  playwright-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: read
+        run: |
+          V=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")
+          echo "Playwright version from lockfile: $V"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
   test:
+    needs: playwright-version
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # 'true' on normal PRs/pushes; '' (falsey) on Dependabot-triggered runs,
@@ -21,10 +55,11 @@ jobs:
     # pre-installed, so CI no longer downloads Chromium from cdn.playwright.dev
     # at runtime. That CDN download intermittently stalls after reaching 100%
     # and hung the job for days (PRs #64–#68). The image is pulled from
-    # Microsoft's container registry instead. Pin the tag to the installed
-    # @playwright/test version — the baked-in browsers must match it.
+    # Microsoft's container registry instead. The tag is derived from the
+    # lockfile by the playwright-version job above, so it tracks
+    # @playwright/test automatically instead of needing a manual bump.
     container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
 
     steps:
       - uses: actions/checkout@v7
