@@ -105,7 +105,7 @@ npx playwright test e2e/smoke.spec.ts
 ## Git workflow
 
 - `main` is always deployable. **Never commit directly to `main`.**
-- One short-lived branch per slice/chore off `main`: `slice/N-name` or `chore/short-name`. Delete after merge.
+- One short-lived branch per slice/chore off `main`: `slice/short-name` or `chore/short-name`. Delete after merge.
 - Don't start a new slice until the current one is merged.
 - Commit messages: short, imperative, English (`Add Trainer Code display`).
 - Update the **Decisions log** in `CLAUDE.md` at the end of each session if anything architectural changed.

@@ -37,7 +37,7 @@ Paste the result here before proceeding.
 
 ## 5. Branch and commit hygiene
 
-- Branch name follows the convention: `slice/N-short-name`
+- Branch name follows the convention: `slice/short-name` (or `chore/short-name`)
 - Commit messages are short, imperative, and in English
 - No merge commits from `main` into the feature branch (rebase if needed)
 
