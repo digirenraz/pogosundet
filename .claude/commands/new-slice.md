@@ -6,8 +6,8 @@ Start a new vertical slice for PoGoSundet.
 
 1. Ask me: "Which slice are we starting?" and wait for my answer before proceeding.
 2. Check the slice against "Next up" in CLAUDE.md. If it isn't listed, or it overlaps "Do NOT build" or "Phase 2 — do not build yet", flag it and ask before continuing.
-3. Create a new git branch using the convention: `slice/N-short-name`
-   - Example: `slice/1-registration`, `slice/2-profile`
+3. Create a new git branch using the convention: `slice/short-name`
+   - Example: `slice/pogo-qa-bot`, `slice/live-location-sharing`
 4. Remind me of the slice's scope based on CLAUDE.md — what is in, and what is explicitly out.
 5. Check the Open Questions section of CLAUDE.md. If any open question is relevant to this slice, raise it now before writing any code.
 6. Load the `design-tokens` skill before writing any UI component, and use the token utilities from `src/app/globals.css` rather than new hardcoded colours.
