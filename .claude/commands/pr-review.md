@@ -22,7 +22,7 @@ Work through each section below. Give a clear verdict at the end.
 - [ ] Supabase logic is in `src/lib/supabase/`
 - [ ] Non-obvious functions have a short comment explaining *why*, not just *what*
 - [ ] No hardcoded UI strings — all text goes through next-intl
-- [ ] Translation keys exist in `/messages/da.json`
+- [ ] Translation keys exist in `/messages/da.json` and are mirrored in `/messages/en.json`
 
 ## 3. GDPR check
 
