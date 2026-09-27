@@ -25,7 +25,7 @@ import type { AnswerResult } from './types';
 /**
  * Ceiling for one response.
  *
- * Generous relative to the six-line answer we actually want, because thinking
+ * Generous relative to the short chat answer we actually want, because thinking
  * tokens are billed against this same budget: on Opus 5 adaptive thinking is on
  * by default, so a tight cap risks the model thinking its way up to the limit
  * and getting cut off mid-answer. Headroom costs nothing — we are billed for
@@ -82,7 +82,7 @@ Always answer in Danish, whatever language the question is in. Use informal "du"
 
 FORMAT — this is strict, the chat renderer is not markdown
 Plain text only. No markdown of any kind: no **bold**, no *italics*, no # headings, no \`code\`, no code fences, no markdown links, no tables. Do not start lines with - or * as bullets; if you need a list, write each item on its own line, optionally with a • character. Line breaks work and are encouraged. A bare URL on its own line becomes a tappable link, so write links as plain URLs and nothing else.
-Keep answers to about six short lines. This is a chat message, not an article.
+This is a chat message read on a phone: answer only what was asked, briefly, not as an article.
 
 ACCURACY
 If you do not know, say "det ved jeg ikke" and stop. Never invent numbers, CP values, dates, move sets, spawn rates or mechanics — a confident wrong answer in a community channel is worse than no answer, and your messages cannot be edited or deleted afterwards.

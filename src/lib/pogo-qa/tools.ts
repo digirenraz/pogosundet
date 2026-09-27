@@ -22,18 +22,25 @@ const MAX_EVENTS_RETURNED = 15;
 export const GET_CURRENT_RAID_BOSSES: Anthropic.Beta.BetaTool = {
   name: 'get_current_raid_bosses',
   description:
-    'Get the raid bosses currently active in Pokémon GO, grouped by tier, with ' +
-    'shiny availability. Use this for any question about what is in raids right ' +
-    'now, which boss to fight, or what is worth raiding. Returns live data.',
+    'Get the raid bosses currently active in Pokémon GO, grouped by tier (every ' +
+    'tier, including 1-star, 3-star, shadow and mega), with shiny availability. ' +
+    'Data is from LeekDuck via ScrapedDuck and changes roughly daily; use it for any ' +
+    'question about what is in raids right now. It returns names, tiers and shiny ' +
+    'flags only: no CP, counters, moves or weather boosts, so use web search for ' +
+    'those. If the feed is down it returns a sentence saying so.',
   input_schema: { type: 'object', properties: {}, additionalProperties: false },
 };
 
 export const GET_UPCOMING_EVENTS: Anthropic.Beta.BetaTool = {
   name: 'get_upcoming_events',
   description:
-    'Get upcoming and currently-running Pokémon GO events (raid hours, raid days, ' +
-    'elite raids and similar), with their times in Danish local time. Use this for ' +
-    'any question about when something is happening. Returns live data.',
+    'Get Pokémon GO events that have not ended yet, running now or upcoming, of ' +
+    'every type in the LeekDuck feed (raid hours, raid days, community days and ' +
+    'others), each with name, type and a time window already in Danish local time. ' +
+    `Returns at most ${MAX_EVENTS_RETURNED} events in feed order, so an event missing from the list is ` +
+    "not proof it isn't happening: say you cannot see it, not that it does not " +
+    'exist. Use it for any question about when something is happening. If the feed ' +
+    'is down it returns a sentence saying so.',
   input_schema: { type: 'object', properties: {}, additionalProperties: false },
 };
 

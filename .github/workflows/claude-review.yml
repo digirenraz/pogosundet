@@ -81,8 +81,9 @@ jobs:
               Policy update (src/app/[locale]/privacy/page.tsx + messages Privacy
               namespace) and a `Privacy.lastUpdated` bump (GDPR).
             - A migration whose new columns/tables are referenced by a query in
-              the same PR must be applied to the shared Supabase project BEFORE
-              merge (flag if the PR adds such a query without noting this).
+              the same PR must be applied to the prod Supabase project (and
+              pogosundet-preview) BEFORE merge — merging deploys to prod and there
+              is no migration runner. Flag it if the PR template's Migration box is unticked.
             - Any change to public/sw.js behaviour must bump its cache-version
               constant (SHELL_CACHE / RUNTIME_CACHE).
             - A new notify-* Edge Function must replicate the isAuthorizedCaller()

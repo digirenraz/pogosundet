@@ -5,35 +5,22 @@ description: Approved PoGoSundet colour palette, typography, and component patte
 
 # PoGoSundet — Design Tokens & UI Patterns
 
-Extracted from Banani designs (April 2026).
-Use this file to ensure every component matches the approved design exactly.
-Do not invent colours, spacing, or patterns not listed here.
+The live token values are the `@theme` block in `src/app/globals.css` (Mint theme).
+Where a hex value in this file disagrees with it, `globals.css` wins. Use the
+utilities it generates (`bg-primary`, `text-muted-foreground`, `border-border`,
+`bg-card`, …) instead of hardcoding hex; new colours go into `@theme`, not inline.
 
 ---
 
 ## Colour palette
 
-Use these as Tailwind custom colours or CSS variables.
-Map them to the closest Tailwind default where possible; use arbitrary values where needed.
-
-| Token                | Hex       | Tailwind equivalent / usage                        |
-|----------------------|-----------|----------------------------------------------------|
-| `primary`            | `#2BBFAA` | Main brand teal — buttons, links, icons, active nav|
-| `primary-light`      | `#E8F7F5` | Light teal — card backgrounds, badge fills         |
-| `text-primary`       | `#111827` | `gray-900` — headings, labels, body text           |
-| `text-secondary`     | `#6B7280` | `gray-500` — subtitles, real names, helper text    |
-| `text-muted`         | `#9CA3AF` | `gray-400` — placeholders, disabled states         |
-| `bg-page`            | `#F9FAFB` | `gray-50` — page background                       |
-| `bg-card`            | `#FFFFFF` | White — cards, modals, input surfaces              |
-| `bg-input`           | `#F3F4F6` | `gray-100` — input field backgrounds              |
-| `border`             | `#E5E7EB` | `gray-200` — card borders, dividers               |
-| `destructive`        | `#EF4444` | `red-500` — delete button only                    |
+See `@theme` in `src/app/globals.css` — it is the single source of colour values.
 
 ---
 
 ## Typography
 
-Font: system sans-serif (no custom font observed — use `font-sans`).
+Font: Inter, loaded via next/font and exposed as `font-sans`.
 
 | Role                  | Size  | Weight      | Tailwind                          |
 |-----------------------|-------|-------------|-----------------------------------|
