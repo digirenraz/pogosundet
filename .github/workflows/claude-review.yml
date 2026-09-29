@@ -54,7 +54,7 @@ jobs:
       # the repo; a mutable tag means its code can change under us without a
       # commit here. Dependabot still tracks it via the version comment and
       # will open a PR when a new release lands.
-      - uses: anthropics/claude-code-action@cfc3eb22bfed5c26ef66e3223c982af27e4524de # v1.0.231
+      - uses: anthropics/claude-code-action@756cc22e19660d20e8cc9496b4f242475a7f7790 # v1.0.235
         if: env.HAS_TOKEN == 'true'
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
