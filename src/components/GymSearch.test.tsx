@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
@@ -45,10 +46,31 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderGymSearch(props: { recentGyms?: string[] } = {}) {
+// GymSearch is fully controlled (no local copy of `value`), so tests that type
+// into it need a parent that holds the state — same as the raid form does.
+function ControlledGymSearch({
+  onChange,
+  ...props
+}: { recentGyms?: string[]; onChange?: (v: string) => void }) {
+  const [value, setValue] = useState('');
+  return (
+    <GymSearch
+      value={value}
+      onChange={v => {
+        setValue(v);
+        onChange?.(v);
+      }}
+      {...props}
+    />
+  );
+}
+
+function renderGymSearch(
+  props: { recentGyms?: string[]; onChange?: (v: string) => void } = {}
+) {
   return render(
     <NextIntlClientProvider locale="da" messages={daMessages}>
-      <GymSearch value="" onChange={() => {}} {...props} />
+      <ControlledGymSearch {...props} />
     </NextIntlClientProvider>
   );
 }
@@ -127,11 +149,7 @@ describe('GymSearch', () => {
   it('keeps the typed-query select flow working (existing behaviour)', async () => {
     stubGeolocation('prompt');
     const onChange = vi.fn();
-    render(
-      <NextIntlClientProvider locale="da" messages={daMessages}>
-        <GymSearch value="" onChange={onChange} />
-      </NextIntlClientProvider>
-    );
+    renderGymSearch({ onChange });
 
     const input = screen.getByPlaceholderText('Søg gym...');
     fireEvent.change(input, { target: { value: 'svøm' } });

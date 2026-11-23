@@ -60,15 +60,12 @@ export function GymSearch({
 }: GymSearchProps) {
   const t = useTranslations('GymSearch');
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState(value);
+  // Fully controlled: the parent owns the text. No local copy synced in an
+  // effect — react-hooks/set-state-in-effect (plugin 7.1+) rejects that.
+  const query = value;
   const [gyms, setGyms] = useState<Gym[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const { status: geoStatus, position, request: requestLocation } = useGeolocation();
-
-  // Keep local query in sync if parent value changes externally
-  useEffect(() => {
-    setQuery(value);
-  }, [value]);
 
   // Load gyms on mount
   useEffect(() => {
@@ -109,13 +106,11 @@ export function GymSearch({
       geoStatus === 'idle');
 
   function handleSelect(name: string) {
-    setQuery(name);
     onChange(name);
     setOpen(false);
   }
 
   function handleClear() {
-    setQuery('');
     onChange('');
   }
 
@@ -135,7 +130,6 @@ export function GymSearch({
           placeholder={placeholder ?? t('placeholder')}
           onFocus={() => setOpen(true)}
           onChange={e => {
-            setQuery(e.target.value);
             onChange(e.target.value);
             setOpen(true);
           }}

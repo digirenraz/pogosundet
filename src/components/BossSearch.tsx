@@ -18,13 +18,10 @@ interface BossSearchProps {
 // When 2+ characters are typed it searches all Pokémon names.
 export function BossSearch({ value, onChange, placeholder = 'Søg raid boss...', maxLength }: BossSearchProps) {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState(value);
+  // Fully controlled: the parent owns the text. No local copy synced in an
+  // effect — react-hooks/set-state-in-effect (plugin 7.1+) rejects that.
+  const query = value;
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Keep local query in sync if parent value changes externally
-  useEffect(() => {
-    setQuery(value);
-  }, [value]);
 
   // Close dropdown when clicking outside the component
   useEffect(() => {
@@ -46,13 +43,11 @@ export function BossSearch({ value, onChange, placeholder = 'Søg raid boss...',
   const sectionLabel = query.length >= 2 ? null : 'Aktuelle bosser';
 
   function handleSelect(name: string) {
-    setQuery(name);
     onChange(name);
     setOpen(false);
   }
 
   function handleClear() {
-    setQuery('');
     onChange('');
   }
 
@@ -67,7 +62,6 @@ export function BossSearch({ value, onChange, placeholder = 'Søg raid boss...',
           placeholder={placeholder}
           onFocus={() => setOpen(true)}
           onChange={e => {
-            setQuery(e.target.value);
             onChange(e.target.value);
             setOpen(true);
           }}
